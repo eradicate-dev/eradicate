@@ -1,0 +1,85 @@
+# Fit the multinomial-Poisson abundance mixture model.
+
+REST <- function(formula, data, starts, method = "BFGS",
+    se = TRUE, ...)
+{
+    if(!is(data, "eFrameREST"))
+		    stop("Data is not a data frame or eFrameREST.")
+    designMats <- getDesign(data, formula)
+    X <- designMats$X
+    y <- designMats$y
+    stay <- designMats$stay
+    cens <- designMats$cens
+    eff<- designMats$effort
+    A<- designMats$area
+    X.offset <- designMats$X.offset
+    if (is.null(X.offset)) {
+        X.offset <- rep(0, nrow(X))
+        }
+    R <- ncol(y)
+    M <- nrow(y)
+
+    lamParms <- colnames(X)
+    nAP <- ncol(X)
+    nDP<- 1
+    nP <- nDP + nAP
+
+    if(!missing(starts) && length(starts) != nP)
+        stop(paste("The number of starting values should be", nP))
+
+    yvec <- as.numeric(t(y))
+    navec <- is.na(yvec)
+    evec <- as.numeric(t(eff))
+
+    nll <- function(parms) {
+        lambda <- exp(X %*% parms[1 : nAP] + X.offset)
+        lambda.ij<- rep(lambda, each = R)
+        logrho<- parms[nAP+nDP]
+        logL.uc <- dexp(stay[cens==1], exp(logrho), log=TRUE)
+        logL.c<- pexp(stay[cens==0], exp(logrho), lower.tail=FALSE, log=TRUE)
+        logL1<- sum(logL.uc) + sum(logL.c)
+
+        logmu<- log(A) + log(evec) + logrho + log(lambda.ij)
+        logL2<- dpois(yvec, exp(logmu), log=TRUE)
+        logL2[navec]<- 0
+        ll<- logL1 + sum(logL2)
+        (-1)*ll
+      }
+
+
+    if(missing(starts))
+        starts <- rep(0, nP)
+    fm <- optim(starts, nll, method = method, hessian = se, ...)
+    opt <- fm
+    if(se) {
+        tryCatch(covMat <- solve(fm$hessian),
+                 error=function(x) stop(simpleError("Hessian is singular.
+                                        Try providing starting values or using fewer covariates.")))
+    } else {
+        covMat <- matrix(NA, nP, nP)
+      }
+    ests <- fm$par
+    fmAIC <- 2 * fm$value + 2 * nP
+    names(ests) <- c(lamParms, "rho")
+
+
+    stateEstimates <- list(name = "Abundance",
+                                   short.name = "lambda",
+                                   estimates = ests[1:nAP],
+                                   covMat = as.matrix(covMat[1:nAP,1:nAP]),
+                                   invlink = "exp",
+                                   invlinkGrad = "exp")
+
+    rhoEstimates <- list(name = "Staying time", short.name = "rho",
+                                 estimates = ests[(nAP + nDP)],
+                                 covMat = as.matrix(covMat[(nAP + 1):nP, (nAP + 1):nP]),
+                                 invlink = "exp",
+                                 invlinkGrad = "exp")
+
+    efit <- list(fitType = "REST model",
+        call = match.call(), formula = formula, state=stateEstimates,stay=rhoEstimates,
+        sitesRemoved = designMats$removed.sites,AIC = fmAIC, opt = opt,
+        negLogLike = fm$value, nllFun = nll)
+    class(efit) <- c('efitREST','efit','list')
+    return(efit)
+}
