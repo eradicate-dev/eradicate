@@ -1,6 +1,7 @@
 
 #' nmix
-#' @name calcN
+#'
+#' @name nmix
 #'
 #' @description
 #' \code{nmix} fits the N-mixture model of Royle et al (2004)
@@ -8,32 +9,31 @@
 #' @usage nmix(lamformula, detformula, data, K, mixture=c("P", "NB", "ZIP"),
 #' starts, method="BFGS", se=TRUE, ...)
 #'
-#'  @param lamformula formula for the latent abundance component.
-#'  @param detformula formula for the detection component.  Only
+#' @param lamformula formula for the latent abundance component.
+#' @param detformula formula for the detection component.  Only
 #'  site-level covariates are allowed for the detection component.
 #'  This differs from the similar model in \code{unmarked}.
-#'  @param data A \code{eFrame} object containing the response (counts)
+#' @param data A \code{eFrame} object containing the response (counts)
 #'  and site-level covariates. see \code{\link{eFrame}} for how to format
 #'  the required data.
-#'  @param K Integer upper index of integration for abundance. This should be
+#' @param K Integer upper index of integration for abundance. This should be
 #'  set high enough so that it does not affect the parameter estimates. Note
 #'  that computation time will increase with K
-#'  @param mixture Distribution modelfor the latent abundance, either Poisson (P)
+#' @param mixture Distribution modelfor the latent abundance, either Poisson (P)
 #'  or Negative-binomial (NB).
-#'  @param starts Initial values for parameters
-#'  @param method Optimisation method
-#'  @param se flag to return the standard error (hessian).
+#' @param starts Initial values for parameters
+#' @param method Optimisation method
+#' @param se flag to return the standard error (hessian).
 #'
-#'  @return a \code{efit} model object.
+#' @return a \code{efit} model object.
 #'
-#'  @examples
+#' @examples
 #'  emf <- eFrame(y=counts, siteCovs=site.df)
 #'  mod <- nmix(~1, ~1, data=emf)
 #'  Nhat<- calcN(mod, ncells=55)
 #'
-#'   @export
+#' @export
 #'
-
 nmix <- function(lamformula, detformula, data, K, mixture = c("P", "NB"), starts,
                    method = "BFGS", se = TRUE, ...)
 {

@@ -1,5 +1,34 @@
-# Fit the multinomial-Poisson abundance mixture model.
-
+#' REST
+#'
+#' @name REST
+#'
+#' @description
+#' \code{REST} fits the random encounter and staying time model of
+#' Nakashima et al (2018), which models the relationship between camera
+#' encounter rate, staying time and density. The model assume that cameras
+#' sample a viewshed of area \code{A} with perfect detection.
+#'
+#' @usage REST(formula, data, starts, method="BFGS", se=TRUE, ...)
+#'
+#' @param formula formula for animal density.
+#' @param data A \code{eFrameREST} object containing the number of encounters
+#' for each camera and the staying times. see \code{\link{eFrameREST}} for how to format
+#'  the required data.
+#' @param starts Initial values for parameters
+#' @param method Optimisation method
+#' @param se flag to return the standard error (hessian).
+#'
+#' @return a \code{efit} model object.
+#'
+#' @examples
+#'  data(snc)
+#'  emf <- eFrameREST(y=counts, stay=staying.times, cens= censor, area=A,
+#'         active_hours=24, siteCovs=site.df)
+#'  mod <- REST(~1, data=emf)
+#'  Nhat<- calcN(mod, ncells=55)
+#'
+#' @export
+#'
 REST <- function(formula, data, starts, method = "BFGS",
     se = TRUE, ...)
 {

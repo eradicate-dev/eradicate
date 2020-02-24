@@ -1,5 +1,6 @@
 
 #' occuRN
+#'
 #' @name occuRN
 #'
 #' @description
@@ -7,30 +8,29 @@
 #'
 #' @usage occuRN(lamformula, detformula, data, K, starts, method="BFGS", se=TRUE, ...)
 #'
-#'  @param lamformula formula for the latent abundance component.
-#'  @param detformula formula for the detection component.  Only
+#' @param lamformula formula for the latent abundance component.
+#' @param detformula formula for the detection component.  Only
 #'  site-level covariates are allowed for the detection component.
 #'  This differs from the similar model in \code{unmarked}.
-#'  @param data A \code{eFrame} object containing the response (counts)
+#' @param data A \code{eFrame} object containing the response (counts)
 #'  and site-level covariates. see \code{\link{eFrame}} for how to format
 #'  the required data.
-#'  @param K Integer upper index of integration for abundance. This should be
+#' @param K Integer upper index of integration for abundance. This should be
 #'  set high enough so that it does not affect the parameter estimates. Note
 #'  that computation time will increase with K
-#'  @param starts Initial values for parameters
-#'  @param method Optimisation method
-#'  @param se flag to return the standard error (hessian).
+#' @param starts Initial values for parameters
+#' @param method Optimisation method
+#' @param se flag to return the standard error (hessian).
 #'
-#'  @return a \code{efit} model object.
+#' @return a \code{efit} model object.
 #'
-#'  @examples
+#' @examples
 #'  emf <- eFrame(y=counts, siteCovs=site.df)
 #'  mod <- occuRN(~1, ~1, data=emf)
 #'  Nhat<- calcN(mod, ncells=55)
 #'
-#'   @export
+#' @export
 #'
-
 occuRN <- function(lamformula, detformula, data, K = 25, starts, method = "BFGS", se = TRUE, ...)
 {
     if(!is(data, "eFrame")) stop("Data is not an eFrame")

@@ -1,44 +1,45 @@
+
 #' remMon1
+#'
 #' @name remMon1
 #'
 #' @description
-#' \code{remMon1} fits the combined multinomial removal model + royle-nichols
+#' \code{remMon1} fits the combined removal model + royle-nichols
 #' occupancy/abundance model to two sources of monitoring data. The first
 #' (main) source of data is removal type data consisting of a number of primary
 #' periods where individuals removed are recorded for each site. The second
 #' source of data consists of standard occupancy data which is collected at the same
-#' set of sites (or a proportion thereof) using a different method.  The model then
-#' estimates abundance in light of the detections of individuals arising from both
+#' set of sites (or a proportion thereof) using a different method (e.g. cameras).
+#' The model then estimates abundance in light of detections of individuals arising from both
 #' sources of data.
 #'
 #' @usage remMOn1(lamformula, detformula, data, K, starts, method="BFGS", se=TRUE, ...)
 #'
-#'  @param lamformula formula for the latent abundance component.
-#'  @param detformula formula for the removal detection component.  Only
+#' @param lamformula formula for the latent abundance component.
+#' @param detformula formula for the removal detection component.  Only
 #'  site-level covariates are allowed for the removal detection component.
 #'  This differs from the similar model in \code{unmarked}. Currently
 #'  an intercept-only model is assumed for the occupancy component.
-#'  @param data A \code{eFrameRM} object containing the response (counts)
+#' @param data A \code{eFrameRM} object containing the response (counts)
 #'  and site-level covariates. see \code{\link{eFrameRM}} for how to format
 #'  the required data.
-#'  @param K Integer upper index of integration for abundance. This should be
+#' @param K Integer upper index of integration for abundance. This should be
 #'  set high enough so that it does not affect the parameter estimates. Note
 #'  that computation time will increase with K.
-#'  @param starts Initial values for parameters
-#'  @param method Optimisation method
-#'  @param se flag to return the standard error (hessian).
+#' @param starts Initial values for parameters
+#' @param method Optimisation method
+#' @param se flag to return the standard error (hessian).
 #'
-#'  @return a \code{efit} model object.
+#' @return a \code{efit} model object.
 #'
-#'  @examples
+#' @examples
 #'  data(snc)
 #'  emf <- eFrameRM(y=removed, y1=pa, cells=cells, Z=Z, siteCovs=site.df)
 #'  mod <- remMon1(~1, ~1, data=emf)
 #'  Nhat<- calcN(mod, ncells=55)
 #'
-#'   @export
+#' @export
 #'
-
 remMon1 <- function(lamformula, detformula, data, K=25, starts, method = "BFGS",
     se = TRUE, ...)
 {

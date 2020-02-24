@@ -7,21 +7,21 @@
 #' \code{eFrame} creates an eFrame data object for use with Nmixture
 #' or occupancy type models
 #'
-#'  @name eFrame
 #'
-#'  @param y An MxJ matrix of the observed measured data, where M is the
+#'
+#' @param y An MxJ matrix of the observed measured data, where M is the
 #'    number of sites and J is the maximum number of observations per site.
-#'  @param SiteCovs A \code{data.frame} of covariates that vary at the
+#' @param SiteCovs A \code{data.frame} of covariates that vary at the
 #'    site level. This should have M rows and one column per covariate
 #'
-#'  @return a \code{eFrame} holding data containing the response and
+#' @return a \code{eFrame} holding data containing the response and
 #'  covariates required for each model
 #'
-#'  @examples
+#' @examples
 #'  emf <- eFrame(y=counts, siteCovs=site.df)
 #'  summary(emf)
 #'
-#'   @export
+#' @export
 #'
 eFrame <- function(y, siteCovs = NULL) {
     if(("data.frame" %in% class(y)) | ("cast_matrix" %in% class(y)))
@@ -39,20 +39,20 @@ eFrame <- function(y, siteCovs = NULL) {
 #'
 #' \code{eFrameR} creates an eFrameR data object for use with removal models.
 #'
-#'  @name eFrameR
 #'
-#'  @param y An MxJ matrix of the observed removal data, where M is the
+#'
+#' @param y An MxJ matrix of the observed removal data, where M is the
 #'    number of sites and J is the maximum number of removal (primary)
 #'    periods per site. Each primary period can consist of k secondary
 #'    periods but this is not used here.
-#'  @param type sampling method
-#'  @param SiteCovs A \code{data.frame} of covariates that vary at the
+#' @param type sampling method
+#' @param SiteCovs A \code{data.frame} of covariates that vary at the
 #'    site level. This should have M rows and one column per covariate
 #'
-#'  @return a \code{eFrameR} holding data containing the response and
+#' @return a \code{eFrameR} holding data containing the response and
 #'  covariates required for removal models
 #'
-#'  @export
+#' @export
 #'
 eFrameR <- function(y, type, siteCovs = NULL) {
     if(!missing(type)) {
@@ -74,21 +74,21 @@ eFrameR <- function(y, type, siteCovs = NULL) {
 #' \code{eFrameRM} creates an eFrameRM data object for use with removal models
 #' that include additional monitoring at some or all of the sites.
 #'
-#'  @name eFrameR
-#'  @inheritsParams eFrameR
-#'  @param y1 An NxJ matrix of the additional monitoring data, where N is the
+#'
+#' @inheritParams eFrameR
+#' @param y1 An NxJ matrix of the additional monitoring data, where N is the
 #'    number of monitored sites and J is the maximum number of primary periods
 #'    per site as for \code{y}.
-#'  @param cells vector indictaing which of the \code{y} sites were subject
+#' @param cells vector indictaing which of the \code{y} sites were subject
 #'  to monitoring
-#'  @param Z integer indicating the number of secondary periods per
+#' @param Z integer indicating the number of secondary periods per
 #'  primary period for \code{y1}
 #'
 #'
-#'  @return a \code{eFrameRM} holding data containing the response and
+#' @return a \code{eFrameRM} holding data containing the response and
 #'  covariates required for removal models
 #'
-#'  @export
+#' @export
 #'
 eFrameRM <- function(y, y1, cells, Z, type, siteCovs = NULL) {
 
@@ -117,28 +117,25 @@ eFrameRM <- function(y, y1, cells, Z, type, siteCovs = NULL) {
 #' model applied to camera trap data using the MLE given in:
 #' Nakashima,Y., Fukasawa, K., and Samejima H. (2018). J.App.Ecol,55,735-744.
 #'
-#'
-#'  @name eFrameREST
-#'
-#'  @param y An MxJ matrix of the observed measured data, where M is the
+#' @param y An MxJ matrix of the observed measured data, where M is the
 #'    number of sites and J is the maximum number of observations per site.
-#'  @param stay A vector of the observed staying times difference  between the
-#'  exit and entry times for all (or a sample) of individuals
-#'  @param cens A vector indicating whether both entry and exit times were
+#' @param stay A vector of the observed staying times, which are the difference
+#'  between the exit and entry times for all (or a sample) of individuals
+#' @param cens A vector indicating whether both entry and exit times were
 #'  observed for each of the staying times (cens=1) or only the entry time
 #'  was observed with the exit time unknown (cens=0).  In the latter case,
 #'  the staying time is the maximum time that the individual was observed to be in
 #'  front of the camera.
-#'  @param area A scalar indicating The area of the camera viewshed in square m.
+#' @param area A scalar indicating The area of the camera viewshed in square meters.
 #'  This area is assumed to have a detection probability of 1.0 (effective sampling area).
-#'  @param active_hours A scalar indicating the number of hours in each 24 hour
+#' @param active_hours A scalar indicating the number of hours in each 24 hour
 #'  period that the species is active
-#'  @inheritsParams eFrame
+#' @inheritParams eFrame
 #'
-#'  @return a \code{eFrameREST} holding data containing the response and
+#' @return a \code{eFrameREST} holding data containing the response and
 #'  covariates required for the REST model
 #'
-#'  @export
+#' @export
 #'
 eFrameREST <- function(y, stay, area, cens, active_hours, siteCovs = NULL) {
 
@@ -172,13 +169,8 @@ getY<- function(object) object$y
 
 
 ################################### PRINT/SUMMARY METHODS ######################
-#' print.eFrame
-#'
-#' @description
-#' \code{print.eFrame} method for \code{eFrame} objects
-#'
+#' @rdname print
 #' @export
-#'
 print.eFrame<- function(object,...) {
   #S3 method for eFrame
   cat("eFrame Object\n\n")
@@ -196,13 +188,8 @@ print.eFrame<- function(object,...) {
     print(summary(object$siteCovs))
   }
 }
-#' summary.eFrame
-#'
-#' @description
-#' \code{summary.eFrame} method for \code{eFrame} objects
-#'
+#' @rdname summary
 #' @export
-#'
 summary.eFrame<- function(object,...) {
   #S3 method for eFrame
   cat("eFrame Object\n\n")
@@ -221,13 +208,8 @@ summary.eFrame<- function(object,...) {
   }
 }
 #-----------------------------------------
-#' print.eFrameR
-#'
-#' @description
-#' \code{print.eFrameR} method for \code{eFrameR} objects
-#'
+#' @rdname print
 #' @export
-#'
 print.eFrameR<- function(object,...) {
   #S3 method for eFrame
   cat("eFrameR Object\n\n")
@@ -247,13 +229,8 @@ print.eFrameR<- function(object,...) {
     print(summary(object$siteCovs))
   }
 }
-#' summary.eFrameR
-#'
-#' @description
-#' \code{summary.eFrameR} method for \code{eFrameR} objects
-#'
+#' @rdname summary
 #' @export
-#'
 summary.eFrameR<- function(object,...) {
   #S3 method for eFrame
   cat("eFrameR Object\n\n")
@@ -275,14 +252,8 @@ summary.eFrameR<- function(object,...) {
 }
 
 #-----------------------------------------
-#' print.eFrameRM
-#'
-#' @description
-#' \code{print.eFrameRM} method for \code{eFrameRM} objects
-#'
+#' @rdname print
 #' @export
-#'
-
 print.eFrameRM<- function(object,...) {
   #S3 method for eFrame
   cat("eFrameRM Object\n\n")
@@ -307,13 +278,8 @@ print.eFrameRM<- function(object,...) {
     print(summary(object$siteCovs))
   }
 }
-#' summary.eFrameRM
-#'
-#' @description
-#' \code{summary.eFrameRM} method for \code{eFrameRM} objects
-#'
+#' @rdname summary
 #' @export
-#'
 summary.eFrameRM<- function(object,...) {
   #S3 method for eFrame
   cat("eFrameRM Object\n\n")
@@ -340,13 +306,8 @@ summary.eFrameRM<- function(object,...) {
 }
 
 #-------------------------------------
-#' print.eFrameREST
-#'
-#' @description
-#' \code{print.eFrameREST} method for \code{eFrameREST} objects
-#'
+#' @rdname print
 #' @export
-#'
 print.eFrameREST<- function(object,...) {
   #S3 method for eFrameREST
   cat("eFrameREST Object\n\n")
@@ -370,13 +331,8 @@ print.eFrameREST<- function(object,...) {
     print(summary(object$stay))
 
 }
-#' summary.eFrameREST
-#'
-#' @description
-#' \code{summary.eFrameREST} method for \code{eFrameREST} objects
-#'
+#' @rdname summary
 #' @export
-#'
 summary.eFrameREST<- function(object,...) {
    #S3 method for eFrameREST
   cat("eFrameREST Object\n\n")

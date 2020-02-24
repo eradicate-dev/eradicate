@@ -123,7 +123,6 @@ rowProds <- function(x, na.rm = FALSE)
 
 ## delta method for variance of proportion given variance of its logistic-
 ## transformed counterpart
-##' @nord
 #sd.prop <- function(est,sd.est) {
 #    exp(-est)/(1 + exp(-est))^2 * sd.est
 #}

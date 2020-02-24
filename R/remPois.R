@@ -1,4 +1,6 @@
+
 #' remPois
+#'
 #' @name remPois
 #'
 #' @description
@@ -7,29 +9,28 @@
 #'
 #' @usage remPois(lamformula, detformula, data, starts, method="BFGS", se=TRUE, ...)
 #'
-#'  @param lamformula formula for the latent abundance component.
-#'  @param detformula formula for the removal detection component.  Only
+#' @param lamformula formula for the latent abundance component.
+#' @param detformula formula for the removal detection component.  Only
 #'  site-level covariates are allowed for the removal detection component.
 #'  This differs from the similar model in \code{unmarked}. Currently
 #'  an intercept-only model is assumed for the occupancy component.
-#'  @param data A \code{eFrameR} object containing the response (counts)
+#' @param data A \code{eFrameR} object containing the response (counts)
 #'  and site-level covariates. see \code{\link{eFrameR}} for how to format
 #'  the required data.
-#'  @param starts Initial values for parameters
-#'  @param method Optimisation method
-#'  @param se flag to return the standard error (hessian).
+#' @param starts Initial values for parameters
+#' @param method Optimisation method
+#' @param se flag to return the standard error (hessian).
 #'
-#'  @return a \code{efit} model object.
+#' @return a \code{efit} model object.
 #'
-#'  @examples
+#' @examples
 #'  data(snc)
 #'  emf <- eFrameR(y=removed, siteCovs=site.df)
 #'  mod <- remPois(~1, ~1, data=emf)
 #'  Nhat<- calcN(mod, ncells=55)
 #'
-#'   @export
+#' @export
 #'
-
 remPois <- function(lamformula, detformula, data, starts, method = "BFGS", se = TRUE, ...) {
 
     if(!is(data, "eFrameR"))

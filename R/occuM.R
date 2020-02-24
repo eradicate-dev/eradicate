@@ -1,5 +1,6 @@
 
-#' occuRN
+#' occuM
+#'
 #' @name occuM
 #'
 #' @description
@@ -7,29 +8,27 @@
 #'
 #' @usage occuM(lamformula, detformula, data, knownocc, starts, method="BFGS", se=TRUE, ...)
 #'
-#'  @param lamformula formula for the latent abundance component.
-#'  @param detformula formula for the detection component.  Only
+#' @param lamformula formula for the latent abundance component.
+#' @param detformula formula for the detection component.  Only
 #'  site-level covariates are allowed for the detection component.
 #'  This differs from the similar model in \code{unmarked}.
-#'  @param data A \code{eFrame} object containing the response (counts)
+#' @param data A \code{eFrame} object containing the response (counts)
 #'  and site-level covariates. see \code{\link{eFrame}} for how to format
 #'  the required data.
-#'  @param knownocc Vector of row numbers of sites that are known to be occupied.
-#'  @param starts Initial values for parameters
-#'  @param method Optimisation method
-#'  @param se flag to return the standard error (hessian).
+#' @param knownocc Vector of row numbers of sites that are known to be occupied.
+#' @param starts Initial values for parameters
+#' @param method Optimisation method
+#' @param se flag to return the standard error (hessian).
 #'
-#'  @return a \code{efit} model object.
+#' @return a \code{efit} model object.
 #'
-#'  @examples
+#' @examples
 #'  emf <- eFrame(y=counts, siteCovs=site.df)
 #'  mod <- occuM(~1, ~1, data=emf)
 #'  Nhat<- calcN(mod, ncells=55)
 #'
-#'   @export
+#' @export
 #'
-
-
 occuM<- function(lamformula, detformula, data, knownOcc = numeric(0), starts,
                  method = "BFGS", se = TRUE, ...) {
 
