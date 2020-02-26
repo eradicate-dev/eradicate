@@ -141,9 +141,10 @@ nmix <- function(lamformula, detformula, data, K, mixture = c("P", "NB"), starts
     }
 
     efit <- list(fitType="nmix", call=match.call(),
-                 formula = formula, sitesRemoved = designMats$removed.sites,
+                 lamformula = lamformula, detformula=detformula,
+                 sitesRemoved = designMats$removed.sites,
                  state=stateEstimates, det=detEstimates, AIC = fmAIC, opt = opt,
                  negLogLike = fm$value, nllFun = nll, K = K, mixture = mixture)
-    class(efit) <- c('efitN','efit','list')
+    class(efit) <- c('efit','list')
     return(efit)
 }

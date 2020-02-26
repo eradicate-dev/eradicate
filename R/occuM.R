@@ -107,11 +107,11 @@ occuM<- function(lamformula, detformula, data, knownOcc = numeric(0), starts,
                             invlinkGrad = "logistic.grad")
 
 
-    efit <- list( fitType = "occuM", call = match.call(),
-                 formula = formula, state=state, det=det,
+    efit <- list( fitType = "occuM", call = match.call(),lamformula = lamformula,
+                 detformula=detformula, state=state, det=det,
                  sitesRemoved = designMats$removed.sites,
                  AIC = fmAIC, opt = opt, negLogLike = fm$value,
                  nllFun = nll, knownOcc = knownOccLog)
-    class(efit) <- c('efitN','efit','list')
+    class(efit) <- c('efit','list')
     return(efit)
 }

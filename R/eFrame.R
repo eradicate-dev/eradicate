@@ -117,13 +117,14 @@ eFrameRM <- function(y, y1, cells, Z, type, siteCovs = NULL) {
 #' model applied to camera trap data using the MLE given in:
 #' Nakashima,Y., Fukasawa, K., and Samejima H. (2018). J.App.Ecol,55,735-744.
 #'
-#' @param y An MxJ matrix of the observed measured data, where M is the
-#'    number of sites and J is the maximum number of observations per site.
+#' @param y An MxJ matrix of the observed number of encounters at a camera over
+#' a specified period (usually 24h but could be less - see \code{active_hours})
+#' where M is the number of sites and J is the maximum number of observations per site.
 #' @param stay A vector of the observed staying times, which are the difference
 #'  between the exit and entry times for all (or a sample) of individuals
 #' @param cens A vector indicating whether both entry and exit times were
-#'  observed for each of the staying times (cens=1) or only the entry time
-#'  was observed with the exit time unknown (cens=0).  In the latter case,
+#'  observed for each of the staying times (\code{cens}=1) or only the entry time
+#'  was observed with the exit time unknown (\code{cens}=0).  In the latter case,
 #'  the staying time is the maximum time that the individual was observed to be in
 #'  front of the camera.
 #' @param area A scalar indicating The area of the camera viewshed in square meters.
@@ -137,7 +138,7 @@ eFrameRM <- function(y, y1, cells, Z, type, siteCovs = NULL) {
 #'
 #' @export
 #'
-eFrameREST <- function(y, stay, area, cens, active_hours, siteCovs = NULL) {
+eFrameREST <- function(y, stay, cens, area, active_hours, siteCovs = NULL) {
 
   if(length(stay) != length(cens)) stop("length of staying times != length of censor variable")
   if(any(is.na(stay))) stop("Staying times must have no missing values")

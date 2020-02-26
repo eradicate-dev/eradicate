@@ -29,12 +29,12 @@
 #'
 #' @export
 #'
-REST <- function(formula, data, starts, method = "BFGS",
+REST <- function(lamformula, data, starts, method = "BFGS",
     se = TRUE, ...)
 {
     if(!is(data, "eFrameREST"))
 		    stop("Data is not a data frame or eFrameREST.")
-    designMats <- getDesign(data, formula)
+    designMats <- getDesign(data, lamformula)
     X <- designMats$X
     y <- designMats$y
     stay <- designMats$stay
@@ -106,7 +106,7 @@ REST <- function(formula, data, starts, method = "BFGS",
                                  invlinkGrad = "exp")
 
     efit <- list(fitType = "REST model",
-        call = match.call(), formula = formula, state=stateEstimates,stay=rhoEstimates,
+        call = match.call(), lamformula = lamformula, state=stateEstimates,stay=rhoEstimates,
         sitesRemoved = designMats$removed.sites,AIC = fmAIC, opt = opt,
         negLogLike = fm$value, nllFun = nll)
     class(efit) <- c('efitREST','efit','list')

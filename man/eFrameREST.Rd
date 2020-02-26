@@ -4,23 +4,24 @@
 \alias{eFrameREST}
 \title{eFrameREST}
 \usage{
-eFrameREST(y, stay, area, cens, active_hours, siteCovs = NULL)
+eFrameREST(y, stay, cens, area, active_hours, siteCovs = NULL)
 }
 \arguments{
-\item{y}{An MxJ matrix of the observed measured data, where M is the
-number of sites and J is the maximum number of observations per site.}
+\item{y}{An MxJ matrix of the observed number of encounters at a camera over
+a specified period (usually 24h but could be less - see \code{active_hours})
+where M is the number of sites and J is the maximum number of observations per site.}
 
 \item{stay}{A vector of the observed staying times, which are the difference
 between the exit and entry times for all (or a sample) of individuals}
 
-\item{area}{A scalar indicating The area of the camera viewshed in square meters.
-This area is assumed to have a detection probability of 1.0 (effective sampling area).}
-
 \item{cens}{A vector indicating whether both entry and exit times were
-observed for each of the staying times (cens=1) or only the entry time
-was observed with the exit time unknown (cens=0).  In the latter case,
+observed for each of the staying times (\code{cens}=1) or only the entry time
+was observed with the exit time unknown (\code{cens}=0).  In the latter case,
 the staying time is the maximum time that the individual was observed to be in
 front of the camera.}
+
+\item{area}{A scalar indicating The area of the camera viewshed in square meters.
+This area is assumed to have a detection probability of 1.0 (effective sampling area).}
 
 \item{active_hours}{A scalar indicating the number of hours in each 24 hour
 period that the species is active}

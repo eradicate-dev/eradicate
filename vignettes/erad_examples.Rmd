@@ -1,0 +1,164 @@
+---
+title: "Eradication tools examples"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{erad_examples}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+## Eradication tools user guide
+### Dave Ramsey (26/2/2020)
+
+The `eradicate` package contains some functions to undertake basic populaton estimation from data that would typically be collected as part of a pest eradication program. The package borrows heavily from ideas and code used in the `unmarked` package, and additionally includes some custom models not included in that package.  It additionally uses the simpler S3 classes for object orientation and method dispatch, which are less formal that the S4 classes used in `unmarked`.  
+
+Here we illustrate the basic use of the models in the `eradicate` package by running through a theoretical  program to eradicate feral cats on San Nicolas Island, off the coast of California. We start by undertaking a preliminary assessment of the population (assessment phase) using camera trap sampling before attempting to eradicate the population using removal trapping with leg-hold traps (removal phase).  During the removal phase we will undertake periodic assessments of the population to track our progress towards eradication.
+
+Before we start we load various the packages necessary for our analysis ...
+
+```{r setup, message=FALSE, warning=FALSE}
+library(eradicate)
+library(sf)
+library(raster)
+```
+
+... and then read in the shapefile of the region and a raster of habitat values. 
+
+```{r, fig.height=5, fig.width=7}
+region<- read_sf(system.file("extdata", "shape/san_nic_region.shp", package="eradicate"))
+habitat<- raster(system.file("extdata", "san_nic_habitat.tif", package="eradicate"))
+
+plot(habitat, axes=F)
+plot(st_geometry(region), add=T)
+```
+
+## Asessment phase
+
+We undertake an initial assessment of the population using a grid of 55 camera traps spread systematically across the island at 1 km spacing. The example dataset `san_nic_pre`, contains the camera locations as well as simulated counts of cat encounters at these cameras over 30 nights sampling.
+
+```{r,fig.height=5, fig.width=7}
+traps<- san_nic_pre$traps
+counts<- san_nic_pre$counts
+dim(counts)
+
+plot(st_geometry(region), axes=F)
+points(traps, pch=16)
+```
+
+It was thought that the cats on the island had a tendency to favour the grassland over the forest habitat so this information may be useful for modelling the variation in cat abundance across the island. We therefore extract habitat information from `habitat` for use in further modelling. Cells in the habitat raster took values of either 1 (grassland) or 0 (forest).  Rather than just extract the habitat value from the focal cell containing each trap location, we get the average of all cells within 500 m of the focal cell
+
+```{r}
+habvals<- extract(habitat, traps, buffer=500)
+pgrass<- sapply(habvals, function(x) mean(x, na.rm=T))
+site.data<- cbind(traps, pgrass)
+pgrass
+
+```
+
+We are now ready to fit some models! There are two types of model suitable for the basic count data collected from these cameras.  Since the data are counts, and assuming that the counts from each camera are independent (i.e. cats recorded on one camera are not recorded on another camera), we can choose to fit an occupancy type model to estimate the proportion of sites occupied by cats or we can estimate the abundance of cats on the sampled sites. For occupancy analysis, `eradicate` can fit the basic Mackenzie type occupancy model using the function `occuM()`.  To estimate abundance, we have two types of model, either the Nmixture model of Royle (2004) `nmix()` or the occupancy model of Royle and Nichols (2003) `occuRN()`.  Although the latter is strictly an occupancy model, it also estimates abundance by positing a relationship between occupancy and abundance.  
+
+The first step in the analysis is to collate the count data and the associated covariate information (i.e. habitat) into a custom data class using `eFrame()`. See `?eFrame` for more info on organizing the data necessary to use the models in `eradicate`.
+
+```{r}
+emf<- eFrame(counts, siteCovs = site.data)
+
+# Occupancy model
+m1<- occuM(~pgrass, ~1, data=emf)
+summary(m1)
+
+# Royle/Nichols model
+m2<- occuRN(~pgrass, ~1, K=50, data=emf)
+summary(m2)
+
+m3<- nmix(~pgrass, ~1, K=50, data=emf)
+summary(m3)
+```
+
+These three models have a common modelling interface.  The first argument specifies the model for the abundance or occupancy component, while the second argment specifies the model for the detection component. Unlike `unmarked`, which can include covariates at the observation level, `eradicate` currently only uses site-level covariates to model the detection process. For `occuRN()` and `nmix()` we also need to specify the parameter `K`, which is an integer specifying the possible upper value for abundance at each site.  Note that all three models give similar parameter estimates.  
+
+In order to get estimates of either the proportion of sites occupied or total abundance, we can use the function `calcN()`, which also requires an additional argument of covariate values for each site used for prediction.  Since we wish to predict for the sites at hand, we simply use `site.data`.
+```{r}
+calcN(m1, site.data)
+calcN(m2, site.data)
+calcN(m3, site.data)
+```
+
+The return values for `calcN` contain the predicted occupancy or abundance for each site as well as for the  total population over all sites. It also produces two estimates of confidence intervals, the standard 
+normal approximation and additional intervals using a log-normal transformation.  The latter intervals are guaranteed not to include zero in the interval.
+
+In addition to these three models, `eradicate` additionally includes another model that is exclusively applied to camera data.  Introduced by Nakashima et al. (2018), the REST model (short for Random Encounter and Staying Time model) uses data on the number of encounters per camera as well as additional information on the time taken for each detected individual to cross the cameras field of view (the staying time).  Under the assumption that detection in the field of view (or some known proportion of it) is perfect, the REST model can estimate animal density.  Further information on this model is available in Nakashima et al (2018) and in the help file. 
+
+We fit the REST model to the example data found in the `rest` dataset.
+```{r}
+counts<- rest$y
+stay<- rest$stay
+cens<- rest$cens
+A<- rest$area # in km2
+active<- rest$active_hours
+
+emf<- eFrameREST(counts, stay, cens, A, active, siteCovs = site.data)
+
+m4<- REST(~pgrass, data=emf)
+summary(m4)
+
+calcN(m4, site.data)
+
+```
+
+## Eradication phase
+
+Now that we have some idea of the size of the cat population on San Nicolas (i.e. around 65 individuals), we now turn to the eradication phase.  The eradication will be attempted using 100 leg-hold traps located across the island.  At a proportion of these trap locations, additional monitoring will also be undertaken using camera traps.  This two-technique approach is useful as the cameras could detect a cat that approaches a trap, but does not get captured.  Along with the data on cat removals, information from these extra detections can be used to update the estimate of the residual population size.
+
+The dataset `san_nic_rem` contains example data from an eradication phase conducted over 20 separate (primary) periods.  During each period, the leg-hold traps and cameras were operated for 10 consecutive nights (secondary periods).  As well as the leg-hold trap locations, the dataset also contains information on the IDs of the traps where the cameras were placed.
+
+The `eradicate` package contains a two functions for use with removal type data `remPois()` and `remMon1()`. The former is applied to the data on removals only while the latter is applied to the joint removal and additional detection data.  We start by collating the data and extracting habitat info for use in the models as before.
+
+```{r}
+rem<- san_nic_rem$rem
+y1<- san_nic_rem$y1 # detections from additional monitoring
+mtraps<- san_nic_rem$cells
+nights<- san_nic_rem$nights
+traps<- san_nic_rem$traps
+
+habvals<- raster::extract(habitat, traps, buffer=500)
+pgrass<- sapply(habvals, function(x) mean(x, na.rm=T))
+site.data<- cbind(traps, pgrass)
+
+
+emf<-eFrameRM(rem, y1, mtraps, nights, type="removal", siteCovs = site.data)
+r1<- remMon1(~ pgrass,  ~ 1, data=emf, K=50)
+summary(r1)
+calcN(r1, site.data)$Nhat
+
+
+emf<- eFrameR(rem, type="removal", siteCovs = site.data)
+r2<- remPois(~pgrass, ~1, data=emf)
+summary(r2)
+calcN(r2, site.data)$Nhat
+
+```
+
+Using data on extra detections has resulted in a higher estimate of the initial population size compared with the model without extra detections.  This is due to the fact that cats were detected in a camera in the periods following the last capture of a cat in the leg-hold traps.  We can get an estimate of the residual population as follows ... [TODO: function to give proper estimate with uncertainty]
+
+```{r}
+# Removal + extra detections
+est<- calcN(r1, site.data)$Nhat
+n.removed<- sum(rem)
+n.initial<- round(est$Nhat)
+n.initial - n.removed
+
+# Removal only
+est<- calcN(r2, site.data)$Nhat
+n.removed<- sum(rem)
+n.initial<- round(est$Nhat)
+n.initial - n.removed
+
+```
+
+... which indicates 12 cats still extant using inference from the removal + extra detections model compared with nominal eradication using the removal only model.

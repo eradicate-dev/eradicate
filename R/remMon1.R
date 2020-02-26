@@ -147,9 +147,9 @@ remMon1 <- function(lamformula, detformula, data, K=25, starts, method = "BFGS",
                                  invlinkGrad = "logistic.grad")
 
     efit <- list(fitType = "Multinomial Removal + Monitoring",
-        call = match.call(), formula = formula, state=stateEstimates,det=detEstimates,
-        sitesRemoved = designMats$removed.sites,AIC = fmAIC, opt = opt,
-        negLogLike = fm$value, nllFun = nll)
-    class(efit) <- c('efitN','efit','list')
+        call = match.call(), lamformula = lamformula, detformula=detformula,
+        state=stateEstimates,det=detEstimates, sitesRemoved = designMats$removed.sites,
+        AIC = fmAIC, opt = opt, negLogLike = fm$value, nllFun = nll)
+    class(efit) <- c('efit','list')
     return(efit)
 }

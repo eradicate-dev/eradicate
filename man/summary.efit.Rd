@@ -13,17 +13,13 @@
 \item{obj}{A fitted model object.}
 }
 \value{
-a \code{data.frame} giving the estimated parameters for the
- model in \code{obj} (on the link scale) and associated SE and 95% CI.
+a \code{data.frame}
 }
 \description{
-\code{summary} summarises an efit object.
+\code{summary} summarises an efit object giving the estimated parameters for the
+ model in \code{obj} (on the link scale) with associated SE and confidence
+ intervals.
 }
-\section{Functions}{
-\itemize{
-\item \code{summary.efitREST}: 
-}}
-
 \examples{
  emf <- eFrame(y=counts, siteCovs=site.df)
  mod <- nmix(~1, ~1, data=emf)

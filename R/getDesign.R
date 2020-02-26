@@ -143,11 +143,11 @@ getDesign.eFrameRM<- function(emf, lamformula, detformula, na.rm=TRUE) {
 # REST model
 
 
-getDesign.eFrameREST<- function(emf, formula, na.rm=TRUE) {
+getDesign.eFrameREST<- function(emf, lamformula, na.rm=TRUE) {
   # REST model assumes cameras sample viewshed of area A with perfect detection
   # Future version will model effective viewshed using distance sampling techniques
 
-  stateformula <- as.formula(formula)
+  stateformula <- as.formula(lamformula)
 
   M <- numSites(emf)
   R <- numY(emf)
@@ -182,6 +182,37 @@ getDesign.eFrameREST<- function(emf, formula, na.rm=TRUE) {
 
   return(list(y = y, X = X, X.offset = X.offset, effort=effort, stay=emf$stay,
               cens=emf$cens, area=emf$area, removed.sites = removed.sites))
+}
+
+
+getDesign.efit<- function(obj, siteCovs, na.rm=TRUE) {
+  # Create design matrix for prediction
+
+  stateformula <- as.formula(obj$lamformula)
+  X.mf <- model.frame(stateformula, siteCovs, na.action = NULL)
+  X <- model.matrix(stateformula, X.mf)
+  X.offset <- as.vector(model.offset(X.mf))
+  if (!is.null(X.offset)) {
+    X.offset[is.na(X.offset)] <- 0
+  }
+
+  ## Record future column names for obsCovs
+  colNames <- colnames(siteCovs)
+
+  if (na.rm) {
+    sites.to.remove <- apply(siteCovs, 1, function(x) any(is.na(x)))
+    num.to.remove <- sum(sites.to.remove)
+    if(num.to.remove > 0) {
+      X <- X[!sites.to.remove, ,drop = FALSE]
+      X.offset <- X.offset[!sites.to.remove]
+      warning(paste(num.to.remove,"sites have been discarded because of missing data."), call. = FALSE)
+    }
+    removed.sites <- which(sites.to.remove)
+  } else {
+    removed.sites=integer(0)
+  }
+
+  return(list(X = X, X.offset = X.offset, removed.sites = removed.sites))
 }
 
 #--------------------------------------------------------

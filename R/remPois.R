@@ -103,9 +103,9 @@ remPois <- function(lamformula, detformula, data, starts, method = "BFGS", se = 
                          invlinkGrad = "logistic.grad")
 
     efit <- list(fitType = "removal Poisson",
-        call = match.call(), formula = formula,state=stateEstimates,det=detEstimates,
-        sitesRemoved = designMats$removed.sites, AIC = fmAIC, opt = opt,
-        negLogLike = fm$value, nllFun = nll)
-    class(efit) <- c('efitN','efit','list')
+        call = match.call(), lamformula = lamformula,detformula=detformula,
+        state=stateEstimates,det=detEstimates, sitesRemoved = designMats$removed.sites,
+        AIC = fmAIC, opt = opt, negLogLike = fm$value, nllFun = nll)
+    class(efit) <- c('efit','list')
     return(efit)
 }

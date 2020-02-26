@@ -7,18 +7,21 @@
 #' of covariate values for each spatial unit.
 #'
 #' @param obj A fitted model object.
-#' @param cells The number of spatial units used for prediction
 #' @param covs A \code{data.frame} of covariates for each spatial unit.
 #'    There must by covariates for every parameter in \code{obj}.
-#'    Either one of \code{cells} or \code{covs} must be supplied.
+#'    if no covariates are used then \code{covs} should be a data.frame
+#'    with one column indicating cell number.
+#' @param off.set Either a scalar offset value to apply to each spatial unit
+#' for prediction (e.g. cell area) or a vector of the same length as \code{nrow(covs)}.
 #'
-#' @return a \code{data.frame} giving the overall abundance estimate for
-#'  the region with associated SE and confidence intervals.
+#' @return a \code{data.frame} giving the predictions for each spatial unit
+#'  as well as the overall abundance estimate for the region with associated
+#'  SE and confidence intervals.
 #'
 #' @examples
 #'  emf <- eFrame(y=counts, siteCovs=site.df)
 #'  mod <- nmix(~1, ~1, data=emf)
-#'  Nhat<- calcN(mod, ncells=55)
+#'  Nhat<- calcN(mod, site.df)
 #'
 #' @export
 #'
@@ -52,12 +55,13 @@ SE <- function(obj, ...){
 
 #' summary.efit
 #'
-#' \code{summary} summarises an efit object.
+#' \code{summary} summarises an efit object giving the estimated parameters for the
+#'  model in \code{obj} (on the link scale) with associated SE and confidence
+#'  intervals.
 #'
 #' @param obj A fitted model object.
 #'
-#' @return a \code{data.frame} giving the estimated parameters for the
-#'  model in \code{obj} (on the link scale) and associated SE and 95% CI.
+#' @return a \code{data.frame}
 #'
 #' @examples
 #'  emf <- eFrame(y=counts, siteCovs=site.df)
@@ -102,8 +106,8 @@ summary.efit<- function(object, ...)
     print(outDF, row.names = printRowNames, digits = 3)
     invisible(outDF)
 }
-#' @describeIn summary.efit
-#'
+#' @rdname summary.efit
+#' @export
 summary.efitREST<- function(object, ...)
 {
   # State
@@ -143,81 +147,64 @@ summary.efitREST<- function(object, ...)
 
 # Compute linear combinations of estimates using coefficients
 
-linearComb.efit<- function(obj, coefficients = NULL, offset = NULL, ...)
+linearComb.efit<- function(obj, coefficients, off.set = NULL, ...)
 {
     estimates<- obj$state$estimates
     covMat<- obj$state$covMat
-    if(is.null(coefficients) & length(estimates == 1))
-      coefficients<- t(as.matrix(1))
     if(!is(coefficients, "matrix"))
         coefficients <- t(as.matrix(coefficients))
-    if(ncol(coefficients) != length(estimates)) stop("error - model contains covariates")
-    if (is.null(offset))
-        offset <- rep(0, nrow(coefficients))
-    e <- as.vector(coefficients %*% estimates) + offset
+    if(ncol(coefficients) != length(estimates)) stop("error - wrong number oc covariates")
+    if (is.null(off.set))
+        off.set <- rep(0, nrow(coefficients))
+    e <- as.vector(coefficients %*% estimates) + off.set
     v <- coefficients %*% covMat %*% t(coefficients)
-
     umlc <- list(estimates = e, covMat = v, coefficients = coefficients,
                  invlink = obj$state$invlink, invlinkGrad = obj$state$invlinkGrad)
     class(umlc)<- c("efit", class(umlc))
     umlc
 }
 
-
 backTransform.efit<- function(obj, ...) {
+    ## MV delta method is Var=J*Sigma*J^T where J is Jacobian
+    ## In this case, J is diagonal with elements = gradient
+    ## Reduces to scaling the rows then columns of Sigma by the gradient
+    invlink<- obj$invlink
+    invlinkGrad<- obj$invlinkGrad
+    estimate<- obj$estimates
+    covMat<- obj$covMat
+    e <- do.call(invlink,list(estimate))
+    grad <- do.call(invlinkGrad,list(estimate))
 
-            ## In general, MV delta method is Var=J*Sigma*J^T where J is Jacobian
-            ## In this case, J is diagonal with elements = gradient
-            ## Reduces to scaling the rows then columns of Sigma by the gradient
-            invlink<- obj$invlink
-            invlinkGrad<- obj$invlinkGrad
-            estimate<- obj$estimates
-            covMat<- obj$covMat
-            e <- do.call(invlink,list(estimate))
-            grad <- do.call(invlinkGrad,list(estimate))
-
-            if(length(estimate) > 1) {
-              v <- diag(grad) %*% covMat %*% diag(grad)
-            } else {
-              v <- grad^2 * covMat
-            }
-
-            umbt <- list(estimates = e, covMat = v)
-            umbt
-          }
+    if(length(estimate) > 1) {
+      v <- diag(grad) %*% covMat %*% diag(grad)
+    } else {
+      v <- grad^2 * covMat
+    }
+    umbt <- list(estimates = e, covMat = v)
+    umbt
+}
 
 #' @rdname calcN
 #' @export
-calcN.default<- function(obj, ncells=NULL, covs=NULL, CI.level=0.95, ...) {
-
-  if(is.null(ncells) & is.null(covs)) stop("one of ncells or covs must be supplied")
-  if(!is.null(ncells) & is.null(covs)) {
-    lc<- linearComb(obj)
-  } else if(is.null(ncells) & !is.null(covs)) {
-    lc<- linearComb(obj, coefficients=covs)
-  }
-  else stop("problem")
+calcN.efit<- function(obj, covs, off.set=NULL, CI.level=0.95, ...) {
+  design <- getDesign(obj, covs)
+  X<- design$X
+  M<- nrow(X)
+  if(!is.null(off.set) & length(off.set) == 1) off.set<- rep(off.set, M)
+  lc<- linearComb(obj, coefficients=X, off.set=off.set)
   est<- backTransform(lc)
-  if(length(est$estimates == 1) & (!is.null(ncells))) {
-    V<- as.vector(est$covMat)
-    Nhat<- est$estimates * ncells
-    varN<- ncells^2 * V
-    seN<- sqrt(varN)
-    z <- qnorm((1-CI.level)/2, lower.tail = FALSE)
-    lwr<- Nhat - seN*z
-    upr<- Nhat + seN*z
-    data.frame(Nhat=round(Nhat,1),se=round(seN,1), lcl=round(lwr,1), ucl=round(upr,1))
-  }
-  else if(length(est$estimates) > 1 & !is.null(covs)) {
-    V<- est$covMat
-    Nhat<- sum(est$estimates)
-    varN<- sum(est$covMat)
-    seN<- sqrt(varN)
-    cv<- sqrt(varN)/Nhat
-    z <- exp(qnorm((1-CI.level)/2) * sqrt(log(1+cv^2))) # asymptotic CI
-    bigN<- data.frame(Nhat=round(Nhat,1),se=round(seN,1), lcl=round(Nhat*z,1), ucl=round(Nhat/z,1))
-    list(cellpreds=est$estimates, Nhat=bigN)
-  }
+  V<- est$covMat
+  Nhat<- sum(est$estimates)
+  varN<- sum(est$covMat)
+  seN<- sqrt(varN)
+  z <- qnorm((1-CI.level)/2, lower.tail = FALSE)
+  lwr<- Nhat - seN*z
+  upr<- Nhat + seN*z
+  cv<- sqrt(varN)/Nhat
+  za <- exp(qnorm((1-CI.level)/2) * sqrt(log(1+cv^2))) # asymptotic CI
+  bigN<- data.frame(Nhat=round(Nhat,1),se=round(seN,1), lcl=round(lwr,1), ucl=round(upr,1),
+                    lcl.ln=round(Nhat*za,1), ucl.ln=round(Nhat/za,1))
+  list(cellpreds=est$estimates, Nhat=bigN)
 }
 
 #' @rdname SE

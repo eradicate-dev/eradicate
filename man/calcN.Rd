@@ -2,25 +2,28 @@
 % Please edit documentation in R/estimates.R
 \name{calcN}
 \alias{calcN}
-\alias{calcN.default}
+\alias{calcN.efit}
 \title{calcN}
 \usage{
 calcN(obj, ...)
 
-\method{calcN}{default}(obj, ncells = NULL, covs = NULL, CI.level = 0.95, ...)
+\method{calcN}{efit}(obj, covs, off.set = NULL, CI.level = 0.95, ...)
 }
 \arguments{
 \item{obj}{A fitted model object.}
 
 \item{covs}{A \code{data.frame} of covariates for each spatial unit.
 There must by covariates for every parameter in \code{obj}.
-Either one of \code{cells} or \code{covs} must be supplied.}
+if no covariates are used then \code{covs} should be a data.frame
+with one column indicating cell number.}
 
-\item{cells}{The number of spatial units used for prediction}
+\item{off.set}{Either a scalar offset value to apply to each spatial unit
+for prediction (e.g. cell area) or a vector of the same length as \code{nrow(covs)}.}
 }
 \value{
-a \code{data.frame} giving the overall abundance estimate for
- the region with associated SE and confidence intervals.
+a \code{data.frame} giving the predictions for each spatial unit
+ as well as the overall abundance estimate for the region with associated
+ SE and confidence intervals.
 }
 \description{
 \code{calcN} estimates abundance for a defined region from a fitted model.
@@ -30,6 +33,6 @@ of covariate values for each spatial unit.
 \examples{
  emf <- eFrame(y=counts, siteCovs=site.df)
  mod <- nmix(~1, ~1, data=emf)
- Nhat<- calcN(mod, ncells=55)
+ Nhat<- calcN(mod, site.df)
 
 }
