@@ -12,5 +12,9 @@ LazyData: true
 RoxygenNote: 7.0.2
 Suggests: 
     knitr,
-    rmarkdown
+    rmarkdown,
+    sf,
+    raster,
+    rgdal,
+    tibble
 VignetteBuilder: knitr
