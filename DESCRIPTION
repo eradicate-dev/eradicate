@@ -18,3 +18,5 @@ Suggests:
     rgdal,
     tibble
 VignetteBuilder: knitr
+URL: https://github.com/dslramsey/eradicate
+BugReports: https://github.com/dslramsey/eradicate/issues
