@@ -25,6 +25,6 @@ current models. This can be accessed by
 
 ## bug reports
 
-please use the [issue
+The package is a work in progress so please use the [issue
 tracker](https://github.com/dslramsey/eradicate/issues) to report bugs
 in the code or models.
