@@ -19,6 +19,8 @@
 #'  SE and confidence intervals.
 #'
 #' @examples
+#'  counts<- san_nic_pre$counts
+#'  site.df<- san_nic_pre$traps
 #'  emf <- eFrame(y=counts, siteCovs=site.df)
 #'  mod <- nmix(~1, ~1, data=emf)
 #'  Nhat<- calcN(mod, site.df)
@@ -205,6 +207,27 @@ calcN.efit<- function(obj, covs, off.set=NULL, CI.level=0.95, ...) {
   bigN<- data.frame(Nhat=round(Nhat,1),se=round(seN,1), lcl=round(lwr,1), ucl=round(upr,1),
                     lcl.ln=round(Nhat*za,1), ucl.ln=round(Nhat/za,1))
   list(cellpreds=est$estimates, Nhat=bigN)
+}
+
+#' @rdname calcN
+#' @export
+calcN.efitM<- function(obj, covs, off.set=NULL, CI.level=0.95, ...) {
+  design <- getDesign(obj, covs)
+  X<- design$X
+  M<- nrow(X)
+  if(!is.null(off.set) & length(off.set) == 1) off.set<- rep(off.set, M)
+  lc<- linearComb(obj, coefficients=X, off.set=off.set)
+  est<- backTransform(lc)
+  V<- est$covMat
+  Pocc<- sum(est$estimates)/ M # proportion of sites occupied
+  varN<- sum(est$covMat) * (1/M^2) # delta method VAR
+  seN<- sqrt(varN)
+  z <- qnorm((1-CI.level)/2, lower.tail = FALSE)
+  lwr<- Pocc - seN*z
+  upr<- Pocc + seN*z
+  bigN<- data.frame(Pocc=round(Pocc,2),se=round(seN,3), lcl=round(lwr,2), ucl=round(upr,2devtools::install(build_vignettes = TRUE)
+))
+  list(cellpreds=est$estimates, Occ=bigN)
 }
 
 #' @rdname SE

@@ -112,6 +112,6 @@ occuM<- function(lamformula, detformula, data, knownOcc = numeric(0), starts,
                  sitesRemoved = designMats$removed.sites,
                  AIC = fmAIC, opt = opt, negLogLike = fm$value,
                  nllFun = nll, knownOcc = knownOccLog)
-    class(efit) <- c('efit','list')
+    class(efit) <- c('efitM','efit','list')
     return(efit)
 }

@@ -25,7 +25,7 @@ plot(st_geometry(region), axes=F)
 points(traps, pch=16)
 
 ## -----------------------------------------------------------------------------
-habvals<- raster::extract(habitat, traps, buffer=500)
+habvals<- extract(habitat, traps, buffer=500)
 pgrass<- sapply(habvals, function(x) mean(x, na.rm=T))
 site.data<- cbind(traps, pgrass)
 pgrass
@@ -35,7 +35,7 @@ pgrass
 emf<- eFrame(counts, siteCovs = site.data)
 
 # Occupancy model
-m1<- occuRN(~pgrass, ~1, data=emf)
+m1<- occuM(~pgrass, ~1, data=emf)
 summary(m1)
 
 # Royle/Nichols model

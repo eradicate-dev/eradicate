@@ -3,6 +3,7 @@
 S3method(SE,efit)
 S3method(SE,efitREST)
 S3method(calcN,efit)
+S3method(calcN,efitM)
 S3method(print,eFrame)
 S3method(print,eFrameR)
 S3method(print,eFrameREST)

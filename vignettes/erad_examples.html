@@ -8,7 +8,7 @@
 <meta name="generator" content="pandoc" />
 <meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
 
 
@@ -117,6 +117,9 @@ padding-right: 2em;
 font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
 font-size: 14px;
 line-height: 1.35;
+}
+#header {
+text-align: center;
 }
 #TOC {
 clear: both;
@@ -285,8 +288,7 @@ code > span.st { color: #d14; }
 code > span.co { color: #888888; font-style: italic; } 
 code > span.ot { color: #007020; } 
 code > span.al { color: #ff0000; font-weight: bold; } 
-code > span.fu { color: #900; font-weight: bold; } 
-code > span.er { color: #a61717; background-color: #e3d2d2; } 
+code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61717; background-color: #e3d2d2; } 
 </style>
 
 
@@ -334,7 +336,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <span id="cb3-7"><a href="#cb3-7"></a><span class="kw">points</span>(traps, <span class="dt">pch=</span><span class="dv">16</span>)</span></code></pre></div>
 <p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAqAAAAHgCAMAAABNUi8GAAAABlBMVEUAAAD///+l2Z/dAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAOgUlEQVR4nO3d24KbOBBFUfr/f3omvjVtYyywVNol7fWQSWICpdJpYXxhlh8JbOldgLTHgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgArNgP6yF0BOysWyLP9+6V2GXjgnF8vN6m9uqVVfTsHFdQFdJ/LyByPanRNw9a8P/xL5+PPy97/qxP5fPefxJanqw/Zf/Abz+rvnc716sff/vFwdPT9sm3qx8z9PgdxMowntxcb/FDXBhHZi3wtP4Ca0D9temjw71cX0bS/Op1dKXcze9PLUXd5YalmKtkze8oORM6Hh5u74u8C9PZ2b0GgzN/xt2pb3Tzhn7lcX0zX8N3n7+XzzqEtosOn6fU/ezkX5fkCn61hfA7b7Fq7Xkd1yt+ydwn+3e7u+VilShYZr9+Oz8etPd94eePrN/j7ePvh1iTpguHb/nsH/roOHTs17GfYV+1DD9frPJzlXH0SuOFATGmi4Vj+F5/5lo8rHcBmNMlybnwfUKEomNMhwXQ4akF+jD9Krya3OklGpub6QZUab6xbQyy/1jx45Hp+JBuga0AYJjQ2oV/TN9Q3oy6vptfYb4uUbyqqvc0CrXw13GI+LaEv9LpK2flthvxX3VXxME9pOt9Y2SGi/L2UY0Gb6tXZ1cq8Uq45X1a6hrfRs7NMnOb6f5I75NKGNdOzr8904v72ir/2CwJFD+5JoKz0D+ucPr/c4Prq7nhG53uzWiNbXdQUt/cuy3XV9IuhN7hthPAdd/+XpvX1RSS0uotV1bWjNJZQRDRNaW9+Abif01CxD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z5pG0q6Ts03R80dxZht/Kwa0kb8L6uzdOK9Z65ySWy4vv3r9dFqrtjkZP6/ftDGiZ7TpmlOxxYyeYUAj2ZjDDGgkn40eZkDDmdAjmnTLGdjlOnpEi1bZ/D33V6BcSssY0D5cRksZ0G5ujTKruwxoN6tPmpjQdzzFM7iIvtGgLXb6FBO6pUVXbPQ5LqIbDCiJCX3hC/UoJTeUK9hJ+puHrR78WMRxBvS8kltyftxF9tsv/nnwQw1nGNAv7M5IyYefC7aps0nIkQwozu75DhKbwCMZUJ69Ex4kNnFHMqBA7xsIeWYYeCRfZgLanS/EtXXgkXyrk8eXQ9fqd8P2fsmArhlQnpLT6yw8xSPZwxsvkphcQ698oZ7KhF74tWMqA/qPt74BM6Gtfkinb2wlsyfU2y/SzX2a9w7LGax6OVtc2412rj42tboD7u3/0tC7ojANRzpPE9u7ZvIezJkSakBzKvkY3AhaDnKG/vWzzHF5b0Azm2ARbTnA4ZsHMHyPDWhyozfZU3xytyYXfLctpaaDGrBfPI8XR38GfEq6tL0B9WDdolqvnYMltPFoxmpWDmMtogZ0QCNF1IAOaZiIth7HIG1KaJDOtx7GIG1K6GkNXV70KuwYAzqu3c+P3jNKD6oBHdij+W9SSFhNd0sIKM2AdrTcV86SW9N9ePzzwU7cGeyWzOXpvourH5zm+TGg/fzOcMEs7C2kbW6/+PoPrl8UuK73UcExoD0t95QWTsN2yEqeBhRs87JKbm4S/U0BA9rfoSnf2LZ+QEGvIWAKUantZ4oVAwqKpwHN6SlCVZ+DouJpQLP6G6OKV/GseBrQvNrc7JCWTwOaV/Us9X1H4A1eRSpVee6A6fwxoJnVTRQznwY0s7oBrbmzeqBlqUStz5EUvI7aDbQslTo0gcsbrYqrgFybChSl7P4e+p/XTltXVkeSMvXe7+0et8/5j7cvU851yqK1afONdPYJ/LPc1WvtHsVl9TfJ42lAR5Tj6qfQAEPQixRftyszxCA0LgMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqNAMqtP8AQ7PczChU10MAAAAASUVORK5CYII=" /><!-- --></p>
 <p>It was thought that the cats on the island had a tendency to favour the grassland over the forest habitat so this information may be useful for modelling the variation in cat abundance across the island. We therefore extract habitat information from <code>habitat</code> for use in further modelling. Cells in the habitat raster took values of either 1 (grassland) or 0 (forest). Rather than just extract the habitat value from the focal cell containing each trap location, we get the average of all cells within 500 m of the focal cell</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a>habvals&lt;-<span class="st"> </span>raster<span class="op">::</span><span class="kw">extract</span>(habitat, traps, <span class="dt">buffer=</span><span class="dv">500</span>)</span>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a>habvals&lt;-<span class="st"> </span><span class="kw">extract</span>(habitat, traps, <span class="dt">buffer=</span><span class="dv">500</span>)</span>
 <span id="cb4-2"><a href="#cb4-2"></a>pgrass&lt;-<span class="st"> </span><span class="kw">sapply</span>(habvals, <span class="cf">function</span>(x) <span class="kw">mean</span>(x, <span class="dt">na.rm=</span>T))</span>
 <span id="cb4-3"><a href="#cb4-3"></a>site.data&lt;-<span class="st"> </span><span class="kw">cbind</span>(traps, pgrass)</span>
 <span id="cb4-4"><a href="#cb4-4"></a>pgrass</span>
@@ -353,18 +355,18 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a>emf&lt;-<span class="st"> </span><span class="kw">eFrame</span>(counts, <span class="dt">siteCovs =</span> site.data)</span>
 <span id="cb5-2"><a href="#cb5-2"></a></span>
 <span id="cb5-3"><a href="#cb5-3"></a><span class="co"># Occupancy model</span></span>
-<span id="cb5-4"><a href="#cb5-4"></a>m1&lt;-<span class="st"> </span><span class="kw">occuRN</span>(<span class="op">~</span>pgrass, <span class="op">~</span><span class="dv">1</span>, <span class="dt">data=</span>emf)</span>
+<span id="cb5-4"><a href="#cb5-4"></a>m1&lt;-<span class="st"> </span><span class="kw">occuM</span>(<span class="op">~</span>pgrass, <span class="op">~</span><span class="dv">1</span>, <span class="dt">data=</span>emf)</span>
 <span id="cb5-5"><a href="#cb5-5"></a><span class="co">#&gt; Warning in truncateToBinary(y): Some observations were &gt; 1. These were truncated</span></span>
 <span id="cb5-6"><a href="#cb5-6"></a><span class="co">#&gt; to 1.</span></span>
 <span id="cb5-7"><a href="#cb5-7"></a><span class="kw">summary</span>(m1)</span>
-<span id="cb5-8"><a href="#cb5-8"></a><span class="co">#&gt; Abundance (log-scale):</span></span>
-<span id="cb5-9"><a href="#cb5-9"></a><span class="co">#&gt;             Estimate    SE     z  P(&gt;|z|)</span></span>
-<span id="cb5-10"><a href="#cb5-10"></a><span class="co">#&gt; (Intercept)   -0.526 0.339 -1.55 0.120389</span></span>
-<span id="cb5-11"><a href="#cb5-11"></a><span class="co">#&gt; pgrass         1.757 0.470  3.74 0.000184</span></span>
+<span id="cb5-8"><a href="#cb5-8"></a><span class="co">#&gt; Occupancy (logit-scale):</span></span>
+<span id="cb5-9"><a href="#cb5-9"></a><span class="co">#&gt;   Estimate    SE     z P(&gt;|z|)</span></span>
+<span id="cb5-10"><a href="#cb5-10"></a><span class="co">#&gt; 1   -0.975 0.797 -1.22   0.222</span></span>
+<span id="cb5-11"><a href="#cb5-11"></a><span class="co">#&gt; 2    5.275 4.209  1.25   0.210</span></span>
 <span id="cb5-12"><a href="#cb5-12"></a><span class="co">#&gt;   </span></span>
 <span id="cb5-13"><a href="#cb5-13"></a><span class="co">#&gt; Detection (logit-scale):</span></span>
-<span id="cb5-14"><a href="#cb5-14"></a><span class="co">#&gt;  Estimate    SE     z  P(&gt;|z|)</span></span>
-<span id="cb5-15"><a href="#cb5-15"></a><span class="co">#&gt;     -3.05 0.266 -11.4 2.42e-30</span></span>
+<span id="cb5-14"><a href="#cb5-14"></a><span class="co">#&gt;  Estimate    SE   z  P(&gt;|z|)</span></span>
+<span id="cb5-15"><a href="#cb5-15"></a><span class="co">#&gt;     -2.36 0.148 -16 1.51e-57</span></span>
 <span id="cb5-16"><a href="#cb5-16"></a></span>
 <span id="cb5-17"><a href="#cb5-17"></a><span class="co"># Royle/Nichols model</span></span>
 <span id="cb5-18"><a href="#cb5-18"></a>m2&lt;-<span class="st"> </span><span class="kw">occuRN</span>(<span class="op">~</span>pgrass, <span class="op">~</span><span class="dv">1</span>, <span class="dt">K=</span><span class="dv">50</span>, <span class="dt">data=</span>emf)</span>
@@ -394,18 +396,18 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <p>In order to get estimates of either the proportion of sites occupied or total abundance, we can use the function <code>calcN()</code>, which also requires an additional argument of covariate values for each site used for prediction. Since we wish to predict for the sites at hand, we simply use <code>site.data</code>.</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a><span class="kw">calcN</span>(m1, site.data)</span>
 <span id="cb6-2"><a href="#cb6-2"></a><span class="co">#&gt; $cellpreds</span></span>
-<span id="cb6-3"><a href="#cb6-3"></a><span class="co">#&gt;  [1] 1.4228655 0.5910640 0.6721529 0.5910640 0.8399361 1.0066173 3.4252574</span></span>
-<span id="cb6-4"><a href="#cb6-4"></a><span class="co">#&gt;  [8] 1.1017566 0.6176052 1.2748899 1.9350809 0.9582429 2.1471126 0.7544229</span></span>
-<span id="cb6-5"><a href="#cb6-5"></a><span class="co">#&gt; [15] 1.7296098 1.9069544 0.6453383 0.8216900 0.9795213 0.5910640 1.0235059</span></span>
-<span id="cb6-6"><a href="#cb6-6"></a><span class="co">#&gt; [22] 1.5535198 0.5910640 0.5910640 0.7847087 0.8346819 0.6892902 0.5910640</span></span>
-<span id="cb6-7"><a href="#cb6-7"></a><span class="co">#&gt; [29] 1.3321378 2.0668731 0.5910640 1.5535198 0.7525841 1.3617186 0.9286447</span></span>
-<span id="cb6-8"><a href="#cb6-8"></a><span class="co">#&gt; [36] 0.6765989 1.1046677 0.6934313 0.8399361 2.1596844 0.8776527 1.4228655</span></span>
-<span id="cb6-9"><a href="#cb6-9"></a><span class="co">#&gt; [43] 1.0235059 0.9795213 2.4886009 3.4252574 2.9007612 1.6593251 0.7863783</span></span>
-<span id="cb6-10"><a href="#cb6-10"></a><span class="co">#&gt; [50] 0.8971415 0.7863783 1.1147654 0.9321043 0.7362356 3.4252574</span></span>
+<span id="cb6-3"><a href="#cb6-3"></a><span class="co">#&gt;  [1] 0.8406196 0.2739643 0.3569485 0.2739643 0.5200836 0.6510940 0.9866169</span></span>
+<span id="cb6-4"><a href="#cb6-4"></a><span class="co">#&gt;  [8] 0.7099171 0.3009604 0.7913637 0.9299520 0.6168016 0.9477527 0.4397992</span></span>
+<span id="cb6-5"><a href="#cb6-5"></a><span class="co">#&gt; [15] 0.9045595 0.9270339 0.3294096 0.5036103 0.6322615 0.2739643 0.6623542</span></span>
+<span id="cb6-6"><a href="#cb6-6"></a><span class="co">#&gt; [22] 0.8728716 0.2739643 0.2739643 0.4690865 0.5153798 0.3744793 0.2739643</span></span>
+<span id="cb6-7"><a href="#cb6-7"></a><span class="co">#&gt; [29] 0.8123019 0.9417920 0.2739643 0.8728716 0.4379950 0.8221487 0.5943072</span></span>
+<span id="cb6-8"><a href="#cb6-8"></a><span class="co">#&gt; [36] 0.3615045 0.7115458 0.3787010 0.5200836 0.9486138 0.5528642 0.8406196</span></span>
+<span id="cb6-9"><a href="#cb6-9"></a><span class="co">#&gt; [43] 0.6623542 0.6322615 0.9658162 0.9866169 0.9781469 0.8932521 0.4706760</span></span>
+<span id="cb6-10"><a href="#cb6-10"></a><span class="co">#&gt; [50] 0.5691015 0.4706760 0.7171203 0.5969960 0.4218364 0.9866169</span></span>
 <span id="cb6-11"><a href="#cb6-11"></a><span class="co">#&gt; </span></span>
-<span id="cb6-12"><a href="#cb6-12"></a><span class="co">#&gt; $Nhat</span></span>
-<span id="cb6-13"><a href="#cb6-13"></a><span class="co">#&gt;   Nhat   se  lcl   ucl lcl.ln ucl.ln</span></span>
-<span id="cb6-14"><a href="#cb6-14"></a><span class="co">#&gt; 1 68.2 18.1 32.8 103.6   40.9  113.6</span></span>
+<span id="cb6-12"><a href="#cb6-12"></a><span class="co">#&gt; $Occ</span></span>
+<span id="cb6-13"><a href="#cb6-13"></a><span class="co">#&gt;   Pocc    se  lcl  ucl</span></span>
+<span id="cb6-14"><a href="#cb6-14"></a><span class="co">#&gt; 1 0.62 0.079 0.47 0.78</span></span>
 <span id="cb6-15"><a href="#cb6-15"></a><span class="kw">calcN</span>(m2, site.data)</span>
 <span id="cb6-16"><a href="#cb6-16"></a><span class="co">#&gt; $cellpreds</span></span>
 <span id="cb6-17"><a href="#cb6-17"></a><span class="co">#&gt;  [1] 1.4228655 0.5910640 0.6721529 0.5910640 0.8399361 1.0066173 3.4252574</span></span>
