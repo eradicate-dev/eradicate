@@ -160,8 +160,6 @@ eFrameREST <- function(y, stay, cens, area, active_hours, siteCovs = NULL) {
 
 siteCovs<- function(object) return(object$siteCovs)
 
-obsCovs<- function(object) return(object$obsCovs)
-
 numSites<- function(object) nrow(object$y)
 
 numY<- function(object) ncol(object$y)

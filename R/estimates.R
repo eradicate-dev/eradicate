@@ -167,9 +167,7 @@ linearComb.efit<- function(obj, coefficients, off.set = NULL, ...)
 }
 
 backTransform.efit<- function(obj, ...) {
-    ## MV delta method is Var=J*Sigma*J^T where J is Jacobian
-    ## In this case, J is diagonal with elements = gradient
-    ## Reduces to scaling the rows then columns of Sigma by the gradient
+  # Delta method VAR
     invlink<- obj$invlink
     invlinkGrad<- obj$invlinkGrad
     estimate<- obj$estimates
@@ -225,8 +223,7 @@ calcN.efitM<- function(obj, covs, off.set=NULL, CI.level=0.95, ...) {
   z <- qnorm((1-CI.level)/2, lower.tail = FALSE)
   lwr<- Pocc - seN*z
   upr<- Pocc + seN*z
-  bigN<- data.frame(Pocc=round(Pocc,2),se=round(seN,3), lcl=round(lwr,2), ucl=round(upr,2devtools::install(build_vignettes = TRUE)
-))
+  bigN<- data.frame(Pocc=round(Pocc,2),se=round(seN,3), lcl=round(lwr,2), ucl=round(upr,2))
   list(cellpreds=est$estimates, Occ=bigN)
 }
 
