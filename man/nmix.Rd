@@ -4,7 +4,7 @@
 \alias{nmix}
 \title{nmix}
 \usage{
-nmix(lamformula, detformula, data, K, mixture=c("P", "NB", "ZIP"),
+nmix(lamformula, detformula, data, K, mixture=c("P", "NB"),
 starts, method="BFGS", se=TRUE, ...)
 }
 \arguments{
@@ -38,8 +38,9 @@ a \code{efit} model object.
 \code{nmix} fits the N-mixture model of Royle et al (2004)
 }
 \examples{
- emf <- eFrame(y=counts, siteCovs=site.df)
+ counts<- san_nic_pre$counts
+ emf <- eFrame(y=counts)
  mod <- nmix(~1, ~1, data=emf)
- Nhat<- calcN(mod, ncells=55)
+ Nhat<- calcN(mod)
 
 }

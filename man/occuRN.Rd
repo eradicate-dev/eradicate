@@ -13,9 +13,9 @@ occuRN(lamformula, detformula, data, K, starts, method="BFGS", se=TRUE, ...)
 site-level covariates are allowed for the detection component.
 This differs from the similar model in \code{unmarked}.}
 
-\item{data}{A \code{eFrame} object containing the response (counts)
+\item{data}{A \code{eFrame} object containing the response (either (0/1) or counts)
 and site-level covariates. see \code{\link{eFrame}} for how to format
-the required data.}
+the required data. count data will get trunctated to (0/1) by \code{occuRN()}.}
 
 \item{K}{Integer upper index of integration for abundance. This should be
 set high enough so that it does not affect the parameter estimates. Note
@@ -34,8 +34,9 @@ a \code{efit} model object.
 \code{occuRN} fits the occupancy/abundance model of Royle & Nichols (2003).
 }
 \examples{
- emf <- eFrame(y=counts, siteCovs=site.df)
+ counts<- san_nic_pre$counts
+ emf <- eFrame(y=counts)
  mod <- occuRN(~1, ~1, data=emf)
- Nhat<- calcN(mod, ncells=55)
+ Nhat<- calcN(mod)
 
 }

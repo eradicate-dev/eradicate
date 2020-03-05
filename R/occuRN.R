@@ -12,9 +12,9 @@
 #' @param detformula formula for the detection component.  Only
 #'  site-level covariates are allowed for the detection component.
 #'  This differs from the similar model in \code{unmarked}.
-#' @param data A \code{eFrame} object containing the response (counts)
+#' @param data A \code{eFrame} object containing the response (either (0/1) or counts)
 #'  and site-level covariates. see \code{\link{eFrame}} for how to format
-#'  the required data.
+#'  the required data. count data will get trunctated to (0/1) by \code{occuRN()}.
 #' @param K Integer upper index of integration for abundance. This should be
 #'  set high enough so that it does not affect the parameter estimates. Note
 #'  that computation time will increase with K
@@ -25,9 +25,10 @@
 #' @return a \code{efit} model object.
 #'
 #' @examples
-#'  emf <- eFrame(y=counts, siteCovs=site.df)
+#'  counts<- san_nic_pre$counts
+#'  emf <- eFrame(y=counts)
 #'  mod <- occuRN(~1, ~1, data=emf)
-#'  Nhat<- calcN(mod, ncells=55)
+#'  Nhat<- calcN(mod)
 #'
 #' @export
 #'
@@ -104,7 +105,8 @@ occuRN <- function(lamformula, detformula, data, K = 25, starts, method = "BFGS"
 	}
   ests <- fm$par
   fmAIC <- 2 * fm$value + 2 * nP
-  names(ests) <- c(occParms, detParms)
+  names(ests)<- c(occParms, detParms)
+  typeNames<- c("state","det")
 
   stateEstimates <- list(name = "Abundance",
       short.name = "lam",
@@ -117,10 +119,11 @@ occuRN <- function(lamformula, detformula, data, K = 25, starts, method = "BFGS"
       covMat = as.matrix(covMat[(nOP + 1) : nP, (nOP + 1) : nP]),
       invlink = "logistic", invlinkGrad = "logistic.grad")
 
-  efit <- list(fitType = "occuRN",call = match.call(), lamformula = lamformula,
-               detformula=detformula,sitesRemoved = designMats$removed.sites,
+  efit <- list(fitType = "occuRN",call = match.call(), types=typeNames,
+               lamformula = lamformula, detformula=detformula,
+               sitesRemoved = designMats$removed.sites,
                state=stateEstimates, det=detEstimates, AIC = fmAIC, opt = opt,
-               negLogLike = fm$value, nllFun = nll)
+               negLogLike = fm$value, nllFun = nll, data = data)
   class(efit) <- c('efit','list')
   return(efit)
 }

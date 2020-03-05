@@ -8,13 +8,13 @@
 #'
 #' @usage occuM(lamformula, detformula, data, knownocc, starts, method="BFGS", se=TRUE, ...)
 #'
-#' @param lamformula formula for the latent abundance component.
+#' @param lamformula formula for the latent occupancy component.
 #' @param detformula formula for the detection component.  Only
 #'  site-level covariates are allowed for the detection component.
 #'  This differs from the similar model in \code{unmarked}.
-#' @param data A \code{eFrame} object containing the response (counts)
+#' @param data A \code{eFrame} object containing the response (either (0/1) or counts)
 #'  and site-level covariates. see \code{\link{eFrame}} for how to format
-#'  the required data.
+#'  the required data. count data will get trunctated to (0/1) by \code{occuM()}.
 #' @param knownocc Vector of row numbers of sites that are known to be occupied.
 #' @param starts Initial values for parameters
 #' @param method Optimisation method
@@ -23,9 +23,10 @@
 #' @return a \code{efit} model object.
 #'
 #' @examples
-#'  emf <- eFrame(y=counts, siteCovs=site.df)
+#'  counts<- san_nic_pre$counts
+#'  emf <- eFrame(y=counts)
 #'  mod <- occuM(~1, ~1, data=emf)
-#'  Nhat<- calcN(mod, ncells=55)
+#'  Nhat<- calcN(mod)
 #'
 #' @export
 #'
@@ -49,7 +50,7 @@ occuM<- function(lamformula, detformula, data, knownOcc = numeric(0), starts,
     J <- ncol(y)
     M <- nrow(y)
 
-    ## convert knownOcc to logical so we can correctly to handle NAs.
+    ## convert knownOcc to logical so we can correctly handle NAs.
     knownOccLog <- rep(FALSE, numSites(data))
     knownOccLog[knownOcc] <- TRUE
     if(length(removed)>0)
@@ -92,6 +93,8 @@ occuM<- function(lamformula, detformula, data, knownOcc = numeric(0), starts,
     }
     ests <- fm$par
     fmAIC <- 2 * fm$value + 2 * nP #+ 2*nP*(nP + 1)/(M - nP - 1)
+    names(ests)<- c(occParms, detParms)
+    typeNames<- c("state","det")
 
     state <- list(name = "Occupancy", short.name = "psi",
                               estimates = ests[1:nOP],
@@ -107,11 +110,11 @@ occuM<- function(lamformula, detformula, data, knownOcc = numeric(0), starts,
                             invlinkGrad = "logistic.grad")
 
 
-    efit <- list( fitType = "occuM", call = match.call(),lamformula = lamformula,
-                 detformula=detformula, state=state, det=det,
+    efit <- list( fitType = "occuM", call = match.call(), types=typeNames,
+                  lamformula = lamformula, detformula=detformula, state=state, det=det,
                  sitesRemoved = designMats$removed.sites,
                  AIC = fmAIC, opt = opt, negLogLike = fm$value,
-                 nllFun = nll, knownOcc = knownOccLog)
+                 nllFun = nll, knownOcc = knownOccLog, data= data)
     class(efit) <- c('efitM','efit','list')
     return(efit)
 }

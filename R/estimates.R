@@ -2,17 +2,14 @@
 #' calcN
 #'
 #' @description
-#' \code{calcN} estimates abundance for a defined region from a fitted model.
-#' The user must supply the number of spatial units (cells) or a data.frame
-#' of covariate values for each spatial unit.
+#' \code{calcN} estimates abundance for a defined region from a fitted model.  The default is for the population defined by the sampling units.  The user can optionally supply a data.frame
+#' of covariate values for any spatial unit of interest.
 #'
 #' @param obj A fitted model object.
-#' @param covs A \code{data.frame} of covariates for each spatial unit.
-#'    There must by covariates for every parameter in \code{obj}.
-#'    if no covariates are used then \code{covs} should be a data.frame
-#'    with one column indicating cell number.
+#' @param newdata An (optional) \code{data.frame} of covariates for spatial units of interest.
+#'    There must by covariate values for every parameter in \code{obj}.
 #' @param off.set Either a scalar offset value to apply to each spatial unit
-#' for prediction (e.g. cell area) or a vector of the same length as \code{nrow(covs)}.
+#' for prediction (e.g. cell area) or a vector of the same length as \code{nrow(newdata)}.
 #'
 #' @return a \code{data.frame} giving the predictions for each spatial unit
 #'  as well as the overall abundance estimate for the region with associated
@@ -20,10 +17,9 @@
 #'
 #' @examples
 #'  counts<- san_nic_pre$counts
-#'  site.df<- san_nic_pre$traps
-#'  emf <- eFrame(y=counts, siteCovs=site.df)
+#'  emf <- eFrame(y=counts)
 #'  mod <- nmix(~1, ~1, data=emf)
-#'  Nhat<- calcN(mod, site.df)
+#'  Nhat<- calcN(mod)
 #'
 #' @export
 #'
@@ -74,77 +70,26 @@ SE <- function(obj, ...){
 #'
 summary.efit<- function(object, ...)
 {
-  # State
-    ests <- object$state$estimates
-    SEs <- SE(object, "state")
-    Z <- ests/SEs
-    p <- 2*pnorm(abs(Z), lower.tail = FALSE)
-    printRowNames <-
-        !(length(ests) == 1 | identical(names(ests), "(Intercept)") | identical(names(ests), "1"))
-    invlink <- object$state$invlink
-    link <- switch(invlink,
-                   exp = "log",
-                   logistic = "logit")
-    cat(object$state$name, " (", link, "-scale)", ":\n", sep="")
-    outDF <- data.frame(Estimate = ests, SE = SEs, z = Z, "P(>|z|)" = p,
-                        check.names = FALSE)
-    print(outDF, row.names = printRowNames, digits = 3)
-    invisible(outDF)
-    cat(" ","\n")
-  # detection
-    ests <- object$det$estimates
-    SEs <- SE(object, "det")
-    Z <- ests/SEs
-    p <- 2*pnorm(abs(Z), lower.tail = FALSE)
-    printRowNames <-
-      !(length(ests) == 1 | identical(names(ests), "(Intercept)") | identical(names(ests), "1"))
-    invlink <- object$det$invlink
-    link <- switch(invlink,
-                   exp = "log",
-                   logistic = "logit")
-    cat(object$det$name, " (", link, "-scale)", ":\n", sep="")
-    outDF <- data.frame(Estimate = ests, SE = SEs, z = Z, "P(>|z|)" = p,
-                        check.names = FALSE)
-    print(outDF, row.names = printRowNames, digits = 3)
-    invisible(outDF)
-}
-#' @rdname summary.efit
-#' @export
-summary.efitREST<- function(object, ...)
-{
-  # State
-    ests <- object$state$estimates
-    SEs <- SE(object, "state")
-    Z <- ests/SEs
-    p <- 2*pnorm(abs(Z), lower.tail = FALSE)
-    printRowNames <-
-        !(length(ests) == 1 | identical(names(ests), "(Intercept)") | identical(names(ests), "1"))
-    invlink <- object$state$invlink
-    link <- switch(invlink,
-                   exp = "log",
-                   logistic = "logit")
-    cat(object$state$name, " (", link, "-scale)", ":\n", sep="")
-    outDF <- data.frame(Estimate = ests, SE = SEs, z = Z, "P(>|z|)" = p,
-                        check.names = FALSE)
-    print(outDF, row.names = printRowNames, digits = 3)
-    invisible(outDF)
-    cat(" ","\n")
-  # staying time
-    ests <- object$stay$estimates
-    SEs <- SE(object, "stay")
-    Z <- ests/SEs
-    p <- 2*pnorm(abs(Z), lower.tail = FALSE)
-    printRowNames <-
-      !(length(ests) == 1 | identical(names(ests), "(Intercept)") | identical(names(ests), "1"))
-    invlink <- object$stay$invlink
-    link <- switch(invlink,
-                   exp = "log",
-                   logistic = "logit")
-    cat(object$stay$name, " (", link, "-scale)", ":\n", sep="")
-    outDF <- data.frame(Estimate = ests, SE = SEs, z = Z, "P(>|z|)" = p,
-                        check.names = FALSE)
-    print(outDF, row.names = printRowNames, digits = 3)
-    invisible(outDF)
+  type<- object$types
+  out.list<- list()
+  for(i in 1:length(type)) {
+  ests <- object[[type[i]]]$estimates
+  SEs <- SE(object, type[i])
+  Z <- ests/SEs
+  p <- 2*pnorm(abs(Z), lower.tail = FALSE)
+  invlink <- object[[type[i]]]$invlink
+  link <- switch(invlink,
+                 exp = "log",
+                 logistic = "logit")
+  cat(object[[type[i]]]$name, " (", link, "-scale)", ":\n", sep="")
+  outDF <- data.frame(Estimate = ests, SE = SEs, z = Z, "P(>|z|)" = p,
+                      check.names = FALSE)
+  print(outDF, digits = 3)
+  out.list[[type[i]]]<- outDF
+  invisible(outDF)
+  cat(" ","\n")
+  }
+  invisible(out.list)
 }
 
 # Compute linear combinations of estimates using coefficients
@@ -155,7 +100,7 @@ linearComb.efit<- function(obj, coefficients, off.set = NULL, ...)
     covMat<- obj$state$covMat
     if(!is(coefficients, "matrix"))
         coefficients <- t(as.matrix(coefficients))
-    if(ncol(coefficients) != length(estimates)) stop("error - wrong number oc covariates")
+    if(ncol(coefficients) != length(estimates)) stop("error - wrong number of covariates")
     if (is.null(off.set))
         off.set <- rep(0, nrow(coefficients))
     e <- as.vector(coefficients %*% estimates) + off.set
@@ -186,8 +131,17 @@ backTransform.efit<- function(obj, ...) {
 
 #' @rdname calcN
 #' @export
-calcN.efit<- function(obj, covs, off.set=NULL, CI.level=0.95, ...) {
-  design <- getDesign(obj, covs)
+calcN.efit<- function(obj, newdata, off.set=NULL, CI.level=0.95, ...) {
+  if(missing(newdata) || is.null(newdata)) {
+    origdata <- obj$data
+    M <- numSites(origdata)
+    if(is.null(siteCovs(origdata))) {
+      newdata <- data.frame(Intercept = rep(1, M))
+    } else {
+      newdata <- siteCovs(origdata)
+    }
+  }
+  design <- getDesign(obj, newdata)
   X<- design$X
   M<- nrow(X)
   if(!is.null(off.set) & length(off.set) == 1) off.set<- rep(off.set, M)
@@ -197,20 +151,28 @@ calcN.efit<- function(obj, covs, off.set=NULL, CI.level=0.95, ...) {
   Nhat<- sum(est$estimates)
   varN<- sum(est$covMat)
   seN<- sqrt(varN)
-  z <- qnorm((1-CI.level)/2, lower.tail = FALSE)
-  lwr<- Nhat - seN*z
-  upr<- Nhat + seN*z
   cv<- sqrt(varN)/Nhat
-  za <- exp(qnorm((1-CI.level)/2) * sqrt(log(1+cv^2))) # asymptotic CI
-  bigN<- data.frame(Nhat=round(Nhat,1),se=round(seN,1), lcl=round(lwr,1), ucl=round(upr,1),
-                    lcl.ln=round(Nhat*za,1), ucl.ln=round(Nhat/za,1))
+  z <- exp(qnorm((1-CI.level)/2) * sqrt(log(1+cv^2)))
+  lwr<- Nhat*z
+  upr<- Nhat/z
+
+  bigN<- data.frame(N=round(Nhat,1),se=round(seN,1), lcl=round(lwr,1), ucl=round(upr,1))
   list(cellpreds=est$estimates, Nhat=bigN)
 }
 
 #' @rdname calcN
 #' @export
-calcN.efitM<- function(obj, covs, off.set=NULL, CI.level=0.95, ...) {
-  design <- getDesign(obj, covs)
+calcN.efitM<- function(obj, newdata, off.set=NULL, CI.level=0.95, ...) {
+  if(missing(newdata) || is.null(newdata)) {
+    origdata <- obj$data
+    M <- numSites(origdata)
+    if(is.null(siteCovs(origdata))) {
+      newdata <- data.frame(Intercept = rep(1, M))
+    } else {
+      newdata <- siteCovs(origdata)
+    }
+  }
+  design <- getDesign(obj, newdata)
   X<- design$X
   M<- nrow(X)
   if(!is.null(off.set) & length(off.set) == 1) off.set<- rep(off.set, M)
@@ -225,6 +187,41 @@ calcN.efitM<- function(obj, covs, off.set=NULL, CI.level=0.95, ...) {
   upr<- Pocc + seN*z
   bigN<- data.frame(Pocc=round(Pocc,2),se=round(seN,3), lcl=round(lwr,2), ucl=round(upr,2))
   list(cellpreds=est$estimates, Occ=bigN)
+}
+
+#' @rdname calcN
+#' @export
+calcN.efitR<- function(obj, off.set=NULL, CI.level=0.95, ...) {
+  # Currently only makes sense to predict to original data
+    origdata <- obj$data
+    M <- numSites(origdata)
+    if(is.null(siteCovs(origdata))) {
+      newdata <- data.frame(Intercept = rep(1, M))
+    } else {
+      newdata <- siteCovs(origdata)
+    }
+  design<- getDesign(obj, newdata)
+  tot.rem<- sum(getY(origdata))
+  X<- design$X
+  M<- nrow(X)
+  if(!is.null(off.set) & length(off.set) == 1) off.set<- rep(off.set, M)
+  lc<- linearComb(obj, coefficients=X, off.set=off.set)
+  est<- backTransform(lc)
+  V<- est$covMat
+  Nhat<- sum(est$estimates)
+  Nresid<- Nhat - tot.rem
+  varN<- sum(est$covMat)
+  seN<- sqrt(varN)
+  cv<- sqrt(varN)/Nhat
+  z <- exp(qnorm((1-CI.level)/2) * sqrt(log(1+cv^2)))
+  lwr<- Nhat*z
+  upr<- Nhat/z
+  lwr1<- Nresid*z
+  upr1<- Nresid/z
+
+  bigN<- data.frame(N=round(Nhat,1),se=round(seN,1), lcl=round(lwr,1), ucl=round(upr,1))
+  littleN<- data.frame(N = round(Nresid,1),lcl=round(lwr1,1), ucl=round(upr1,1))
+  list(cellpreds=est$estimates, Nhat=bigN, Nresid=littleN)
 }
 
 #' @rdname SE
@@ -248,3 +245,46 @@ SE.efitREST<- function(obj, type=c("state","stay"), ...){
     v<- obj$stay$covMat
     sqrt(diag(v))
 }
+
+#' profileCI
+#'
+#' @description extracts profile likelihood confidence intervals for parameters
+#' on the link scale.
+#' @param obj A fitted model object.
+#' @param type parameter type (i.e. "state","det")
+#' @param level confidence level
+#'
+#' @export
+#'
+profileCI<- function(object, type, level = 0.95) {
+    parm <- 1:length(object[[type]]$estimates)
+    nllFun <- nllFun(object)
+    ests <- mle(object)
+    nP <- length(parm)
+    ci <- matrix(NA, nP, 2)
+    types <- object$types
+    numbertable <- list()
+    for(i in 1:length(types)) {
+      length.est <- length(object[[types[i]]]$estimates)
+      numbertable[[i]] <- data.frame(type = rep(types[i], length.est), num = seq(length.est))
+    }
+     numbertable<- do.call('rbind', numbertable)
+     allparms<- which(numbertable$type == type & numbertable$num %in% parm)
+     multiple<- c(2,4,8,12)
+    for(i in 1:nP) {
+      cat("Profiling parameter",i,"of",nP,"...")
+      se <- SE(object, type)
+      whichPar<- allparms[i]
+      for(mult in multiple) {
+        ci[i,] <- calc.profileCI(nllFun, whichPar=whichPar, MLE=ests,
+                          interval=ests[whichPar] + mult*se[i]*c(-1,1), level=level)
+        if(all(is.finite(ci[i,]))) break
+      }
+      cat(" done.\n")
+    }
+    colnames(ci) <- c((1-level)/2, 1- (1-level)/2)
+    if(any(!is.finite(ci)))
+      warning("At least one endpoint of profile confidence interval is on the boundary.",
+              call. = FALSE)
+    return(ci)
+  }

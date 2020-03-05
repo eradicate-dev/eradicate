@@ -68,9 +68,8 @@ getDesign.eFrame<- function(emf, lamformula, detformula, na.rm=TRUE) {
 }
 
 #-------------------------------------------------------------------------
-# Removal Monitor data unmarkedFrameRemMon
+# Removal Monitor data for eFrameRM
 # just need to handle extra monitoring data
-# unmarkedFrame
 
 getDesign.eFrameRM<- function(emf, lamformula, detformula, na.rm=TRUE) {
 
@@ -142,7 +141,6 @@ getDesign.eFrameRM<- function(emf, lamformula, detformula, na.rm=TRUE) {
 #-------------------------------------------------------------------------
 # REST model
 
-
 getDesign.eFrameREST<- function(emf, lamformula, na.rm=TRUE) {
   # REST model assumes cameras sample viewshed of area A with perfect detection
   # Future version will model effective viewshed using distance sampling techniques
@@ -184,6 +182,7 @@ getDesign.eFrameREST<- function(emf, lamformula, na.rm=TRUE) {
               cens=emf$cens, area=emf$area, removed.sites = removed.sites))
 }
 
+# Method for prediction
 
 getDesign.efit<- function(obj, siteCovs, na.rm=TRUE) {
   # Create design matrix for prediction
@@ -196,7 +195,6 @@ getDesign.efit<- function(obj, siteCovs, na.rm=TRUE) {
     X.offset[is.na(X.offset)] <- 0
   }
 
-  ## Record future column names for obsCovs
   colNames <- colnames(siteCovs)
 
   if (na.rm) {

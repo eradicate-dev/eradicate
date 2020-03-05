@@ -21,11 +21,15 @@
 #' @return a \code{efit} model object.
 #'
 #' @examples
-#'  data(snc)
-#'  emf <- eFrameREST(y=counts, stay=staying.times, cens= censor, area=A,
-#'         active_hours=24, siteCovs=site.df)
+#'  y<- san_nic_rest$y
+#'  stay<- san_nic_rest$stay
+#'  cens<- san_nic_rest$cens
+#'  area<- san_nic_rest$area
+#'  active_hours<- san_nic_rest$active_hours
+#'
+#'  emf <- eFrameREST(y, stay, cens, area, active_hours)
 #'  mod <- REST(~1, data=emf)
-#'  Nhat<- calcN(mod, ncells=55)
+#'  Nhat<- calcN(mod)
 #'
 #' @export
 #'
@@ -89,8 +93,8 @@ REST <- function(lamformula, data, starts, method = "BFGS",
       }
     ests <- fm$par
     fmAIC <- 2 * fm$value + 2 * nP
-    names(ests) <- c(lamParms, "rho")
 
+    typeNames<- c("state","stay")
 
     stateEstimates <- list(name = "Abundance",
                                    short.name = "lambda",
@@ -106,9 +110,10 @@ REST <- function(lamformula, data, starts, method = "BFGS",
                                  invlinkGrad = "exp")
 
     efit <- list(fitType = "REST model",
-        call = match.call(), lamformula = lamformula, state=stateEstimates,stay=rhoEstimates,
+        call = match.call(), types=typeNames,lamformula = lamformula,
+        state=stateEstimates, stay=rhoEstimates,
         sitesRemoved = designMats$removed.sites,AIC = fmAIC, opt = opt,
-        negLogLike = fm$value, nllFun = nll)
+        negLogLike = fm$value, nllFun = nll, data = data)
     class(efit) <- c('efitREST','efit','list')
     return(efit)
 }

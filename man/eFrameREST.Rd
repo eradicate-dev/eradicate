@@ -35,3 +35,14 @@ a \code{eFrameREST} holding data containing the response and
 model applied to camera trap data using the MLE given in:
 Nakashima,Y., Fukasawa, K., and Samejima H. (2018). J.App.Ecol,55,735-744.
 }
+\examples{
+counts<- rest$y
+stay<- rest$stay
+cens<- rest$cens
+A<- rest$area # in km2
+active<- rest$active_hours
+
+emf<- eFrameREST(counts, stay, cens, A, active, siteCovs = site.data)
+summary(emf)
+
+}

@@ -11,8 +11,7 @@ remPois(lamformula, detformula, data, starts, method="BFGS", se=TRUE, ...)
 
 \item{detformula}{formula for the removal detection component.  Only
 site-level covariates are allowed for the removal detection component.
-This differs from the similar model in \code{unmarked}. Currently
-an intercept-only model is assumed for the occupancy component.}
+This differs from the similar model in \code{unmarked}.}
 
 \item{data}{A \code{eFrameR} object containing the response (counts)
 and site-level covariates. see \code{\link{eFrameR}} for how to format
@@ -32,9 +31,9 @@ a \code{efit} model object.
 a number of primary periods where individuals removed are recorded for each site.
 }
 \examples{
- data(snc)
- emf <- eFrameR(y=removed, siteCovs=site.df)
+ rem<- san_nic_rem$rem
+ emf <- eFrameR(y=rem)
  mod <- remPois(~1, ~1, data=emf)
- Nhat<- calcN(mod, ncells=55)
+ Nhat<- calcN(mod)
 
 }

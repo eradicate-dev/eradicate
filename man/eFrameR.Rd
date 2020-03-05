@@ -12,7 +12,8 @@ number of sites and J is the maximum number of removal (primary)
 periods per site. Each primary period can consist of k secondary
 periods but this is not used here.}
 
-\item{type}{sampling method}
+\item{type}{sampling method. Currently supports "removal" for removal
+sampling and "double" for double observer sampling}
 
 \item{SiteCovs}{A \code{data.frame} of covariates that vary at the
 site level. This should have M rows and one column per covariate}
@@ -23,4 +24,10 @@ a \code{eFrameR} holding data containing the response and
 }
 \description{
 \code{eFrameR} creates an eFrameR data object for use with removal models.
+}
+\examples{
+ rem<- san_nic_rem$rem
+ emf<- eFrameR(rem, type="removal")
+ summary(emf)
+
 }

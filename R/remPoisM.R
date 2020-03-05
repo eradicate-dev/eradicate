@@ -1,10 +1,10 @@
 
-#' remMon1
+#' remPoisM
 #'
-#' @name remMon1
+#' @name remPoisM
 #'
 #' @description
-#' \code{remMon1} fits the combined removal model + royle-nichols
+#' \code{remPoisM} fits the combined removal model + royle-nichols
 #' occupancy/abundance model to two sources of monitoring data. The first
 #' (main) source of data is removal type data consisting of a number of primary
 #' periods where individuals removed are recorded for each site. The second
@@ -13,13 +13,13 @@
 #' The model then estimates abundance in light of detections of individuals arising from both
 #' sources of data.
 #'
-#' @usage remMOn1(lamformula, detformula, data, K, starts, method="BFGS", se=TRUE, ...)
+#' @usage remPoisM(lamformula, detformula, data, K, starts, method="BFGS", se=TRUE, ...)
 #'
 #' @param lamformula formula for the latent abundance component.
 #' @param detformula formula for the removal detection component.  Only
 #'  site-level covariates are allowed for the removal detection component.
 #'  This differs from the similar model in \code{unmarked}. Currently
-#'  an intercept-only model is assumed for the occupancy component.
+#'  an intercept-only model is assumed for the detection component of the occupancy data.
 #' @param data A \code{eFrameRM} object containing the response (counts)
 #'  and site-level covariates. see \code{\link{eFrameRM}} for how to format
 #'  the required data.
@@ -33,14 +33,14 @@
 #' @return a \code{efit} model object.
 #'
 #' @examples
-#'  data(snc)
-#'  emf <- eFrameRM(y=removed, y1=pa, cells=cells, Z=Z, siteCovs=site.df)
-#'  mod <- remMon1(~1, ~1, data=emf)
-#'  Nhat<- calcN(mod, ncells=55)
+#'  ## uses san_nic_rem
+#'  emf <- eFrameRM(y=rem, y1=y1, cells=cells, Z=nights)
+#'  mod <- remPoisM(~1, ~1, data=emf)
+#'  Nhat<- calcN(mod)
 #'
 #' @export
 #'
-remMon1 <- function(lamformula, detformula, data, K=25, starts, method = "BFGS",
+remPoisM <- function(lamformula, detformula, data, K=25, starts, method = "BFGS",
     se = TRUE, ...)
 {
     if(!is(data, "eFrameRM"))
@@ -130,8 +130,8 @@ remMon1 <- function(lamformula, detformula, data, K=25, starts, method = "BFGS",
       }
     ests <- fm$par
     fmAIC <- 2 * fm$value + 2 * nP
-    names(ests) <- c(lamParms, detParms)
 
+    typeNames<- c("state","det")
 
     stateEstimates <- list(name = "Abundance",
                                    short.name = "lambda",
@@ -147,9 +147,9 @@ remMon1 <- function(lamformula, detformula, data, K=25, starts, method = "BFGS",
                                  invlinkGrad = "logistic.grad")
 
     efit <- list(fitType = "Multinomial Removal + Monitoring",
-        call = match.call(), lamformula = lamformula, detformula=detformula,
+        call = match.call(), types=typeNames, lamformula = lamformula, detformula=detformula,
         state=stateEstimates,det=detEstimates, sitesRemoved = designMats$removed.sites,
-        AIC = fmAIC, opt = opt, negLogLike = fm$value, nllFun = nll)
-    class(efit) <- c('efit','list')
+        AIC = fmAIC, opt = opt, negLogLike = fm$value, nllFun = nll, data = data)
+    class(efit) <- c('efitR','efit','list')
     return(efit)
 }

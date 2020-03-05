@@ -12,8 +12,7 @@
 #' @param lamformula formula for the latent abundance component.
 #' @param detformula formula for the removal detection component.  Only
 #'  site-level covariates are allowed for the removal detection component.
-#'  This differs from the similar model in \code{unmarked}. Currently
-#'  an intercept-only model is assumed for the occupancy component.
+#'  This differs from the similar model in \code{unmarked}.
 #' @param data A \code{eFrameR} object containing the response (counts)
 #'  and site-level covariates. see \code{\link{eFrameR}} for how to format
 #'  the required data.
@@ -24,10 +23,10 @@
 #' @return a \code{efit} model object.
 #'
 #' @examples
-#'  data(snc)
-#'  emf <- eFrameR(y=removed, siteCovs=site.df)
+#'  rem<- san_nic_rem$rem
+#'  emf <- eFrameR(y=rem)
 #'  mod <- remPois(~1, ~1, data=emf)
-#'  Nhat<- calcN(mod, ncells=55)
+#'  Nhat<- calcN(mod)
 #'
 #' @export
 #'
@@ -84,11 +83,10 @@ remPois <- function(lamformula, detformula, data, starts, method = "BFGS", se = 
       }
     ests <- fm$par
     fmAIC <- 2 * fm$value + 2 * nP
-    names(ests) <- c(lamParms, detParms)
 
-    stateName <- "Abundance"
+    typeNames<- c("state","det")
 
-    stateEstimates <- list(name = stateName,
+    stateEstimates <- list(name = "Abundance",
                            short.name = "lambda",
                            estimates = ests[1:nAP],
                            covMat = as.matrix(
@@ -103,9 +101,9 @@ remPois <- function(lamformula, detformula, data, starts, method = "BFGS", se = 
                          invlinkGrad = "logistic.grad")
 
     efit <- list(fitType = "removal Poisson",
-        call = match.call(), lamformula = lamformula,detformula=detformula,
+        call = match.call(), types=typeNames,lamformula = lamformula,detformula=detformula,
         state=stateEstimates,det=detEstimates, sitesRemoved = designMats$removed.sites,
-        AIC = fmAIC, opt = opt, negLogLike = fm$value, nllFun = nll)
-    class(efit) <- c('efit','list')
+        AIC = fmAIC, opt = opt, negLogLike = fm$value, nllFun = nll, data = data)
+    class(efit) <- c('efitR','efit','list')
     return(efit)
 }

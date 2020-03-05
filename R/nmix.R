@@ -6,7 +6,7 @@
 #' @description
 #' \code{nmix} fits the N-mixture model of Royle et al (2004)
 #'
-#' @usage nmix(lamformula, detformula, data, K, mixture=c("P", "NB", "ZIP"),
+#' @usage nmix(lamformula, detformula, data, K, mixture=c("P", "NB"),
 #' starts, method="BFGS", se=TRUE, ...)
 #'
 #' @param lamformula formula for the latent abundance component.
@@ -28,9 +28,10 @@
 #' @return a \code{efit} model object.
 #'
 #' @examples
-#'  emf <- eFrame(y=counts, siteCovs=site.df)
+#'  counts<- san_nic_pre$counts
+#'  emf <- eFrame(y=counts)
 #'  mod <- nmix(~1, ~1, data=emf)
-#'  Nhat<- calcN(mod, ncells=55)
+#'  Nhat<- calcN(mod)
 #'
 #' @export
 #'
@@ -107,7 +108,6 @@ nmix <- function(lamformula, detformula, data, K, mixture = c("P", "NB"), starts
     if(missing(starts)) starts <- rep(0, nP)
     fm <- optim(starts, nll, method=method, hessian=se, ...)
     opt <- fm
-
     ests <- fm$par
     nbParm <- switch(mixture,
                      NB = "alpha",
@@ -121,6 +121,7 @@ nmix <- function(lamformula, detformula, data, K, mixture = c("P", "NB"), starts
     }
     fmAIC <- 2 * fm$value + 2 * nP
 
+    typeNames<- c("state","det")
     stateEstimates <- list(name="Abundance", short.name="lam",
         estimates = ests[1:nAP],
         covMat = as.matrix(covMat[1:nAP,1:nAP]),
@@ -140,11 +141,12 @@ nmix <- function(lamformula, detformula, data, K, mixture = c("P", "NB"), starts
             invlinkGrad = "exp")
     }
 
-    efit <- list(fitType="nmix", call=match.call(),
+    efit <- list(fitType="nmix", call=match.call(), types=typeNames,
                  lamformula = lamformula, detformula=detformula,
                  sitesRemoved = designMats$removed.sites,
                  state=stateEstimates, det=detEstimates, AIC = fmAIC, opt = opt,
-                 negLogLike = fm$value, nllFun = nll, K = K, mixture = mixture)
+                 negLogLike = fm$value, nllFun = nll, K = K, mixture = mixture,
+                 data = data)
     class(efit) <- c('efit','list')
     return(efit)
 }

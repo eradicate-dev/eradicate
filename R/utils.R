@@ -54,7 +54,7 @@ genFixedNLL <- function(nll, whichFixed, fixedValues)
 
 # nll the original negative log likelihood function
 # MLE the full vector of MLE values
-profileCI <- function(nll, whichPar, MLE, interval, level)
+calc.profileCI <- function(nll, whichPar, MLE, interval, level)
 {
     stopifnot(length(whichPar) == 1)
     MLEnll <- nll(MLE)
@@ -66,17 +66,9 @@ profileCI <- function(nll, whichPar, MLE, interval, level)
         mleRestricted - MLEnll - chsq
         }
     lower <- tryCatch(uniroot(f, c(interval[1],MLE[whichPar]))$root,
-        error = function(e) {
-            warning("Lower endpoint of profile confidence interval is on the boundary.",
-        call. = FALSE)
-        -Inf
-        })
+        error = function(e) -Inf)
     upper <- tryCatch(upper <- uniroot(f, c(MLE[whichPar], interval[2]))$root,
-        error = function(e) {
-            warning("Upper endpoint of profile confidence interval is on the boundary.",
-        call. = FALSE)
-        Inf
-        })
+        error = function(e) Inf)
 
     return(c(lower,upper))
 }
@@ -101,9 +93,7 @@ explink <- function(x) exp(x)
 
 exp1 <- function(x) exp(x) + 1
 
-
 identLink <- function(x) x
-
 
 identLinkGrad <- function(x) 1
 
@@ -114,18 +104,6 @@ rowProds <- function(x, na.rm = FALSE)
   exp(rowSums(log(x), na.rm = na.rm))
 }
 
-## compute estimated asymptotic variances of parameter estimates
-## using the observed information matrix
-
-#sd.est <- function(fm) {
-#    sqrt(diag(solve(fm$hessian)))
-#}
-
-## delta method for variance of proportion given variance of its logistic-
-## transformed counterpart
-#sd.prop <- function(est,sd.est) {
-#    exp(-est)/(1 + exp(-est))^2 * sd.est
-#}
 
 ### track linked list of parameters using a data frame
 ### add row to linked list
@@ -214,3 +192,6 @@ rzip <- function(n, lambda, psi) {
     x
 }
 
+nllFun<- function(object) object$nllFun
+
+mle<- function(object) object$opt$par

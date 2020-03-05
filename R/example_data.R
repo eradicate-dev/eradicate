@@ -45,7 +45,7 @@
 #'
 "san_nic_rem"
 
-#' rest
+#' san_nic_rest
 #'
 #' Example camera monitoring data collected for use in the REST model
 #'
@@ -74,7 +74,7 @@
 #'  \item{traps}{a data.frame with \code{M} rows of trap locations}
 #'  }
 #'
-"rest"
+"san_nic_rest"
 
 
 #' @name san_nic_habitat.tif

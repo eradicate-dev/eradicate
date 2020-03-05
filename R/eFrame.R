@@ -7,8 +7,6 @@
 #' \code{eFrame} creates an eFrame data object for use with Nmixture
 #' or occupancy type models
 #'
-#'
-#'
 #' @param y An MxJ matrix of the observed measured data, where M is the
 #'    number of sites and J is the maximum number of observations per site.
 #' @param SiteCovs A \code{data.frame} of covariates that vary at the
@@ -18,13 +16,14 @@
 #'  covariates required for each model
 #'
 #' @examples
-#'  emf <- eFrame(y=counts, siteCovs=site.df)
+#'  counts<- san_nic_pre$counts
+#'  emf <- eFrame(y=counts)
 #'  summary(emf)
 #'
 #' @export
 #'
 eFrame <- function(y, siteCovs = NULL) {
-    if(("data.frame" %in% class(y)) | ("cast_matrix" %in% class(y)))
+    if("data.frame" %in% class(y))
         y <- as.matrix(y)
     M <- nrow(y)
     J <- ncol(y)
@@ -39,18 +38,22 @@ eFrame <- function(y, siteCovs = NULL) {
 #'
 #' \code{eFrameR} creates an eFrameR data object for use with removal models.
 #'
-#'
-#'
 #' @param y An MxJ matrix of the observed removal data, where M is the
 #'    number of sites and J is the maximum number of removal (primary)
 #'    periods per site. Each primary period can consist of k secondary
 #'    periods but this is not used here.
-#' @param type sampling method
+#' @param type sampling method. Currently supports "removal" for removal
+#' sampling and "double" for double observer sampling
 #' @param SiteCovs A \code{data.frame} of covariates that vary at the
 #'    site level. This should have M rows and one column per covariate
 #'
 #' @return a \code{eFrameR} holding data containing the response and
 #'  covariates required for removal models
+#'
+#' @examples
+#'  rem<- san_nic_rem$rem
+#'  emf<- eFrameR(rem, type="removal")
+#'  summary(emf)
 #'
 #' @export
 #'
@@ -58,8 +61,7 @@ eFrameR <- function(y, type, siteCovs = NULL) {
     if(!missing(type)) {
         switch(type,
             removal = piFun <- "removalPiFun",
-            double = piFun <- "doublePiFun",
-            depDouble = piFun <- "depDoublePiFun")
+            double = piFun <- "doublePiFun")
     } else stop("Removal type required")
 
     emf <- eFrame(y, siteCovs)
@@ -84,9 +86,17 @@ eFrameR <- function(y, type, siteCovs = NULL) {
 #' @param Z integer indicating the number of secondary periods per
 #'  primary period for \code{y1}
 #'
-#'
 #' @return a \code{eFrameRM} holding data containing the response and
 #'  covariates required for removal models
+#'
+#' @examples
+#'  rem<- san_nic_rem$rem
+#'  y1<- san_nic_rem$y1 # detections from additional monitoring
+#'  mtraps<- san_nic_rem$cells
+#'  nights<- san_nic_rem$nights
+#'
+#'  emf<-eFrameRM(rem, y1, mtraps, nights, type="removal")
+#'  summary(emf)
 #'
 #' @export
 #'
@@ -95,8 +105,7 @@ eFrameRM <- function(y, y1, cells, Z, type, siteCovs = NULL) {
   if(!missing(type)) {
     switch(type,
            removal = piFun <- "removalPiFun",
-           double = piFun <- "doublePiFun",
-           depDouble = piFun <- "depDoublePiFun")
+           double = piFun <- "doublePiFun")
   } else stop("Removal type required")
 
   emf <- eFrame(y, siteCovs)
@@ -136,6 +145,16 @@ eFrameRM <- function(y, y1, cells, Z, type, siteCovs = NULL) {
 #' @return a \code{eFrameREST} holding data containing the response and
 #'  covariates required for the REST model
 #'
+#' @examples
+#' counts<- rest$y
+#' stay<- rest$stay
+#' cens<- rest$cens
+#' A<- rest$area # in km2
+#' active<- rest$active_hours
+#'
+#' emf<- eFrameREST(counts, stay, cens, A, active, siteCovs = site.data)
+#' summary(emf)
+#'
 #' @export
 #'
 eFrameREST <- function(y, stay, cens, area, active_hours, siteCovs = NULL) {
@@ -168,8 +187,21 @@ getY<- function(object) object$y
 
 
 ################################### PRINT/SUMMARY METHODS ######################
-#' @rdname print
+#' print.eFrame
+#'
+#' \code{print} method for eFrame objects. Basically the same as \code{summary.eFrame}
+#'
+#' @param object An \code{eFrame} object.
+#'
+#' @return a \code{list} containing various summaries of the data
+#'
+#' @examples
+#' ## uses san_nic_pre
+#'  emf <- eFrame(y=counts)
+#'  summary(emf)
+#'
 #' @export
+#'
 print.eFrame<- function(object,...) {
   #S3 method for eFrame
   cat("eFrame Object\n\n")
@@ -187,8 +219,21 @@ print.eFrame<- function(object,...) {
     print(summary(object$siteCovs))
   }
 }
-#' @rdname summary
+#' summary.eFrame
+#'
+#' \code{summary} method for eFrame objects.
+#'
+#' @param object An \code{eFrame} object.
+#'
+#' @return a \code{list} containing various summaries of the data
+#'
+#' @examples
+#' ## uses san_nic_pre
+#'  emf <- eFrame(y=counts)
+#'  summary(emf)
+#'
 #' @export
+#'
 summary.eFrame<- function(object,...) {
   #S3 method for eFrame
   cat("eFrame Object\n\n")
@@ -207,11 +252,25 @@ summary.eFrame<- function(object,...) {
   }
 }
 #-----------------------------------------
-#' @rdname print
+#' print.eFrameR
+#'
+#' \code{print} method for eFrameR objects. Basically the same as \code{summary.eFrame}
+#'
+#' @param object An \code{eFrameR} object.
+#'
+#' @return a \code{list} containing various summaries of the data
+#'
+#' @examples
+#' ## uses san_nic_rem
+#'  emf <- eFrameR(y=rem, type="removal")
+#'  summary(emf)
+#'
 #' @export
+#'
 print.eFrameR<- function(object,...) {
   #S3 method for eFrame
   cat("eFrameR Object\n\n")
+  cat("sampling method: ",object$samplingMethod,"\n\n")
   cat(nrow(object$y), "sites\n")
   cat("Maximum number of periods per site:",numY(object),"\n\n")
   cat("Number of removals per period:","\n")
@@ -228,11 +287,25 @@ print.eFrameR<- function(object,...) {
     print(summary(object$siteCovs))
   }
 }
-#' @rdname summary
+#' summary.eFrameR
+#'
+#' \code{summary} method for eFrameR objects.
+#'
+#' @param object An \code{eFrameR} object.
+#'
+#' @return a \code{list} containing various summaries of the data
+#'
+#' @examples
+#' ## uses san_nic_rem
+#'  emf <- eFrame(y=rem, type="removal")
+#'  summary(emf)
+#'
 #' @export
+#'
 summary.eFrameR<- function(object,...) {
   #S3 method for eFrame
   cat("eFrameR Object\n\n")
+  cat("sampling method: ",object$samplingMethod,"\n\n")
   cat(nrow(object$y), "sites\n")
   cat("Maximum number of periods per site:",numY(object),"\n\n")
   cat("Number of removals per period:","\n")
@@ -251,8 +324,21 @@ summary.eFrameR<- function(object,...) {
 }
 
 #-----------------------------------------
-#' @rdname print
+#' print.eFrameRM
+#'
+#' \code{print} method for eFrameRM objects. Basically the same as \code{summary.eFrame}
+#'
+#' @param object An \code{eFrameRM} object.
+#'
+#' @return a \code{list} containing various summaries of the data
+#'
+#' @examples
+#'  ## uses san_nic_rem
+#'  emf <- eFrameRM(y=rem, y1=y1, cells=cells, Z=nights)
+#'  summary(emf)
+#'
 #' @export
+#'
 print.eFrameRM<- function(object,...) {
   #S3 method for eFrame
   cat("eFrameRM Object\n\n")
@@ -277,8 +363,21 @@ print.eFrameRM<- function(object,...) {
     print(summary(object$siteCovs))
   }
 }
-#' @rdname summary
+#' summary.eFrameRM
+#'
+#' \code{summary} method for eFrameRM objects.
+#'
+#' @param object An \code{eFrameRM} object.
+#'
+#' @return a \code{list} containing various summaries of the data
+#'
+#' @examples
+#'  ## uses san_nic_rem
+#'  emf <- eFrameRM(y=rem, y1=y1, cells=cells, Z=nights)
+#'  summary(emf)
+#'
 #' @export
+#'
 summary.eFrameRM<- function(object,...) {
   #S3 method for eFrame
   cat("eFrameRM Object\n\n")
@@ -305,8 +404,21 @@ summary.eFrameRM<- function(object,...) {
 }
 
 #-------------------------------------
-#' @rdname print
+#' print.eFrameREST
+#'
+#' \code{print} method for eFrameREST objects. Basically the same as \code{summary.eFrame}
+#'
+#' @param object An \code{eFrameREST} object.
+#'
+#' @return a \code{list} containing various summaries of the data
+#'
+#' @examples
+#'  ## uses rest
+#'  emf <- eFrameREST(y, stay, cens, area, active_hours)
+#'  summary(emf)
+#'
 #' @export
+#'
 print.eFrameREST<- function(object,...) {
   #S3 method for eFrameREST
   cat("eFrameREST Object\n\n")
@@ -330,8 +442,21 @@ print.eFrameREST<- function(object,...) {
     print(summary(object$stay))
 
 }
-#' @rdname summary
+#' summary.eFrameREST
+#'
+#' \code{summary} method for eFrameREST objects.
+#'
+#' @param object An \code{eFrameREST} object.
+#'
+#' @return a \code{list} containing various summaries of the data
+#'
+#' @examples
+#'  ## uses rest
+#'  emf <- eFrameREST(y, stay, cens, area, active_hours)
+#'  summary(emf)
+#'
 #' @export
+#'
 summary.eFrameREST<- function(object,...) {
    #S3 method for eFrameREST
   cat("eFrameREST Object\n\n")

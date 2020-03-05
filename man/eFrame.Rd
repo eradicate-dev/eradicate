@@ -22,7 +22,8 @@ a \code{eFrame} holding data containing the response and
 or occupancy type models
 }
 \examples{
- emf <- eFrame(y=counts, siteCovs=site.df)
+ counts<- san_nic_pre$counts
+ emf <- eFrame(y=counts)
  summary(emf)
 
 }

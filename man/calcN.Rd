@@ -4,24 +4,25 @@
 \alias{calcN}
 \alias{calcN.efit}
 \alias{calcN.efitM}
+\alias{calcN.efitR}
 \title{calcN}
 \usage{
 calcN(obj, ...)
 
-\method{calcN}{efit}(obj, covs, off.set = NULL, CI.level = 0.95, ...)
+\method{calcN}{efit}(obj, newdata, off.set = NULL, CI.level = 0.95, ...)
 
-\method{calcN}{efitM}(obj, covs, off.set = NULL, CI.level = 0.95, ...)
+\method{calcN}{efitM}(obj, newdata, off.set = NULL, CI.level = 0.95, ...)
+
+\method{calcN}{efitR}(obj, off.set = NULL, CI.level = 0.95, ...)
 }
 \arguments{
 \item{obj}{A fitted model object.}
 
-\item{covs}{A \code{data.frame} of covariates for each spatial unit.
-There must by covariates for every parameter in \code{obj}.
-if no covariates are used then \code{covs} should be a data.frame
-with one column indicating cell number.}
+\item{newdata}{An (optional) \code{data.frame} of covariates for spatial units of interest.
+There must by covariate values for every parameter in \code{obj}.}
 
 \item{off.set}{Either a scalar offset value to apply to each spatial unit
-for prediction (e.g. cell area) or a vector of the same length as \code{nrow(covs)}.}
+for prediction (e.g. cell area) or a vector of the same length as \code{nrow(newdata)}.}
 }
 \value{
 a \code{data.frame} giving the predictions for each spatial unit
@@ -29,15 +30,13 @@ a \code{data.frame} giving the predictions for each spatial unit
  SE and confidence intervals.
 }
 \description{
-\code{calcN} estimates abundance for a defined region from a fitted model.
-The user must supply the number of spatial units (cells) or a data.frame
-of covariate values for each spatial unit.
+\code{calcN} estimates abundance for a defined region from a fitted model.  The default is for the population defined by the sampling units.  The user can optionally supply a data.frame
+of covariate values for any spatial unit of interest.
 }
 \examples{
  counts<- san_nic_pre$counts
- site.df<- san_nic_pre$traps
- emf <- eFrame(y=counts, siteCovs=site.df)
+ emf <- eFrame(y=counts)
  mod <- nmix(~1, ~1, data=emf)
- Nhat<- calcN(mod, site.df)
+ Nhat<- calcN(mod)
 
 }

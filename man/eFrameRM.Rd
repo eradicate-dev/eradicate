@@ -22,7 +22,8 @@ to monitoring}
 \item{Z}{integer indicating the number of secondary periods per
 primary period for \code{y1}}
 
-\item{type}{sampling method}
+\item{type}{sampling method. Currently supports "removal" for removal
+sampling and "double" for double observer sampling}
 }
 \value{
 a \code{eFrameRM} holding data containing the response and
@@ -31,4 +32,14 @@ a \code{eFrameRM} holding data containing the response and
 \description{
 \code{eFrameRM} creates an eFrameRM data object for use with removal models
 that include additional monitoring at some or all of the sites.
+}
+\examples{
+ rem<- san_nic_rem$rem
+ y1<- san_nic_rem$y1 # detections from additional monitoring
+ mtraps<- san_nic_rem$cells
+ nights<- san_nic_rem$nights
+
+ emf<-eFrameRM(rem, y1, mtraps, nights, type="removal")
+ summary(emf)
+
 }

@@ -2,12 +2,9 @@
 % Please edit documentation in R/estimates.R
 \name{summary.efit}
 \alias{summary.efit}
-\alias{summary.efitREST}
 \title{summary.efit}
 \usage{
 \method{summary}{efit}(object, ...)
-
-\method{summary}{efitREST}(object, ...)
 }
 \arguments{
 \item{obj}{A fitted model object.}

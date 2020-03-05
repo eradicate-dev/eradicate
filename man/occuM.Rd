@@ -7,15 +7,15 @@
 occuM(lamformula, detformula, data, knownocc, starts, method="BFGS", se=TRUE, ...)
 }
 \arguments{
-\item{lamformula}{formula for the latent abundance component.}
+\item{lamformula}{formula for the latent occupancy component.}
 
 \item{detformula}{formula for the detection component.  Only
 site-level covariates are allowed for the detection component.
 This differs from the similar model in \code{unmarked}.}
 
-\item{data}{A \code{eFrame} object containing the response (counts)
+\item{data}{A \code{eFrame} object containing the response (either (0/1) or counts)
 and site-level covariates. see \code{\link{eFrame}} for how to format
-the required data.}
+the required data. count data will get trunctated to (0/1) by \code{occuM()}.}
 
 \item{starts}{Initial values for parameters}
 
@@ -32,8 +32,9 @@ a \code{efit} model object.
 \code{occuM} fits the occupancy model of McKenzie et al. (2002).
 }
 \examples{
- emf <- eFrame(y=counts, siteCovs=site.df)
+ counts<- san_nic_pre$counts
+ emf <- eFrame(y=counts)
  mod <- occuM(~1, ~1, data=emf)
- Nhat<- calcN(mod, ncells=55)
+ Nhat<- calcN(mod)
 
 }
