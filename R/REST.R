@@ -53,6 +53,8 @@ REST <- function(lamformula, data, starts, method = "BFGS",
     M <- nrow(y)
 
     lamParms <- colnames(X)
+    stayParm <- "(Intercept)"
+
     nAP <- ncol(X)
     nDP<- 1
     nP <- nDP + nAP
@@ -93,7 +95,7 @@ REST <- function(lamformula, data, starts, method = "BFGS",
       }
     ests <- fm$par
     fmAIC <- 2 * fm$value + 2 * nP
-
+    names(ests)<- c(lamParms, stayParm)
     typeNames<- c("state","stay")
 
     stateEstimates <- list(name = "Abundance",
