@@ -97,6 +97,15 @@ identLink <- function(x) x
 
 identLinkGrad <- function(x) 1
 
+#Complimentary log log link
+cloglog <- function(x){
+  1-exp(-exp(x))
+}
+
+cloglog.grad <- function(x){
+  exp(-exp(x))
+}
+
 ## use logarithms to vectorize row-wise products
 ## this speeds things up a LOT (vs. apply(x,1,prod))
 rowProds <- function(x, na.rm = FALSE)
@@ -195,3 +204,126 @@ rzip <- function(n, lambda, psi) {
 nllFun<- function(object) object$nllFun
 
 mle<- function(object) object$opt$par
+
+#---------------------------------
+formatMult <- function(df.in) {
+# This convenience function converts multi-year data in long format to
+# eFrameRGP Object.
+
+  years <- sort(unique(df.in[[1]]))
+  nY <- length(years)
+  df.obs <- list()
+  nsamp <- numeric()
+  maxsamp <- max(table(df.in[[1]], df.in[[2]])) # the maximum samples/yr
+  for(t in 1:nY){
+    df.t <- df.in[df.in[[1]] == years[t],] # subset for current year
+    df.t <- df.t[,-1] # remove year column
+    df.t <- dateToObs(df.t)
+    nsamp <- max(df.t$obsNum)
+    if(nsamp < maxsamp) {
+      newrows <- df.t[1:(maxsamp - nsamp), ] # just a placeholder
+      newrows[,"obsNum"] <- ((nsamp + 1) : maxsamp)
+      newrows[,3 : (ncol(df.t) - 1)] <- NA
+      df.t <- rbind(df.t, newrows)
+    }
+    df.obs <- rbind(df.obs,cbind(year = years[t],df.t))
+  }
+
+  names(df.obs)[4] <- "y"
+  scol <- names(df.obs)[2]
+  df_sub <- df.obs[c("year", scol, "y", "obsNum")]
+  df_sub$yind <- 1:nrow(df_sub)
+
+  ywide <- reshape(df_sub, idvar=c(scol,"year"), timevar="obsNum",
+                   direction="wide")
+  ywide <- reshape(ywide, idvar=scol, timevar="year", direction="wide")
+  #Reshape goofs up the order
+  ywide <- ywide[order(ywide[,1]),]
+
+  y <- unname(as.matrix(ywide[grep("^y\\.", names(ywide))]))
+  yind <- as.vector(t(as.matrix(ywide[grep("yind", names(ywide))])))
+
+  #Reorder input data frame by y-index (=no factor issues)
+  #Also drop site/time/y/numObs cols
+  obsvars.df <- df.obs[yind, -c(1:2, 4, ncol(df.obs)), drop=FALSE]
+  rownames(obsvars.df) <- NULL
+
+  ## check for siteCovs
+  obsNum <- ncol(y)
+  M <- nrow(y)
+  site.inds <- matrix(1:(M*obsNum), M, obsNum, byrow = TRUE)
+  siteCovs <- sapply(obsvars.df, function(x) {
+    obsmat <- matrix(x, M, obsNum, byrow = TRUE)
+    l.u <- apply(obsmat, 1, function(y) {
+      row.u <- unique(y)
+      length(row.u[!is.na(row.u)])
+    })
+    ## if there are 0 or 1 unique vals per row, we have a sitecov
+    if(all(l.u %in% 0:1)) {
+      u <- apply(obsmat, 1, function(y) {
+        row.u <- unique(y)
+        ## only remove NAs if there are some non-NAs.
+        if(!all(is.na(row.u)))
+          row.u <- row.u[!is.na(row.u)]
+        row.u
+      })
+      u
+    }
+  })
+  siteCovs <- as.data.frame(siteCovs[!sapply(siteCovs, is.null)])
+  if(nrow(siteCovs) == 0) siteCovs <- NULL
+
+  ## only check non-sitecovs
+  obsvars.df2 <- as.data.frame(obsvars.df[, !(names(obsvars.df) %in%
+                                                names(siteCovs))])
+  names(obsvars.df2) <- names(obsvars.df)[!(names(obsvars.df) %in%
+                                              names(siteCovs))]
+
+  yearlySiteCovs <- sapply(obsvars.df2, function(x) {
+    obsmat <- matrix(x, M*nY, obsNum/nY, byrow = TRUE)
+    l.u <- apply(obsmat, 1, function(y) {
+      row.u <- unique(y)
+      length(row.u[!is.na(row.u)])
+    })
+    ## if there are 0 or 1 unique vals per row, we have a sitecov
+    if(all(l.u %in% 0:1)) {
+      u <- apply(obsmat, 1, function(y) {
+        row.u <- unique(y)
+        ## only remove NAs if there are some non-NAs.
+        if(!all(is.na(row.u)))
+          row.u <- row.u[!is.na(row.u)]
+        row.u
+      })
+      u
+    }
+  })
+  yearlySiteCovs <- as.data.frame(yearlySiteCovs[!sapply(yearlySiteCovs,
+                                                         is.null)])
+  if(nrow(yearlySiteCovs) == 0) yearlySiteCovs <- NULL
+
+  # Extract siteCovs and yearlySiteCovs from obsvars
+  finalobsvars.df <- as.data.frame(obsvars.df[, !(names(obsvars.df) %in%
+                                                    c(names(siteCovs),
+                                                      names(yearlySiteCovs)))])
+  names(finalobsvars.df) <- names(obsvars.df)[!(names(obsvars.df) %in%
+                                                  c(names(siteCovs),
+                                                    names(yearlySiteCovs)))]
+
+  emf <- eFrameRGP(y = y, siteCovs = siteCovs, primaryCovs = yearlySiteCovs,
+                           numPrimary = nY)
+  return(emf)
+}
+
+#-------------------------------------
+#Inverts Hessian. Returns blank matrix with a warning on a failure.
+invertHessian <- function(optimOut, nparam, SE){
+
+  blankMat <- matrix(NA, nparam, nparam)
+  if(!SE) return(blankMat)
+
+  tryCatch(solve(optimOut$hessian),
+           error=function(e){
+             warning("Hessian is singular. Try providing starting values or using fewer covariates.", call.=FALSE)
+             return(blankMat)
+           })
+}

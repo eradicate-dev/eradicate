@@ -175,6 +175,53 @@ eFrameREST <- function(y, stay, cens, area, active_hours, siteCovs = NULL) {
   emf
 }
 
+
+#' eFrameRGP
+#'
+#' \code{eFrameRGP} creates an eFrameRGP data object for use with generalized removal
+#' models using the robust design where sampling occurs over a number of primary and
+#' secondary periods.
+#'
+#'
+#' @param y An NxJ matrix of the additional monitoring data, where N is the
+#'    number of monitored sites and J is the maximum number of primary periods
+#'    per site as for \code{y}.
+#' @param cells vector indictaing which of the \code{y} sites were subject
+#'  to monitoring
+#' @param Z integer indicating the number of secondary periods per
+#'  primary period for \code{y1}
+#'
+#' @return a \code{eFrameRGP} holding data containing the response and
+#'  covariates required for removal models
+#'
+#' @examples
+#'  rem<- san_nic_rem$rem
+#'  y1<- san_nic_rem$y1 # detections from additional monitoring
+#'  mtraps<- san_nic_rem$cells
+#'  nights<- san_nic_rem$nights
+#'
+#'  emf<-eFrameRM(rem, y1, mtraps, nights, type="removal")
+#'  summary(emf)
+#'
+#' @export
+#'
+eFrameRGP<- function(y, numPrimary, siteCovs = NULL, primaryCovs = NULL, type) {
+
+  if(!missing(type)) {
+    switch(type,
+           removal = piFun <- "removalPiFun",
+           double = piFun <- "doublePiFun")
+  } else stop("Removal type required")
+
+  emf <- eFrame(y, siteCovs)
+  emf$piFun<- piFun
+  emf$samplingMethod<- type
+  emf$numPrimary <- numPrimary
+  emf$primaryCovs <- covsToDF(primaryCovs, "primaryCovs", numPrimary, nrow(y))
+  class(emf) <- c("eFrameRGP",class(emf))
+  emf
+}
+
 ############################ EXTRACTORS ##################################
 
 siteCovs<- function(object) return(object$siteCovs)
@@ -185,6 +232,17 @@ numY<- function(object) ncol(object$y)
 
 getY<- function(object) object$y
 
+covsToDF <- function(covs, name, obsNum, numSites){
+# Convert covs provided as list of matrices/dfs to data frame
+  if(!inherits(covs, "list")) return(covs)
+  lapply(covs, function(x){
+    if(!inherits(x, c("matrix", "data.frame")))
+      stop(paste("At least one element of", name, "is not a matrix or data frame."))
+    if(ncol(x) != obsNum | nrow(x) != numSites)
+      stop(paste("At least one element of", name, "has incorrect number of dimensions."))
+  })
+  data.frame(lapply(covs, function(x) as.vector(t(x))))
+}
 
 ################################### PRINT/SUMMARY METHODS ######################
 #' print.eFrame

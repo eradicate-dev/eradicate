@@ -107,18 +107,12 @@ nmix <- function(lamformula, detformula, data, K, mixture = c("P", "NB"), starts
 
     if(missing(starts)) starts <- rep(0, nP)
     fm <- optim(starts, nll, method=method, hessian=se, ...)
-    opt <- fm
     ests <- fm$par
     nbParm <- switch(mixture,
                      NB = "alpha",
                      P = character(0))
-    names(ests) <- c(lamParms, detParms, nbParm)
-    if(se) {
-        tryCatch(covMat <- solve(fm$hessian), error=function(x)
-                 stop(simpleError("Hessian is singular.  Try using fewer covariates.")))
-    } else {
-        covMat <- matrix(NA, nP, nP)
-    }
+
+    covMat <- invertHessian(fm, nP, se)
     fmAIC <- 2 * fm$value + 2 * nP
 
     typeNames<- c("state","det")
@@ -144,7 +138,7 @@ nmix <- function(lamformula, detformula, data, K, mixture = c("P", "NB"), starts
     efit <- list(fitType="nmix", call=match.call(), types=typeNames,
                  lamformula = lamformula, detformula=detformula,
                  sitesRemoved = designMats$removed.sites,
-                 state=stateEstimates, det=detEstimates, AIC = fmAIC, opt = opt,
+                 state=stateEstimates, det=detEstimates, AIC = fmAIC, opt = fm,
                  negLogLike = fm$value, nllFun = nll, K = K, mixture = mixture,
                  data = data)
     class(efit) <- c('efit','list')
