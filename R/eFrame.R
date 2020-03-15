@@ -276,7 +276,7 @@ print.eFrameR<- function(object,...) {
   cat("Number of removals per period:","\n")
   print(data.frame(Period=1:numY(object),Removed=colSums(object$y)))
   cat("\n")
-  cat("Total removed:",sum(y),"\n")
+  cat("Total removed:",sum(object$y),"\n")
   cat("Sites with at least one detection:",
       sum(apply(getY(object), 1, function(x) any(x > 0, na.rm=TRUE))),
       "\n\n")
@@ -311,7 +311,7 @@ summary.eFrameR<- function(object,...) {
   cat("Number of removals per period:","\n")
   print(data.frame(Period=1:numY(object),Removed=colSums(object$y)))
   cat("\n")
-  cat("Total removed:",sum(y),"\n")
+  cat("Total removed:",sum(object$y),"\n")
   cat("Sites with at least one detection:",
       sum(apply(getY(object), 1, function(x) any(x > 0, na.rm=TRUE))),
       "\n\n")
@@ -348,7 +348,7 @@ print.eFrameRM<- function(object,...) {
   cat("Number of removals per period:","\n")
   print(data.frame(Period=1:numY(object),Removed=colSums(object$y)))
   cat("\n")
-  cat("Total removed:",sum(y),"\n\n")
+  cat("Total removed:",sum(object$y),"\n\n")
   cat("Sites with at least one detection:",
       sum(apply(getY(object), 1, function(x) any(x > 0, na.rm=TRUE))),
       "\n\n")
@@ -387,7 +387,7 @@ summary.eFrameRM<- function(object,...) {
   cat("Number of removals per period:","\n")
   print(data.frame(Period=1:numY(object),Removed=colSums(object$y)))
   cat("\n")
-  cat("Total removed:",sum(y),"\n\n")
+  cat("Total removed:",sum(object$y),"\n\n")
   cat("Sites with at least one detection:",
       sum(apply(getY(object), 1, function(x) any(x > 0, na.rm=TRUE))),
       "\n\n")
