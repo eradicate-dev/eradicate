@@ -59,7 +59,6 @@ remPoisM <- function(lamformula, detformula, data, K=25, starts, method = "BFGS"
     R <- ncol(y)
     M <- nrow(y)
     piFun <- data$piFun
-    #y1 <- truncateToBinary(y1)
 
     lamParms <- colnames(X)
     detParms <- c(colnames(V), colnames(V1))
@@ -89,30 +88,22 @@ remPoisM <- function(lamformula, detformula, data, K=25, starts, method = "BFGS"
         logLikeR <- dpois(y, matrix(lambda, M, J) * pi, log = TRUE)
         logLikeR[navec] <- 0
         logLikeR<- sum(logLikeR)
-        # add in monitoring
-        ## compute individual level detection probabilities
+        # add in extra monitoring in y1
         r.ij <- matrix(plogis(V1 %*% parms[(nDP + nAP + 1) : nP]), P, Q,
                        byrow = TRUE)
-
-        ## compute list of detection probabilities along N
+        r.pi <- do.call(piFun, list(p = r.ij))
         p.ij.list <- lapply(n, function(k) 1 - (1 - r.ij)^k)
-
-        ## compute P(y_{ij} | N) (cell probabilities) along N
         cp.ij.list <- lapply(p.ij.list, function(pmat) pmat^y1 * (1-pmat)^(Z-y1))
-
-        ## replace NA cell probabilities with 1.
         cp.ij.list <- lapply(cp.ij.list, function(cpmat) {
           cpmat[navec1] <- 1
           cpmat
         })
-
-        ## compute P(N = n | lambda_i) along i
-        lambda.i <- matrix(lambda[cells,], P, R) * pi[cells,]
+        ## compute P(N = n | lambda * pi) along i
+        lambda.i <- matrix(lambda[cells,], P, R) * r.pi[cells,] # marginal lambda
         lambda.in <- sapply(n, function(x) dpois(x, lambda.i))
         cp.mat <- sapply(cp.ij.list, as.vector)
         cp.in <- rowSums(cp.mat * lambda.in)
         loglikeM<- sum(log(cp.in))
-
         -(logLikeR + loglikeM)
         }
 
