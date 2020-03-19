@@ -274,9 +274,9 @@ print.eFrameR<- function(object,...) {
   cat(nrow(object$y), "sites\n")
   cat("Maximum number of periods per site:",numY(object),"\n\n")
   cat("Number of removals per period:","\n")
-  print(data.frame(Period=1:numY(object),Removed=colSums(object$y)))
+  print(data.frame(Period=1:numY(object),Removed=colSums(object$y,na.rm=TRUE)))
   cat("\n")
-  cat("Total removed:",sum(object$y),"\n")
+  cat("Total removed:",sum(object$y,na.rm=TRUE),"\n")
   cat("Sites with at least one detection:",
       sum(apply(getY(object), 1, function(x) any(x > 0, na.rm=TRUE))),
       "\n\n")
@@ -309,9 +309,9 @@ summary.eFrameR<- function(object,...) {
   cat(nrow(object$y), "sites\n")
   cat("Maximum number of periods per site:",numY(object),"\n\n")
   cat("Number of removals per period:","\n")
-  print(data.frame(Period=1:numY(object),Removed=colSums(object$y)))
+  print(data.frame(Period=1:numY(object),Removed=colSums(object$y,na.rm=TRUE)))
   cat("\n")
-  cat("Total removed:",sum(object$y),"\n")
+  cat("Total removed:",sum(object$y,na.rm=TRUE),"\n")
   cat("Sites with at least one detection:",
       sum(apply(getY(object), 1, function(x) any(x > 0, na.rm=TRUE))),
       "\n\n")
@@ -346,9 +346,9 @@ print.eFrameRM<- function(object,...) {
   cat("Maximum number of periods per site:",numY(object),"\n")
   cat("Mean replicate counts per period:",mean(object$Z),"\n\n")
   cat("Number of removals per period:","\n")
-  print(data.frame(Period=1:numY(object),Removed=colSums(object$y)))
+  print(data.frame(Period=1:numY(object),Removed=colSums(object$y, na.rm=TRUE)))
   cat("\n")
-  cat("Total removed:",sum(object$y),"\n\n")
+  cat("Total removed:",sum(object$y, na.rm=TRUE),"\n\n")
   cat("Sites with at least one detection:",
       sum(apply(getY(object), 1, function(x) any(x > 0, na.rm=TRUE))),
       "\n\n")
@@ -385,9 +385,9 @@ summary.eFrameRM<- function(object,...) {
   cat("Maximum number of periods per site:",numY(object),"\n")
   cat("Mean replicate counts per period:",mean(object$Z),"\n\n")
   cat("Number of removals per period:","\n")
-  print(data.frame(Period=1:numY(object),Removed=colSums(object$y)))
+  print(data.frame(Period=1:numY(object),Removed=colSums(object$y,na.rm=TRUE)))
   cat("\n")
-  cat("Total removed:",sum(object$y),"\n\n")
+  cat("Total removed:",sum(object$y,na.rm=TRUE),"\n\n")
   cat("Sites with at least one detection:",
       sum(apply(getY(object), 1, function(x) any(x > 0, na.rm=TRUE))),
       "\n\n")
