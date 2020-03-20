@@ -127,7 +127,7 @@ getDesign.eFrameRM<- function(emf, lamformula, detformula, na.rm=TRUE) {
         V.offset <- out$V.offset
         Xm<- out$Xm
         Xm.offset<- out$Xm.offset
-        Vm<- Vm
+        Vm<- out$Vm
         y.sites<- out$y.sites
         ym.sites<- out$ym.sites
         removed.sites <- out$removed.sites
@@ -333,7 +333,7 @@ handleNA.eFrameRM<- function(emf, X, X.offset, V, V.offset, Vm) {
    removed.sites<- unique(c(y.removed.sites,ym.removed.sites))
 
   list(y = y, ym=ym, X = Xr, X.offset = Xr.offset, V = V, V.offset = V.offset,
-       Xm=Xm, Xm.offset = Xm.offset, Vm=Vm, y.sites = y.sites, ym.sites = ym.sites,
+       Xm=Xm, Xm.offset = Xm.offset, Vm = Vm, y.sites = y.sites, ym.sites = ym.sites,
        removed.sites = removed.sites)
 }
 
