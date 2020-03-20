@@ -45,61 +45,79 @@ remPoisM <- function(lamformula, detformula, data, K=25, starts, method = "BFGS"
 {
     if(!is(data, "eFrameRM"))
 		    stop("Data is not a data frame or eFrameRM.")
-    designMats <- getDesign(data, lamformula, detformula)
-    X <- designMats$X; V <- designMats$V; y <- designMats$y
-    y1 <- designMats$y1; V1 <- designMats$V1; cells<- designMats$cells; Z<- designMats$Z
-    X.offset <- designMats$X.offset; V.offset <- designMats$V.offset
+    D <- getDesign(data, lamformula, detformula)
+    y <- D$y
+    ym <- D$ym
+    X <- D$X
+    Xm<- D$Xm
+    V <- D$V;
+    Vm<- D$Vm
+    Z<- D$Z
+    X.offset <- D$X.offset
+    Xm.offset <- D$Xm.offset
+    V.offset <- D$V.offset
+    y.sites<- D$y.sites
+    ym.sites<- D$ym.sites
+
     if (is.null(X.offset)) {
         X.offset <- rep(0, nrow(X))
-        }
+    }
+    if (is.null(Xm.offset)) {
+      Xm.offset <- rep(0, nrow(Xm))
+    }
     if (is.null(V.offset)) {
         V.offset <- rep(0, nrow(V))
-        }
-    J <- ncol(y)
-    R <- ncol(y)
-    M <- nrow(y)
-    piFun <- data$piFun
+    }
 
+    M <- nrow(y)
+    R <- ncol(y)
+    P <- nrow(ym)
+    Q <- ncol(ym)
+
+    rsites<- ym.sites %in% y.sites # sites with both removal and monitoring
+
+    piFun <- data$piFun
     lamParms <- colnames(X)
-    detParms <- c(colnames(V), colnames(V1))
+    detParms <- c(colnames(V), colnames(Vm))
+
     nDP <- ncol(V)
     nAP <- ncol(X)
-    nDP1 <- ncol(V1)
+    nDP1 <- ncol(Vm)
 
     nP <- nDP + nAP +  nDP1
 
     n <- 0:K
-    P <- nrow(y1)
-    Q<- ncol(y1)
 
     if(!missing(starts) && length(starts) != nP)
         stop(paste("The number of starting values should be", nP))
 
     yvec <- as.numeric(y)
     navec <- is.na(yvec)
-    y1vec <- as.numeric(y1)
-    navec1 <- is.na(y1vec)
+    ymvec <- as.numeric(ym)
+    navecm <- is.na(ymvec)
 
     nll <- function(parms) {
         lambda <- exp(X %*% parms[1 : nAP] + X.offset)
         p <- plogis(V %*% parms[(nAP + 1) : (nDP + nAP)] + V.offset)
         p.matrix <- matrix(p, M, R, byrow = TRUE)
         pi <- do.call(piFun, list(p = p.matrix))
-        logLikeR <- dpois(y, matrix(lambda, M, J) * pi, log = TRUE)
+        logLikeR <- dpois(y, matrix(lambda, M, R) * pi, log = TRUE)
         logLikeR[navec] <- 0
         logLikeR<- sum(logLikeR)
-        # add in extra monitoring in y1
-        r.ij <- matrix(plogis(V1 %*% parms[(nDP + nAP + 1) : nP]), P, Q,
+        # add in extra monitoring in ym
+        r.ij <- matrix(plogis(Vm %*% parms[(nDP + nAP + 1) : nP]), P, Q,
                        byrow = TRUE)
         r.pi <- do.call(piFun, list(p = r.ij))
         p.ij.list <- lapply(n, function(k) 1 - (1 - r.ij)^k)
-        cp.ij.list <- lapply(p.ij.list, function(pmat) pmat^y1 * (1-pmat)^(Z-y1))
+        cp.ij.list <- lapply(p.ij.list, function(pmat) pmat^ym * (1-pmat)^(Z-ym))
         cp.ij.list <- lapply(cp.ij.list, function(cpmat) {
-          cpmat[navec1] <- 1
+          cpmat[navecm] <- 1
           cpmat
         })
         ## compute P(N = n | lambda * pi) along i
-        lambda.i <- matrix(lambda[cells,], P, R) * r.pi[cells,] # marginal lambda
+        lambda.m <- exp(Xm %*% parms[1 : nAP] + Xm.offset)
+        lambda.i <- matrix(lambda.m, P, Q)
+        lambda.i[rsites,] <- lambda.i[rsites,] * r.pi[rsites,] # marginal lambda for removal sites
         lambda.in <- sapply(n, function(x) dpois(x, lambda.i))
         cp.mat <- sapply(cp.ij.list, as.vector)
         cp.in <- rowSums(cp.mat * lambda.in)
@@ -139,7 +157,7 @@ remPoisM <- function(lamformula, detformula, data, K=25, starts, method = "BFGS"
 
     efit <- list(fitType = "Multinomial Removal + Monitoring",
         call = match.call(), types=typeNames, lamformula = lamformula, detformula=detformula,
-        state=stateEstimates,det=detEstimates, sitesRemoved = designMats$removed.sites,
+        state=stateEstimates,det=detEstimates, sitesRemoved = D$removed.sites,
         AIC = fmAIC, opt = opt, negLogLike = fm$value, nllFun = nll, data = data)
     class(efit) <- c('efitR','efit','list')
     return(efit)

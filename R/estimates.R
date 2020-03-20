@@ -201,7 +201,7 @@ calcN.efitR<- function(obj, off.set=NULL, CI.level=0.95, ...) {
       newdata <- siteCovs(origdata)
     }
   design<- getDesign(obj, newdata)
-  tot.rem<- sum(getY(origdata))
+  tot.rem<- sum(getY(origdata), na.rm=TRUE)
   X<- design$X
   M<- nrow(X)
   if(!is.null(off.set) & length(off.set) == 1) off.set<- rep(off.set, M)
