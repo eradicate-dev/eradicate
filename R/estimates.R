@@ -73,21 +73,21 @@ summary.efit<- function(object, ...)
   type<- object$types
   out.list<- list()
   for(i in 1:length(type)) {
-  ests <- object[[type[i]]]$estimates
-  SEs <- SE(object, type[i])
-  Z <- ests/SEs
-  p <- 2*pnorm(abs(Z), lower.tail = FALSE)
-  invlink <- object[[type[i]]]$invlink
-  link <- switch(invlink,
-                 exp = "log",
-                 logistic = "logit")
-  cat(object[[type[i]]]$name, " (", link, "-scale)", ":\n", sep="")
-  outDF <- data.frame(Estimate = ests, SE = SEs, z = Z, "P(>|z|)" = p,
-                      check.names = FALSE)
-  print(outDF, digits = 3)
-  out.list[[type[i]]]<- outDF
-  invisible(outDF)
-  cat(" ","\n")
+    ests <- object[[type[i]]]$estimates
+    SEs <- SE(object, type[i])
+    Z <- ests/SEs
+    p <- 2*pnorm(abs(Z), lower.tail = FALSE)
+    invlink <- object[[type[i]]]$invlink
+    link <- switch(invlink,
+                   exp = "log",
+                   logistic = "logit")
+    cat(object[[type[i]]]$name, " (", link, "-scale)", ":\n", sep="")
+    outDF <- data.frame(Estimate = ests, SE = SEs, z = Z, "P(>|z|)" = p,
+                        check.names = FALSE)
+    print(outDF, digits = 3)
+    out.list[[type[i]]]<- outDF
+    invisible(outDF)
+    cat(" ","\n")
   }
   invisible(out.list)
 }
@@ -96,37 +96,37 @@ summary.efit<- function(object, ...)
 
 linearComb.efit<- function(obj, coefficients, off.set = NULL, ...)
 {
-    estimates<- obj$state$estimates
-    covMat<- obj$state$covMat
-    if(!is(coefficients, "matrix"))
-        coefficients <- t(as.matrix(coefficients))
-    if(ncol(coefficients) != length(estimates)) stop("error - wrong number of covariates")
-    if (is.null(off.set))
-        off.set <- rep(0, nrow(coefficients))
-    e <- as.vector(coefficients %*% estimates) + off.set
-    v <- coefficients %*% covMat %*% t(coefficients)
-    umlc <- list(estimates = e, covMat = v, coefficients = coefficients,
-                 invlink = obj$state$invlink, invlinkGrad = obj$state$invlinkGrad)
-    class(umlc)<- c("efit", class(umlc))
-    umlc
+  estimates<- obj$state$estimates
+  covMat<- obj$state$covMat
+  if(!is(coefficients, "matrix"))
+    coefficients <- t(as.matrix(coefficients))
+  if(ncol(coefficients) != length(estimates)) stop("error - wrong number of covariates")
+  if (is.null(off.set))
+    off.set <- rep(0, nrow(coefficients))
+  e <- as.vector(coefficients %*% estimates) + off.set
+  v <- coefficients %*% covMat %*% t(coefficients)
+  umlc <- list(estimates = e, covMat = v, coefficients = coefficients,
+               invlink = obj$state$invlink, invlinkGrad = obj$state$invlinkGrad)
+  class(umlc)<- c("efit", class(umlc))
+  umlc
 }
 
 backTransform.efit<- function(obj, ...) {
   # Delta method VAR
-    invlink<- obj$invlink
-    invlinkGrad<- obj$invlinkGrad
-    estimate<- obj$estimates
-    covMat<- obj$covMat
-    e <- do.call(invlink,list(estimate))
-    grad <- do.call(invlinkGrad,list(estimate))
+  invlink<- obj$invlink
+  invlinkGrad<- obj$invlinkGrad
+  estimate<- obj$estimates
+  covMat<- obj$covMat
+  e <- do.call(invlink,list(estimate))
+  grad <- do.call(invlinkGrad,list(estimate))
 
-    if(length(estimate) > 1) {
-      v <- diag(grad) %*% covMat %*% diag(grad)
-    } else {
-      v <- grad^2 * covMat
-    }
-    umbt <- list(estimates = e, covMat = v)
-    umbt
+  if(length(estimate) > 1) {
+    v <- diag(grad) %*% covMat %*% diag(grad)
+  } else {
+    v <- grad^2 * covMat
+  }
+  umbt <- list(estimates = e, covMat = v)
+  umbt
 }
 
 #' @rdname calcN
@@ -179,7 +179,7 @@ calcN.efitM<- function(obj, newdata, off.set=NULL, CI.level=0.95, ...) {
   lc<- linearComb(obj, coefficients=X, off.set=off.set)
   est<- backTransform(lc)
   V<- est$covMat
-  Pocc<- sum(est$estimates)/ M # proportion of sites occupied
+  Pocc<- sum(est$estimates)/ M # mean occupancy
   varN<- sum(est$covMat) * (1/M^2) # delta method VAR
   seN<- sqrt(varN)
   z <- qnorm((1-CI.level)/2, lower.tail = FALSE)
@@ -193,15 +193,15 @@ calcN.efitM<- function(obj, newdata, off.set=NULL, CI.level=0.95, ...) {
 #' @export
 calcN.efitR<- function(obj, off.set=NULL, CI.level=0.95, ...) {
   # Currently only makes sense to predict to original data
-    origdata <- obj$data
-    M <- numSites(origdata)
-    if(is.null(siteCovs(origdata))) {
-      newdata <- data.frame(Intercept = rep(1, M))
-    } else {
-      newdata <- siteCovs(origdata)
-    }
+  origdata <- obj$data
+  M <- numSites(origdata)
+  if(is.null(siteCovs(origdata))) {
+    newdata <- data.frame(Intercept = rep(1, M))
+  } else {
+    newdata <- siteCovs(origdata)
+  }
   design<- getDesign(obj, newdata)
-  tot.rem<- sum(getY(origdata), na.rm=TRUE)
+  tot.rem<- sum(getY(origdata))
   X<- design$X
   M<- nrow(X)
   if(!is.null(off.set) & length(off.set) == 1) off.set<- rep(off.set, M)
@@ -220,31 +220,18 @@ calcN.efitR<- function(obj, off.set=NULL, CI.level=0.95, ...) {
   upr1<- Nresid/z
 
   bigN<- data.frame(N=round(Nhat,1),se=round(seN,1), lcl=round(lwr,1), ucl=round(upr,1))
-  littleN<- data.frame(N = round(Nresid,1),se=round(Nresid*cv,1),lcl=round(lwr1,1),ucl=round(upr1,1))
+  littleN<- data.frame(N = round(Nresid,1),se=round(Nresid*cv,1),lcl=round(lwr1,1), ucl=round(upr1,1))
   list(cellpreds=est$estimates, Nhat=bigN, Nresid=littleN)
 }
 
 #' @rdname SE
 #' @export
-SE.efit<- function(obj, type=c("state","det"), ...){
-  type <- match.arg(type, c("state", "det"))
-  if(identical(type,"state"))
-    v<- obj$state$covMat
-  else if(identical(type,"det"))
-    v<- obj$det$covMat
-    sqrt(diag(v))
+SE.efit<- function(obj, type=c("state","det","avail","stay"), ...){
+  type <- match.arg(type)
+  v<- obj[[type]]$covMat
+  sqrt(diag(v))
 }
 
-#' @rdname SE
-#' @export
-SE.efitREST<- function(obj, type=c("state","stay"), ...){
-  type <- match.arg(type, c("state", "stay"))
-  if(identical(type,"state"))
-    v<- obj$state$covMat
-  else if(identical(type,"stay"))
-    v<- obj$stay$covMat
-    sqrt(diag(v))
-}
 
 #' profileCI
 #'
@@ -257,34 +244,34 @@ SE.efitREST<- function(obj, type=c("state","stay"), ...){
 #' @export
 #'
 profileCI<- function(object, type, level = 0.95) {
-    parm <- 1:length(object[[type]]$estimates)
-    nllFun <- nllFun(object)
-    ests <- mle(object)
-    nP <- length(parm)
-    ci <- matrix(NA, nP, 2)
-    types <- object$types
-    numbertable <- list()
-    for(i in 1:length(types)) {
-      length.est <- length(object[[types[i]]]$estimates)
-      numbertable[[i]] <- data.frame(type = rep(types[i], length.est), num = seq(length.est))
-    }
-     numbertable<- do.call('rbind', numbertable)
-     allparms<- which(numbertable$type == type & numbertable$num %in% parm)
-     multiple<- c(2,4,8,12)
-    for(i in 1:nP) {
-      cat("Profiling parameter",i,"of",nP,"...")
-      se <- SE(object, type)
-      whichPar<- allparms[i]
-      for(mult in multiple) {
-        ci[i,] <- calc.profileCI(nllFun, whichPar=whichPar, MLE=ests,
-                          interval=ests[whichPar] + mult*se[i]*c(-1,1), level=level)
-        if(all(is.finite(ci[i,]))) break
-      }
-      cat(" done.\n")
-    }
-    colnames(ci) <- c((1-level)/2, 1- (1-level)/2)
-    if(any(!is.finite(ci)))
-      warning("At least one endpoint of profile confidence interval is on the boundary.",
-              call. = FALSE)
-    return(ci)
+  parm <- 1:length(object[[type]]$estimates)
+  nllFun <- nllFun(object)
+  ests <- mle(object)
+  nP <- length(parm)
+  ci <- matrix(NA, nP, 2)
+  types <- object$types
+  numbertable <- list()
+  for(i in 1:length(types)) {
+    length.est <- length(object[[types[i]]]$estimates)
+    numbertable[[i]] <- data.frame(type = rep(types[i], length.est), num = seq(length.est))
   }
+  numbertable<- do.call('rbind', numbertable)
+  allparms<- which(numbertable$type == type & numbertable$num %in% parm)
+  multiple<- c(2,4,8,12)
+  for(i in 1:nP) {
+    cat("Profiling parameter",i,"of",nP,"...")
+    se <- SE(object, type)
+    whichPar<- allparms[i]
+    for(mult in multiple) {
+      ci[i,] <- calc.profileCI(nllFun, whichPar=whichPar, MLE=ests,
+                               interval=ests[whichPar] + mult*se[i]*c(-1,1), level=level)
+      if(all(is.finite(ci[i,]))) break
+    }
+    cat(" done.\n")
+  }
+  colnames(ci) <- c((1-level)/2, 1- (1-level)/2)
+  if(any(!is.finite(ci)))
+    warning("At least one endpoint of profile confidence interval is on the boundary.",
+            call. = FALSE)
+  return(ci)
+}
