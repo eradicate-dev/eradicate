@@ -40,7 +40,7 @@
 #'
 #' @export
 #'
-remPoisM <- function(lamformula, detformula, data, K=25, starts, method = "BFGS",
+remPoisM <- function(lamformula, detformula, data, starts, method = "BFGS",
     se = TRUE, ...)
 {
     if(!is(data, "eFrameRM"))
@@ -69,6 +69,10 @@ remPoisM <- function(lamformula, detformula, data, K=25, starts, method = "BFGS"
         V.offset <- rep(0, nrow(V))
     }
 
+    linkFunc <- cloglog
+    invlink <- "cloglog"
+    linkGrad <- "cloglog.grad"
+
     M <- nrow(y)
     R <- ncol(y)
     P <- nrow(ym)
@@ -86,8 +90,6 @@ remPoisM <- function(lamformula, detformula, data, K=25, starts, method = "BFGS"
 
     nP <- nDP + nAP +  nDP1
 
-    n <- 0:K
-
     if(!missing(starts) && length(starts) != nP)
         stop(paste("The number of starting values should be", nP))
 
@@ -98,33 +100,22 @@ remPoisM <- function(lamformula, detformula, data, K=25, starts, method = "BFGS"
 
     nll <- function(parms) {
         lambda <- exp(X %*% parms[1 : nAP] + X.offset)
-        p <- plogis(V %*% parms[(nAP + 1) : (nDP + nAP)] + V.offset)
+        p <- linkFunc(V %*% parms[(nAP + 1) : (nDP + nAP)] + log(Z))
         p.matrix <- matrix(p, M, R, byrow = TRUE)
         pi <- do.call(piFun, list(p = p.matrix))
-        logLikeR <- dpois(y, matrix(lambda, M, R) * pi, log = TRUE)
+        lambda.m<- matrix(lambda, M, R) * pi
+        logLikeR <- dpois(y, lambda.m, log = TRUE)
         logLikeR[navec] <- 0
         logLikeR<- sum(logLikeR)
-        # add in extra monitoring in ym
-        r.ij <- matrix(plogis(Vm %*% parms[(nDP + nAP + 1) : nP]), P, Q,
-                       byrow = TRUE)
-        r.pi <- do.call(piFun, list(p = r.ij))
-        p.ij.list <- lapply(n, function(k) 1 - (1 - r.ij)^k)
-        cp.ij.list <- lapply(p.ij.list, function(pmat) pmat^ym * (1-pmat)^(Z-ym))
-        cp.ij.list <- lapply(cp.ij.list, function(cpmat) {
-          cpmat[navecm] <- 1
-          cpmat
-        })
-        ## compute P(N = n | lambda * pi) along i
-        lambda.m <- exp(Xm %*% parms[1 : nAP] + Xm.offset)
-        lambda.i <- matrix(lambda.m, P, Q)
-        lambda.i[rsites,] <- lambda.i[rsites,] * r.pi[rsites,] # marginal lambda for removal sites
-        lambda.in <- sapply(n, function(x) dpois(x, lambda.i))
-        cp.mat <- sapply(cp.ij.list, as.vector)
-        cp.in <- rowSums(cp.mat * lambda.in)
-        loglikeM<- sum(log(cp.in))
-        -(logLikeR + loglikeM)
+        # add in extra monitoring in ym which occurs just before removal
+        pm <- linkFunc(Vm %*% parms[(nDP + nAP + 1) : nP] + log(Z))
+        pm.matrix <- matrix(pm, P, Q, byrow=TRUE)
+        pi.m <- do.call(piFun, list(p = pm.matrix))
+        logLikeM<- dpois(ym, matrix(lambda, M, R) * pi.m, log=TRUE)
+        logLikeM[navec]<- 0
+        logLikeM<- sum(logLikeM)
+        -(logLikeR + logLikeM)
         }
-
 
     if(missing(starts))
         starts <- rep(0, nP)

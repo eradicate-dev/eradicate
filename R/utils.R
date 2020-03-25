@@ -83,11 +83,18 @@ logistic.grad <- function(x) {
   exp(-x)/(exp(-x)+1)^2
 }
 
-
-log.grad <- function(x) { # duh! (but for clarity)
-  1/x
+#Complimentary log log link
+cloglog <- function(x){
+  1-exp(-exp(x))
 }
 
+cloglog.grad <- function(x){
+  exp(-exp(x))
+}
+
+log.grad <- function(x) {
+  1/x
+}
 
 explink <- function(x) exp(x)
 
