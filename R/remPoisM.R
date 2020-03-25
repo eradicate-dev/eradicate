@@ -40,82 +40,82 @@
 #'
 #' @export
 #'
-remPoisM <- function(lamformula, detformula, data, K=25, starts, method = "BFGS",
+remPoisM <- function(lamformula, detformula, data, starts, method = "BFGS",
     se = TRUE, ...)
 {
     if(!is(data, "eFrameRM"))
 		    stop("Data is not a data frame or eFrameRM.")
-    designMats <- getDesign(data, lamformula, detformula)
-    X <- designMats$X; V <- designMats$V; y <- designMats$y
-    y1 <- designMats$y1; V1 <- designMats$V1; cells<- designMats$cells; Z<- designMats$Z
-    X.offset <- designMats$X.offset; V.offset <- designMats$V.offset
+    D <- getDesign(data, lamformula, detformula)
+    y <- D$y
+    ym <- D$ym
+    X <- D$X
+    Xm<- D$Xm
+    V <- D$V;
+    Vm<- D$Vm
+    Z<- D$Z
+    X.offset <- D$X.offset
+    Xm.offset <- D$Xm.offset
+    V.offset <- D$V.offset
+    y.sites<- D$y.sites
+    ym.sites<- D$ym.sites
+
     if (is.null(X.offset)) {
         X.offset <- rep(0, nrow(X))
-        }
+    }
+    if (is.null(Xm.offset)) {
+      Xm.offset <- rep(0, nrow(Xm))
+    }
     if (is.null(V.offset)) {
         V.offset <- rep(0, nrow(V))
-        }
-    J <- ncol(y)
-    R <- ncol(y)
-    M <- nrow(y)
-    piFun <- data$piFun
-    #y1 <- truncateToBinary(y1)
+    }
 
+    linkFunc <- cloglog
+    invlink <- "cloglog"
+    linkGrad <- "cloglog.grad"
+
+    M <- nrow(y)
+    R <- ncol(y)
+    P <- nrow(ym)
+    Q <- ncol(ym)
+
+    rsites<- ym.sites %in% y.sites # sites with both removal and monitoring
+
+    piFun <- data$piFun
     lamParms <- colnames(X)
-    detParms <- c(colnames(V), colnames(V1))
+    detParms <- c(colnames(V), colnames(Vm))
+
     nDP <- ncol(V)
     nAP <- ncol(X)
-    nDP1 <- ncol(V1)
+    nDP1 <- ncol(Vm)
 
     nP <- nDP + nAP +  nDP1
-
-    n <- 0:K
-    P <- nrow(y1)
-    Q<- ncol(y1)
 
     if(!missing(starts) && length(starts) != nP)
         stop(paste("The number of starting values should be", nP))
 
     yvec <- as.numeric(y)
     navec <- is.na(yvec)
-    y1vec <- as.numeric(y1)
-    navec1 <- is.na(y1vec)
+    ymvec <- as.numeric(ym)
+    navecm <- is.na(ymvec)
 
     nll <- function(parms) {
         lambda <- exp(X %*% parms[1 : nAP] + X.offset)
-        p <- plogis(V %*% parms[(nAP + 1) : (nDP + nAP)] + V.offset)
+        p <- linkFunc(V %*% parms[(nAP + 1) : (nDP + nAP)] + log(Z))
         p.matrix <- matrix(p, M, R, byrow = TRUE)
         pi <- do.call(piFun, list(p = p.matrix))
-        logLikeR <- dpois(y, matrix(lambda, M, J) * pi, log = TRUE)
+        lambda.m<- matrix(lambda, M, R) * pi
+        logLikeR <- dpois(y, lambda.m, log = TRUE)
         logLikeR[navec] <- 0
         logLikeR<- sum(logLikeR)
-        # add in monitoring
-        ## compute individual level detection probabilities
-        r.ij <- matrix(plogis(V1 %*% parms[(nDP + nAP + 1) : nP]), P, Q,
-                       byrow = TRUE)
-
-        ## compute list of detection probabilities along N
-        p.ij.list <- lapply(n, function(k) 1 - (1 - r.ij)^k)
-
-        ## compute P(y_{ij} | N) (cell probabilities) along N
-        cp.ij.list <- lapply(p.ij.list, function(pmat) pmat^y1 * (1-pmat)^(Z-y1))
-
-        ## replace NA cell probabilities with 1.
-        cp.ij.list <- lapply(cp.ij.list, function(cpmat) {
-          cpmat[navec1] <- 1
-          cpmat
-        })
-
-        ## compute P(N = n | lambda_i) along i
-        lambda.i <- matrix(lambda[cells,], P, R) * pi[cells,]
-        lambda.in <- sapply(n, function(x) dpois(x, lambda.i))
-        cp.mat <- sapply(cp.ij.list, as.vector)
-        cp.in <- rowSums(cp.mat * lambda.in)
-        loglikeM<- sum(log(cp.in))
-
-        -(logLikeR + loglikeM)
+        # add in extra monitoring in ym which occurs just before removal
+        pm <- linkFunc(Vm %*% parms[(nDP + nAP + 1) : nP] + log(Z))
+        pm.matrix <- matrix(pm, P, Q, byrow=TRUE)
+        pi.m <- do.call(piFun, list(p = pm.matrix))
+        logLikeM<- dpois(ym, matrix(lambda, M, R) * pi.m, log=TRUE)
+        logLikeM[navec]<- 0
+        logLikeM<- sum(logLikeM)
+        -(logLikeR + logLikeM)
         }
-
 
     if(missing(starts))
         starts <- rep(0, nP)
@@ -148,7 +148,7 @@ remPoisM <- function(lamformula, detformula, data, K=25, starts, method = "BFGS"
 
     efit <- list(fitType = "Multinomial Removal + Monitoring",
         call = match.call(), types=typeNames, lamformula = lamformula, detformula=detformula,
-        state=stateEstimates,det=detEstimates, sitesRemoved = designMats$removed.sites,
+        state=stateEstimates,det=detEstimates, sitesRemoved = D$removed.sites,
         AIC = fmAIC, opt = opt, negLogLike = fm$value, nllFun = nll, data = data)
     class(efit) <- c('efitR','efit','list')
     return(efit)

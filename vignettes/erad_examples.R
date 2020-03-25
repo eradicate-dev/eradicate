@@ -52,11 +52,11 @@ calcN(m2)
 calcN(m3)
 
 ## -----------------------------------------------------------------------------
-counts<- rest$y
-stay<- rest$stay
-cens<- rest$cens
-A<- rest$area # in km2
-active<- rest$active_hours
+counts<- san_nic_rest$y
+stay<- san_nic_rest$stay
+cens<- san_nic_rest$cens
+A<- san_nic_rest$area # in km2
+active<- san_nic_rest$active_hours
 
 emf<- eFrameREST(counts, stay, cens, A, active, siteCovs = site.data)
 

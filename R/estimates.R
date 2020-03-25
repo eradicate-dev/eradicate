@@ -201,7 +201,7 @@ calcN.efitR<- function(obj, off.set=NULL, CI.level=0.95, ...) {
       newdata <- siteCovs(origdata)
     }
   design<- getDesign(obj, newdata)
-  tot.rem<- sum(getY(origdata))
+  tot.rem<- sum(getY(origdata), na.rm=TRUE)
   X<- design$X
   M<- nrow(X)
   if(!is.null(off.set) & length(off.set) == 1) off.set<- rep(off.set, M)
@@ -220,7 +220,7 @@ calcN.efitR<- function(obj, off.set=NULL, CI.level=0.95, ...) {
   upr1<- Nresid/z
 
   bigN<- data.frame(N=round(Nhat,1),se=round(seN,1), lcl=round(lwr,1), ucl=round(upr,1))
-  littleN<- data.frame(N = round(Nresid,1),lcl=round(lwr1,1), ucl=round(upr1,1))
+  littleN<- data.frame(N = round(Nresid,1),se=round(Nresid*cv,1),lcl=round(lwr1,1),ucl=round(upr1,1))
   list(cellpreds=est$estimates, Nhat=bigN, Nresid=littleN)
 }
 

@@ -78,11 +78,8 @@ getDesign.eFrameRM<- function(emf, lamformula, detformula, na.rm=TRUE) {
 
       M <- numSites(emf)
       R <- numY(emf)
-      P <- nrow(emf$y1)
-      Q <- ncol(emf$y1)
       Z <- emf$Z
-      cells<- emf$cells
-      y1<- emf$y1
+      ym<- emf$ym
 
       ## Compute removal design matrix
       if(is.null(siteCovs(emf))) {
@@ -116,26 +113,36 @@ getDesign.eFrameRM<- function(emf, lamformula, detformula, na.rm=TRUE) {
       }
 
       ## Compute monitoring detection design matrix (intercept only)
-      obsCovs <- data.frame(placeHolder = rep(1, P*Q))
-      detformula2<- as.formula(~1)
-      V1.mf <- model.frame(detformula2, obsCovs, na.action = NULL)
-      V1 <- model.matrix(detformula2, V1.mf)
+      obsCovs <- data.frame(placeHolder = rep(1, M*R))
+      Vm.mf <- model.frame(as.formula(~1), obsCovs, na.action = NULL)
+      Vm <- model.matrix(as.formula(~1), Vm.mf)
 
       if (na.rm) {
-        out <- handleNA(emf, X, X.offset, V, V.offset)
+        out <- handleNA(emf, X, X.offset, V, V.offset, Vm)
         y <- out$y
+        ym<- out$ym
         X <- out$X
         X.offset <- out$X.offset
         V <- out$V
         V.offset <- out$V.offset
+        Xm<- out$Xm
+        Xm.offset<- out$Xm.offset
+        Vm<- out$Vm
+        y.sites<- out$y.sites
+        ym.sites<- out$ym.sites
         removed.sites <- out$removed.sites
       } else {
         y<- getY(emf)
+        Xm<- X
+        Xm.offset<- X.offset
+        y.sites<- seq_len(M)
+        ym.sites<- y.sites
         removed.sites=integer(0)
       }
 
-      return(list(y = y, y1=y1, cells=cells, X = X, X.offset = X.offset, V = V,
-                  V.offset = V.offset, V1=V1, Z=Z, removed.sites = removed.sites))
+      return(list(y = y, ym=ym, X = X, X.offset = X.offset, V = V,
+                  V.offset = V.offset, Xm=Xm, Xm.offset=Xm.offset, Vm=Vm, Z=Z,
+                  y.sites=y.sites, ym.sites=ym.sites, removed.sites = removed.sites))
 }
 
 #-------------------------------------------------------------------------
@@ -323,6 +330,80 @@ handleNA.eFrame<- function(emf, X, X.offset, V, V.offset) {
 
   list(y = y, X = X, X.offset = X.offset, V = V, V.offset = V.offset,
        removed.sites = which(sites.to.remove))
+}
+#--------------------------------------------------------
+handleNA.eFrameRM<- function(emf, X, X.offset, V, V.offset, Vm) {
+
+  J <- numY(emf)
+  M <- numSites(emf)
+  sites<- seq_len(M)
+
+  X.long <- X[rep(1:M, each = J),]
+  X.long.na <- is.na(X.long)
+
+  V.long <- V[rep(1:M, each = J),]
+  V.long.na <- is.na(V.long)
+
+  y.long <- as.vector(t(getY(emf)))
+  y.long.na <- is.na(y.long)
+
+  ym.long <- as.vector(t(emf$ym))
+  ym.long.na <- is.na(ym.long)
+
+  covs.na <- apply(cbind(X.long.na, V.long.na), 1, any)
+
+  ## are any NA in covs not in y already?
+  y.new.na <- covs.na & !y.long.na
+  ym.new.na <- covs.na & !ym.long.na
+
+  if(sum(y.new.na) > 0 | sum(ym.new.na) > 0) {
+    y.long[y.new.na] <- NA
+    ym.long[ym.new.na] <- NA
+    warning("Some observations have been discarded because
+                corresponding covariates were missing.", call. = FALSE)
+  }
+
+  y <- matrix(y.long, M, J, byrow = TRUE)
+  y.remove <- apply(y, 1, function(x) all(is.na(x)))
+
+  ym <- matrix(ym.long, M, J, byrow = TRUE)
+  ym.remove <- apply(ym, 1, function(x) all(is.na(x)))
+
+  y <- y[!y.remove, ,drop = FALSE]
+  Xr <- X[!y.remove, ,drop = FALSE]
+  Xr.offset <- X.offset[!y.remove]
+  V <- V[!y.remove, ,drop = FALSE]
+  V.offset <- V.offset[!y.remove]
+  # now do ym
+  ym <- ym[!ym.remove, ,drop = FALSE]
+  Xm <- X[!ym.remove, ,drop = FALSE]
+  Xm.offset <- X.offset[!ym.remove]
+  Vm <- Vm[!ym.remove, ,drop = FALSE]
+
+  if(sum(y.remove) > 0){
+    y.sites.remove<- which(y.remove)
+    y.sites<- sites[-y.sites.remove]
+    y.removed.sites<- y.sites.remove
+    warning(paste(sum(y.remove)," removal sites have been discarded because of missing data."),call. = FALSE)
+  } else {
+    y.sites<- sites
+    y.removed.sites<- integer(0)
+  }
+
+  if(sum(ym.remove) > 0) {
+    ym.sites.remove<- which(ym.remove)
+    ym.sites<- sites[-ym.sites.remove]
+    ym.removed.sites<- ym.sites.remove
+    warning(paste(sum(ym.remove),"monitoring sites have been discarded because of missing data."),call. = FALSE)
+  } else {
+    ym.sites<- sites
+    ym.removed.sites<- integer(0)
+  }
+   removed.sites<- unique(c(y.removed.sites,ym.removed.sites))
+
+  list(y = y, ym=ym, X = Xr, X.offset = Xr.offset, V = V, V.offset = V.offset,
+       Xm=Xm, Xm.offset = Xm.offset, Vm = Vm, y.sites = y.sites, ym.sites = ym.sites,
+       removed.sites = removed.sites)
 }
 
 #---------

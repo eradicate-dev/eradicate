@@ -94,13 +94,13 @@ The return values for `calcN` contain the predicted occupancy or abundance for e
 
 In addition to these three models, `eradicate` additionally includes another model that is exclusively applied to camera data.  Introduced by Nakashima et al. (2018), the REST model (short for Random Encounter and Staying Time model) uses data on the number of encounters per camera as well as additional information on the time taken for each detected individual to cross the cameras field of view (the staying time).  Under the assumption that detection in the field of view (or some known proportion of it) is perfect, the REST model can estimate animal density.  Further information on this model is available in Nakashima et al (2018) and in the help file. 
 
-We fit the REST model to the example data found in the `rest` dataset.
+We fit the REST model to the example data found in the `san_nic_rest` dataset.
 ```{r}
-counts<- rest$y
-stay<- rest$stay
-cens<- rest$cens
-A<- rest$area # in km2
-active<- rest$active_hours
+counts<- san_nic_rest$y
+stay<- san_nic_rest$stay
+cens<- san_nic_rest$cens
+A<- san_nic_rest$area # in km2
+active<- san_nic_rest$active_hours
 
 emf<- eFrameREST(counts, stay, cens, A, active, siteCovs = site.data)
 
