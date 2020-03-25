@@ -4,7 +4,7 @@
 \alias{eFrameRM}
 \title{eFrameRM}
 \usage{
-eFrameRM(y, y1, cells, Z, type, siteCovs = NULL)
+eFrameRM(y, ym, Z, type, siteCovs = NULL)
 }
 \arguments{
 \item{y}{An MxJ matrix of the observed removal data, where M is the
@@ -12,15 +12,10 @@ number of sites and J is the maximum number of removal (primary)
 periods per site. Each primary period can consist of k secondary
 periods but this is not used here.}
 
-\item{y1}{An NxJ matrix of the additional monitoring data, where N is the
-number of monitored sites and J is the maximum number of primary periods
-per site as for \code{y}.}
-
-\item{cells}{vector indictaing which of the \code{y} sites were subject
-to monitoring}
+\item{ym}{An MxJ matrix of the additional monitoring data,}
 
 \item{Z}{integer indicating the number of secondary periods per
-primary period for \code{y1}}
+primary period for \code{ym}}
 
 \item{type}{sampling method. Currently supports "removal" for removal
 sampling and "double" for double observer sampling}
@@ -35,11 +30,10 @@ that include additional monitoring at some or all of the sites.
 }
 \examples{
  rem<- san_nic_rem$rem
- y1<- san_nic_rem$y1 # detections from additional monitoring
- mtraps<- san_nic_rem$cells
+ ym<- san_nic_rem$ym # detections from additional monitoring
  nights<- san_nic_rem$nights
 
- emf<-eFrameRM(rem, y1, mtraps, nights, type="removal")
+ emf<-eFrameRM(rem, ym, nights, type="removal")
  summary(emf)
 
 }

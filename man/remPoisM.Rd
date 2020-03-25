@@ -18,15 +18,15 @@ an intercept-only model is assumed for the detection component of the occupancy 
 and site-level covariates. see \code{\link{eFrameRM}} for how to format
 the required data.}
 
-\item{K}{Integer upper index of integration for abundance. This should be
-set high enough so that it does not affect the parameter estimates. Note
-that computation time will increase with K.}
-
 \item{starts}{Initial values for parameters}
 
 \item{method}{Optimisation method}
 
 \item{se}{flag to return the standard error (hessian).}
+
+\item{K}{Integer upper index of integration for abundance. This should be
+set high enough so that it does not affect the parameter estimates. Note
+that computation time will increase with K.}
 }
 \value{
 a \code{efit} model object.

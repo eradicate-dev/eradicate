@@ -62,7 +62,7 @@ remGP <- function(lamformula, phiformula, detformula, data,
   lk <- length(k)
   M <- nrow(y)
   T <- data$numPrimary
-  R <- numY(data) / T
+  R <- ncol(y) / T
 
   y <- array(y, c(M, R, T))
   y <- aperm(y, c(1,3,2))
