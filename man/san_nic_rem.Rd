@@ -4,7 +4,8 @@
 \name{san_nic_rem}
 \alias{san_nic_rem}
 \title{San_nic_rem}
-\format{A list consisting of 2 elements
+\format{
+A list consisting of 2 elements
  \describe{
  \item{rem}{An \code{M} x \code{J} matrix of counts of individuals removed at each trap
  location for each primary period where M is the number of traps and J is the number of
@@ -17,7 +18,8 @@
  \item{nights}{The number of secondary periods of sampling for each of the \code{J} primary
  periods}
  \item{traps}{a data.frame with \code{M} rows of trap locations}
- }}
+ }
+}
 \usage{
 san_nic_rem
 }

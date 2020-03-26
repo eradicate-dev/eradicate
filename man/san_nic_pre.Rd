@@ -4,11 +4,13 @@
 \name{san_nic_pre}
 \alias{san_nic_pre}
 \title{San_nic_pre}
-\format{A list consisting of 2 elements
+\format{
+A list consisting of 2 elements
  \describe{
  \item{counts}{A matrix of counts with one row for each camera}
  \item{traps}{a data.frame of camera coordinates}
- }}
+ }
+}
 \usage{
 san_nic_pre
 }

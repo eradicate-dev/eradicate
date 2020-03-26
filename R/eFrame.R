@@ -215,6 +215,54 @@ eFrameRGP<- function(y, numPrimary, siteCovs = NULL, primaryCovs = NULL, type) {
   emf
 }
 
+
+#' eFrameRGPM
+#'
+#' \code{eFrameRGP} creates an eFrameRGP data object for use with generalized removal
+#' models using the robust design where sampling occurs over a number of primary and
+#' secondary periods.
+#'
+#'
+#' @param y An NxJ matrix of the additional monitoring data, where N is the
+#'    number of monitored sites and J is the maximum number of primary periods
+#'    per site as for \code{y}.
+#' @param cells vector indictaing which of the \code{y} sites were subject
+#'  to monitoring
+#' @param Z integer indicating the number of secondary periods per
+#'  primary period for \code{y1}
+#'
+#' @return a \code{eFrameRGP} holding data containing the response and
+#'  covariates required for removal models
+#'
+#' @examples
+#'  rem<- san_nic_rem$rem
+#'  y1<- san_nic_rem$y1 # detections from additional monitoring
+#'  mtraps<- san_nic_rem$cells
+#'  nights<- san_nic_rem$nights
+#'
+#'  emf<-eFrameRM(rem, y1, mtraps, nights, type="removal")
+#'  summary(emf)
+#'
+#' @export
+#'
+eFrameRGPM<- function(y, ym, numPrimary, siteCovs = NULL, primaryCovs = NULL, type) {
+
+  if(!missing(type)) {
+    switch(type,
+           removal = piFun <- "removalPiFun",
+           double = piFun <- "doublePiFun")
+  } else stop("Removal type required")
+
+  emf <- eFrame(y, siteCovs)
+  emf$ym<- ym
+  emf$piFun<- piFun
+  emf$samplingMethod<- type
+  emf$numPrimary <- numPrimary
+  emf$primaryCovs <- covsToDF(primaryCovs, "primaryCovs", numPrimary, nrow(y))
+  class(emf) <- c("eFrameRGPM",class(emf))
+  emf
+}
+
 ############################ EXTRACTORS ##################################
 
 siteCovs<- function(object) return(object$siteCovs)

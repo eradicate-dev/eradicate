@@ -3,14 +3,11 @@
 \name{SE}
 \alias{SE}
 \alias{SE.efit}
-\alias{SE.efitREST}
 \title{SE}
 \usage{
 SE(obj, ...)
 
-\method{SE}{efit}(obj, type = c("state", "det"), ...)
-
-\method{SE}{efitREST}(obj, type = c("state", "stay"), ...)
+\method{SE}{efit}(obj, type = c("state", "det", "avail", "stay"), ...)
 }
 \arguments{
 \item{obj}{A fitted model object.}

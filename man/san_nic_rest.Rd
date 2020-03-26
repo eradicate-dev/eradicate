@@ -4,7 +4,8 @@
 \name{san_nic_rest}
 \alias{san_nic_rest}
 \title{san_nic_rest}
-\format{A list consisting of 2 elements
+\format{
+A list consisting of 2 elements
  \describe{
  \item{y}{An \code{M} x \code{J} matrix of counts of individuals detected at each camera
  where M is the number of cameras and J is the maximum number of days the camera was
@@ -20,7 +21,8 @@
  \item{active_hours}{The number of hours in a single 24 hour period that individuals of
  the target species were active for}
  \item{traps}{a data.frame with \code{M} rows of trap locations}
- }}
+ }
+}
 \usage{
 san_nic_rest
 }

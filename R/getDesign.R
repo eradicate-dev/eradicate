@@ -251,6 +251,7 @@ getDesign.eFrameRGP<- function(emf, lamformula, phiformula, detformula, na.rm = 
     if(is.null(siteCovs(emf))) {
       siteCovs <- data.frame(placeHolder = rep(1, M))
     } else siteCovs <- siteCovs(emf)
+
     Xlam.mf <- model.frame(lamformula, siteCovs, na.action = NULL)
     Xlam <- model.matrix(lamformula, Xlam.mf)
     Xlam.offset <- as.vector(model.offset(Xlam.mf))
@@ -287,6 +288,75 @@ getDesign.eFrameRGP<- function(emf, lamformula, phiformula, detformula, na.rm = 
                 removed.sites = out$removed.sites))
   }
 
+
+getDesign.eFrameRGPM<- function(emf, lamformula, phiformula, detformula, na.rm = TRUE) {
+
+  M <- numSites(emf)
+  T <- emf$numPrimary
+  R <- numY(emf) # 2*T for double observer sampling
+  # 1*T for distance sampling
+  # nPasses*T for removal sampling
+
+  ## Compute phi design matrices
+  if(is.null(emf$primaryCovs)) {
+    primaryCovs <- data.frame(placeHolder = rep(1, M*T))
+  } else primaryCovs <- emf$primaryCovs
+
+
+  # add siteCovs in so they can be used as well
+  if(!is.null(emf$siteCovs)) {
+    sC <- emf$siteCovs[rep(1:M, each = T),,drop=FALSE]
+    primaryCovs <- cbind(primaryCovs, sC)
+  }
+
+  Xphi.mf <- model.frame(phiformula, primaryCovs, na.action = NULL)
+  Xphi <- model.matrix(phiformula, Xphi.mf)
+  Xphi.offset <- as.vector(model.offset(Xphi.mf))
+  if(!is.null(Xphi.offset)) Xphi.offset[is.na(Xphi.offset)] <- 0
+
+  # Compute site-level design matrix for lambda
+  if(is.null(siteCovs(emf))) {
+    siteCovs <- data.frame(placeHolder = rep(1, M))
+  } else siteCovs <- siteCovs(emf)
+  Xlam.mf <- model.frame(lamformula, siteCovs, na.action = NULL)
+  Xlam <- model.matrix(lamformula, Xlam.mf)
+  Xlam.offset <- as.vector(model.offset(Xlam.mf))
+  if(!is.null(Xlam.offset)) Xlam.offset[is.na(Xlam.offset)] <- 0
+
+  # add observation level vars
+  obsCovs <- data.frame(placeHolder = rep(1, M*R))
+  # add site and yearlysite covariates, which contain siteCovs
+  cnames <- c(colnames(obsCovs), colnames(primaryCovs))
+  obsCovs <- cbind(obsCovs, primaryCovs[rep(1:(M*T), each = R/T),])
+  colnames(obsCovs) <- cnames
+  # add observation number if not present
+  if(!("obsNum" %in% names(obsCovs)))
+    obsCovs <- cbind(obsCovs, obsNum = as.factor(rep(1:R, M)))
+
+  Xdet.mf <- model.frame(detformula, obsCovs, na.action = NULL)
+  Xdet <- model.matrix(detformula, Xdet.mf)
+  Xdet.offset <- as.vector(model.offset(Xdet.mf))
+  if(!is.null(Xdet.offset)) Xdet.offset[is.na(Xdet.offset)] <- 0
+
+  Xdetm.mf <- model.frame(as.formula(~1), obsCovs, na.action = NULL)
+  Xdetm <- model.matrix(as.formula(~1), Xdetm.mf)
+
+
+  if(na.rm)
+    out <- handleNA(emf, Xlam, Xlam.offset, Xphi, Xphi.offset, Xdet,
+                    Xdet.offset, Xdetm)
+  else
+    out <- list(y=emf$y, ym=emf$ym, Xlam=Xlam, Xlam.offset = Xlam.offset,
+                Xphi=Xphi, Xphi.offset = Xphi.offset, Xdet=Xdet, Xdetm=Xdetm,
+                removed.sites=integer(0))
+
+  return(list(y = out$y, ym=out$ym, Xlam = out$Xlam, Xphi = out$Xphi,
+              Xdet = out$Xdet, Xdetm=out$Xdetm,
+              Xlam.offset = out$Xlam.offset,
+              Xphi.offset = out$Xphi.offset,
+              Xdet.offset = out$Xdet.offset,
+              removed.sites = out$removed.sites))
+}
 
 
 #--------------------------------------------------------
@@ -511,3 +581,64 @@ handleNA.eFrameRGP<- function(emf, Xlam, Xlam.offset, Xphi, Xphi.offset, Xdet, X
          removed.sites = which(sites.to.remove))
 }
 
+#-------------------------------------
+handleNA.eFrameRGPM<- function(emf, Xlam, Xlam.offset, Xphi, Xphi.offset, Xdet, Xdet.offset, Xdetm) {
+
+  M <- numSites(emf)
+  T <- emf$numPrimary
+  R <- numY(emf)
+  J <- R/T
+
+  obsToY <- diag(J)
+  obsToY[upper.tri(obsToY)] <- 1
+  obsToY <- kronecker(diag(T), obsToY)
+
+  # treat Xphi and Xlam together
+  X <- cbind(Xphi, Xlam[rep(1:M, each = T), ])
+
+  X.na <- is.na(X)
+  X.long.na <- X.na[rep(1:(M*T), each = J),]
+
+  Xdet.long.na <- apply(Xdet, 2, function(x) {
+    x.mat <- matrix(x, M, R, byrow = TRUE)
+    x.mat <- is.na(x.mat)
+    x.mat <- x.mat %*% obsToY
+    x.long <- as.vector(t(x.mat))
+    x.long > 0
+  })
+
+  Xdet.long.na <- apply(Xdet.long.na, 1, any)
+
+  y.long <- as.vector(t(getY(emf)))
+  y.long.na <- is.na(y.long)
+
+  covs.na <- apply(cbind(X.long.na, Xdet.long.na), 1, any)
+
+  ## are any NA in covs not in y already?
+  y.new.na <- covs.na & !y.long.na
+
+  if(sum(y.new.na) > 0) {
+    y.long[y.new.na] <- NA
+    warning("Some observations have been discarded because correspoding covariates were missing.", call. = FALSE)
+  }
+
+  y <- matrix(y.long, M, numY(emf), byrow = TRUE)
+  sites.to.remove <- apply(y, 1, function(x) all(is.na(x)))
+
+  num.to.remove <- sum(sites.to.remove)
+  if(num.to.remove > 0) {
+    y <- y[!sites.to.remove,, drop = FALSE]
+    Xlam <- Xlam[!sites.to.remove,, drop = FALSE]
+    Xlam.offset <- Xlam.offset[!sites.to.remove]
+    Xphi <- Xphi[!sites.to.remove[rep(1:M, each = T)],, drop = FALSE]
+    Xphi.offset <- Xphi.offset[!sites.to.remove[rep(1:M, each = T)]]
+    Xdet <- Xdet[!sites.to.remove[rep(1:M, each = R)],,
+                 drop=FALSE]
+    Xdet.offset <- Xdet.offset[!sites.to.remove[rep(1:M, each=R)]]
+    warning(paste(num.to.remove,
+                  "sites have been discarded because of missing data."), call.=FALSE)
+  }
+  list(y = y, ym=ym, Xlam = Xlam, Xlam.offset = Xlam.offset, Xphi = Xphi,
+       Xphi.offset = Xphi.offset, Xdet = Xdet, Xdet.offset = Xdet.offset,
+       Xdetm = Xdetm, removed.sites = which(sites.to.remove))
+}
