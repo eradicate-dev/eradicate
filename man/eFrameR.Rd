@@ -24,6 +24,7 @@ a \code{eFrameR} holding data containing the response and
 }
 \description{
 \code{eFrameR} creates an eFrameR data object for use with removal models.
+This model is designed to be used with data over a single primary period.
 }
 \examples{
  rem<- san_nic_rem$rem

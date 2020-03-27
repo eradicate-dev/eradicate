@@ -34,84 +34,6 @@ eFrame <- function(y, siteCovs = NULL) {
     return(emf)
 }
 
-#' eFrameR
-#'
-#' \code{eFrameR} creates an eFrameR data object for use with removal models.
-#'
-#' @param y An MxJ matrix of the observed removal data, where M is the
-#'    number of sites and J is the maximum number of removal (primary)
-#'    periods per site. Each primary period can consist of k secondary
-#'    periods but this is not used here.
-#' @param type sampling method. Currently supports "removal" for removal
-#' sampling and "double" for double observer sampling
-#' @param SiteCovs A \code{data.frame} of covariates that vary at the
-#'    site level. This should have M rows and one column per covariate
-#'
-#' @return a \code{eFrameR} holding data containing the response and
-#'  covariates required for removal models
-#'
-#' @examples
-#'  rem<- san_nic_rem$rem
-#'  emf<- eFrameR(rem, type="removal")
-#'  summary(emf)
-#'
-#' @export
-#'
-eFrameR <- function(y, type, siteCovs = NULL) {
-    if(!missing(type)) {
-        switch(type,
-            removal = piFun <- "removalPiFun",
-            double = piFun <- "doublePiFun")
-    } else stop("Removal type required")
-
-    emf <- eFrame(y, siteCovs)
-    emf$piFun<- piFun
-    emf$samplingMethod<- type
-    class(emf) <- c("eFrameR",class(emf))
-    emf
-}
-
-#' eFrameRM
-#'
-#' \code{eFrameRM} creates an eFrameRM data object for use with removal models
-#' that include additional monitoring at some or all of the sites.
-#'
-#'
-#' @inheritParams eFrameR
-#' @param ym An MxJ matrix of the additional monitoring data,
-#' @param Z integer indicating the number of secondary periods per
-#'  primary period for \code{ym}
-#'
-#' @return a \code{eFrameRM} holding data containing the response and
-#'  covariates required for removal models
-#'
-#' @examples
-#'  rem<- san_nic_rem$rem
-#'  ym<- san_nic_rem$ym # detections from additional monitoring
-#'  nights<- san_nic_rem$nights
-#'
-#'  emf<-eFrameRM(rem, ym, nights, type="removal")
-#'  summary(emf)
-#'
-#' @export
-#'
-eFrameRM <- function(y, ym, Z, type, siteCovs = NULL) {
-
-  if(!missing(type)) {
-    switch(type,
-           removal = piFun <- "removalPiFun",
-           double = piFun <- "doublePiFun")
-  } else stop("Removal type required")
-
-  emf <- eFrame(y, siteCovs)
-  emf$ym<- ym
-  emf$Z<- Z
-  emf$piFun <- piFun
-  emf$samplingMethod <- type
-  class(emf) <- c("eFrameRM",class(emf))
-  emf
-}
-
 #-------------------------------
 #' eFrameREST
 #'
@@ -168,10 +90,47 @@ eFrameREST <- function(y, stay, cens, area, active_hours, siteCovs = NULL) {
   emf
 }
 
-
-#' eFrameRGP
+#' eFrameR
 #'
-#' \code{eFrameRGP} creates an eFrameRGP data object for use with generalized removal
+#' \code{eFrameR} creates an eFrameR data object for use with removal models.
+#' This model is designed to be used with data over a single primary period.
+#'
+#' @param y An MxJ matrix of the observed removal data, where M is the
+#'    number of sites and J is the maximum number of removal (primary)
+#'    periods per site. Each primary period can consist of k secondary
+#'    periods but this is not used here.
+#' @param type sampling method. Currently supports "removal" for removal
+#' sampling and "double" for double observer sampling
+#' @param SiteCovs A \code{data.frame} of covariates that vary at the
+#'    site level. This should have M rows and one column per covariate
+#'
+#' @return a \code{eFrameR} holding data containing the response and
+#'  covariates required for removal models
+#'
+#' @examples
+#'  rem<- san_nic_rem$rem
+#'  emf<- eFrameR(rem, type="removal")
+#'  summary(emf)
+#'
+#' @export
+#'
+eFrameR <- function(y, type, siteCovs = NULL) {
+  if(!missing(type)) {
+    switch(type,
+           removal = piFun <- "removalPiFun",
+           double = piFun <- "doublePiFun")
+  } else stop("Removal type required")
+
+  emf <- eFrame(y, siteCovs)
+  emf$piFun<- piFun
+  emf$samplingMethod<- type
+  class(emf) <- c("eFrameR",class(emf))
+  emf
+}
+
+#' eFrameGR
+#'
+#' \code{eFrameGR} creates an eFrameGR data object for use with generalized removal
 #' models using the robust design where sampling occurs over a number of primary and
 #' secondary periods.
 #'
@@ -179,12 +138,16 @@ eFrameREST <- function(y, stay, cens, area, active_hours, siteCovs = NULL) {
 #' @param y An NxJ matrix of the additional monitoring data, where N is the
 #'    number of monitored sites and J is the maximum number of primary periods
 #'    per site as for \code{y}.
-#' @param cells vector indictaing which of the \code{y} sites were subject
-#'  to monitoring
-#' @param Z integer indicating the number of secondary periods per
-#'  primary period for \code{y1}
-#'
-#' @return a \code{eFrameRGP} holding data containing the response and
+#' @param numPrimary the number of primary periods. For each primary period, the
+#' population is assumed to be closed.
+#' @param Z integer indicating the amount of monitoring effort occurring for each
+#' monitoring device used during each primary period. Ignored if \code{numPrimary}
+#' is greater than 1.
+#' @param siteCovs A \code{data.frame} of covariates that vary at the
+#'    site level. This should have M rows and one column per covariate.
+#' @param primaryCovs A \code{data.frame} of covariates that vary at the
+#'    site x primary period level.
+#' @return a \code{eFrameGR} holding data containing the response and
 #'  covariates required for removal models
 #'
 #' @examples
@@ -198,7 +161,7 @@ eFrameREST <- function(y, stay, cens, area, active_hours, siteCovs = NULL) {
 #'
 #' @export
 #'
-eFrameRGP<- function(y, numPrimary, siteCovs = NULL, primaryCovs = NULL, type) {
+eFrameGR<- function(y, numPrimary, siteCovs = NULL, primaryCovs = NULL, type) {
 
   if(!missing(type)) {
     switch(type,
@@ -211,26 +174,34 @@ eFrameRGP<- function(y, numPrimary, siteCovs = NULL, primaryCovs = NULL, type) {
   emf$samplingMethod<- type
   emf$numPrimary <- numPrimary
   emf$primaryCovs <- covsToDF(primaryCovs, "primaryCovs", numPrimary, nrow(y))
-  class(emf) <- c("eFrameRGP",class(emf))
+  class(emf) <- c("eFrameGR",class(emf))
   emf
 }
 
 
-#' eFrameRGPM
+#' eFrameGRM
 #'
-#' \code{eFrameRGP} creates an eFrameRGP data object for use with generalized removal
-#' models using the robust design where sampling occurs over a number of primary and
-#' secondary periods.
+#' \code{eFrameGRM} creates an eFrameGRM data object for use with generalized removal
+#' models with additional monitoring using the robust design where sampling occurs
+#' over a number of primary and secondary periods.  The additional monitoring
+#' usually consists of an index of abundance and hence, inference follows the
+#' combined removal + index/removal method (Chen, Pollock & Hoenig (1998) Biometrics,
+#' 54, 815-827).
 #'
-#'
-#' @param y An NxJ matrix of the additional monitoring data, where N is the
-#'    number of monitored sites and J is the maximum number of primary periods
-#'    per site as for \code{y}.
-#' @param cells vector indictaing which of the \code{y} sites were subject
-#'  to monitoring
-#' @param Z integer indicating the number of secondary periods per
-#'  primary period for \code{y1}
-#'
+#' @param y An MxJ matrix of the observed removal data, where M is the
+#'    number of sites and J is the maximum number of removal (primary)
+#'    periods per site. Each primary period can consist of k secondary
+#'    periods but this is not used here.
+#' @param ym An MxJ matrix of the additional monitoring (index) data.
+#' @param numPrimary the number of primary periods. For each primary period, the
+#' population is assumed to be closed.
+#' @param Z integer indicating the amount of monitoring effort occurring for each
+#' monitoring device used during each primary period. Ignored if \code{numPrimary}
+#' is greater than 1.
+#' @param SiteCovs A \code{data.frame} of covariates that vary at the
+#'    site level. This should have M rows and one column per covariate
+#' @param primaryCovs A \code{data.frame} of covariates that vary at the
+#'    site x primary period level.
 #' @return a \code{eFrameRGP} holding data containing the response and
 #'  covariates required for removal models
 #'
@@ -245,7 +216,7 @@ eFrameRGP<- function(y, numPrimary, siteCovs = NULL, primaryCovs = NULL, type) {
 #'
 #' @export
 #'
-eFrameRGPM<- function(y, ym, numPrimary, siteCovs = NULL, primaryCovs = NULL, type) {
+eFrameGRM<- function(y, ym, numPrimary, siteCovs = NULL, primaryCovs = NULL, type) {
 
   if(!missing(type)) {
     switch(type,
@@ -259,7 +230,7 @@ eFrameRGPM<- function(y, ym, numPrimary, siteCovs = NULL, primaryCovs = NULL, ty
   emf$samplingMethod<- type
   emf$numPrimary <- numPrimary
   emf$primaryCovs <- covsToDF(primaryCovs, "primaryCovs", numPrimary, nrow(y))
-  class(emf) <- c("eFrameRGPM",class(emf))
+  class(emf) <- c("eFrameGRM",class(emf))
   emf
 }
 
@@ -421,9 +392,84 @@ summary.eFrameR<- function(object,...) {
     print(summary(object$siteCovs))
   }
 }
+#-----------------------------------------
+#' print.eFrameGR
+#'
+#' \code{print} method for eFrameGR objects. Basically the same as \code{summary.eFrame}
+#'
+#' @param object An \code{eFrameGR} object.
+#'
+#' @return a \code{list} containing various summaries of the data
+#'
+#' @examples
+#'  ## uses san_nic_rem
+#'  emf <- eFrameRM(y=rem, y1=y1, cells=cells, Z=nights)
+#'  summary(emf)
+#'
+#' @export
+#'
+print.eFrameGR<- function(object,...) {
+  #S3 method for eFrame
+  cat("eFrameGR Object\n\n")
+  cat(nrow(object$y), " removal sites\n\n")
+  cat("Number of primary periods:",object$numPrimary,"\n\n")
+  cat("Maximum number of secondary periods:",numY(object)/object$numPrimary,"\n\n")
+  cat("Mean effort per secondary period:",mean(object$Z),"\n\n")
+  cat("Number of removals per period:","\n")
+  print(data.frame(Period=1:numY(object),Removed=colSums(object$y, na.rm=TRUE)))
+  cat("\n")
+  cat("Total removed:",sum(object$y, na.rm=TRUE),"\n\n")
+  cat("Sites with at least one detection:",
+      sum(apply(getY(object), 1, function(x) any(x > 0, na.rm=TRUE))),
+      "\n\n")
+  cat("Tabulation of y observations:")
+  print(table(object$y, exclude=NULL))
+  cat("\n")
+  if(!is.null(object$siteCovs)) {
+    cat("\nSite-level covariates:\n")
+    print(summary(object$siteCovs))
+  }
+}
+#' summary.eFrameGRM
+#'
+#' \code{summary} method for eFrameRM objects.
+#'
+#' @param object An \code{eFrameRM} object.
+#'
+#' @return a \code{list} containing various summaries of the data
+#'
+#' @examples
+#'  ## uses san_nic_rem
+#'  emf <- eFrameRM(y=rem, y1=y1, cells=cells, Z=nights)
+#'  summary(emf)
+#'
+#' @export
+#'
+summary.eFrameGR<- function(object,...) {
+  #S3 method for eFrame
+  cat("eFrameGR Object\n\n")
+  cat(nrow(object$y), " removal sites\n\n")
+  cat("Number of primary periods:",object$numPrimary,"\n\n")
+  cat("Maximum number of secondary periods:",numY(object)/object$numPrimary,"\n\n")
+  cat("Mean effort per secondary period:",mean(object$Z),"\n\n")
+  cat("Number of removals per period:","\n")
+  print(data.frame(Period=1:numY(object),Removed=colSums(object$y, na.rm=TRUE)))
+  cat("\n")
+  cat("Total removed:",sum(object$y, na.rm=TRUE),"\n\n")
+  cat("Sites with at least one detection:",
+      sum(apply(getY(object), 1, function(x) any(x > 0, na.rm=TRUE))),
+      "\n\n")
+  cat("Tabulation of y observations:")
+  print(table(object$y, exclude=NULL))
+  cat("\n")
+  if(!is.null(object$siteCovs)) {
+    cat("\nSite-level covariates:\n")
+    print(summary(object$siteCovs))
+  }
+}
 
 #-----------------------------------------
-#' print.eFrameRM
+#' print.eFrameGRM
 #'
 #' \code{print} method for eFrameRM objects. Basically the same as \code{summary.eFrame}
 #'
@@ -438,12 +484,13 @@ summary.eFrameR<- function(object,...) {
 #'
 #' @export
 #'
-print.eFrameRM<- function(object,...) {
+print.eFrameGRM<- function(object,...) {
   #S3 method for eFrame
-  cat("eFrameRM Object\n\n")
+  cat("eFrameGRM Object\n\n")
   cat(nrow(object$y), " removal sites\n")
-  cat("Maximum number of periods per site:",numY(object),"\n")
-  cat("Mean replicate counts per period:",mean(object$Z),"\n\n")
+  cat("Number of primary periods:",object$numPrimary,"\n\n")
+  cat("Maximum number of secondary periods:",numY(object)/object$numPrimary,"\n\n")
+  cat("Mean effort per secondary period:",mean(object$Z),"\n\n")
   cat("Number of removals per period:","\n")
   print(data.frame(Period=1:numY(object),Removed=colSums(object$y, na.rm=TRUE)))
   cat("\n")
@@ -462,9 +509,9 @@ print.eFrameRM<- function(object,...) {
     print(summary(object$siteCovs))
   }
 }
-#' summary.eFrameRM
+#' summary.eFrameGRM
 #'
-#' \code{summary} method for eFrameRM objects.
+#' \code{summary} method for eFrameGRM objects.
 #'
 #' @param object An \code{eFrameRM} object.
 #'
@@ -477,12 +524,12 @@ print.eFrameRM<- function(object,...) {
 #'
 #' @export
 #'
-summary.eFrameRM<- function(object,...) {
+summary.eFrameGRM<- function(object,...) {
   #S3 method for eFrame
-  cat("eFrameRM Object\n\n")
-  cat(nrow(object$y), "sites\n")
-  cat("Maximum number of periods per site:",numY(object),"\n")
-  cat("Mean replicate counts per period:",mean(object$Z),"\n\n")
+  cat("eFrameGRM Object\n\n")
+  cat("Number of primary periods:",object$numPrimary,"\n\n")
+  cat("Maximum number of secondary periods:",numY(object)/object$numPrimary,"\n\n")
+  cat("Mean effort per secondary period:",mean(object$Z),"\n\n")
   cat("Number of removals per period:","\n")
   print(data.frame(Period=1:numY(object),Removed=colSums(object$y,na.rm=TRUE)))
   cat("\n")

@@ -1,14 +1,14 @@
 
-#' remGP
+#' remGRM
 #'
-#' @name remGP
+#' @name remGRM
 #'
 #' @description
 #' \code{remGP} fits the generalized multinomial removal model to data collected from
 #' repeated removal episodes from M sites over T primary periods with each primary consisting of J
 #' secondary periods.
 #'
-#' @usage remGP(lamformula, phiformula, detformula, data, mixture = c("P", "NB"), K,
+#' @usage remGRM(lamformula, phiformula, detformula, data, mixture = c("P", "NB"), K,
 #'                   starts, method="BFGS", se=TRUE, ...)
 #'
 #' @param lamformula formula for the latent abundance component.
@@ -35,11 +35,11 @@
 #'
 #' @export
 #'
-remGP <- function(lamformula, phiformula, detformula, data, mixture=c('P', 'NB'),
+remGRM <- function(lamformula, phiformula, detformula, data, mixture=c('P', 'NB'),
                   K, starts, method = "BFGS", se = TRUE, ...)
 {
-  if(!is(data, "eFrameRGP"))
-    stop("Data is not a eFrameRGP.")
+  if(!is(data, "eFrameGRM"))
+    stop("Data is not a eFrameRGPM.")
 
   mixture <- match.arg(mixture)
 
@@ -48,7 +48,9 @@ remGP <- function(lamformula, phiformula, detformula, data, mixture=c('P', 'NB')
   Xlam <- D$Xlam
   Xphi <- D$Xphi
   Xdet <- D$Xdet
+  Xdetm <- D$Xdetm
   y <- D$y  # MxJT
+  ym <- D$ym
 
   Xlam.offset <- D$Xlam.offset
   Xphi.offset <- D$Xphi.offset
@@ -66,13 +68,26 @@ remGP <- function(lamformula, phiformula, detformula, data, mixture=c('P', 'NB')
 
   y <- array(y, c(M, R, T))
   y <- aperm(y, c(1,3,2))
-  yt <- apply(y, 1:2, function(x) {
-    if(all(is.na(x)))
-      return(NA)
-    else return(sum(x, na.rm=TRUE))
-  })
 
-  piFun <- data$piFun
+  ym <- array(ym, c(M, R, T))
+  ym <- aperm(ym, c(1,3,2))
+
+  cumy<- y
+  for(i in 1:M){
+    for(t in 1:T) {
+      if(all(is.na(y[i,t,])))
+        cumy[i,t,]<- NA
+      else {
+        for(r in 1:R){
+          cumy[i,t,r]<- sum(y[i,t,1:r], na.rm=TRUE) - y[i,t,r]
+        }
+      }
+    }
+  }
+
+  yt<- as.matrix(cumy[,,R])
+
+   piFun <- data$piFun
 
   lamPars <- colnames(Xlam)
   detPars <- colnames(Xdet)
@@ -85,7 +100,9 @@ remGP <- function(lamformula, phiformula, detformula, data, mixture=c('P', 'NB')
     phiPars <- colnames(Xphi)
   }
   nDP <- ncol(Xdet)
-  nP <- nLP + nPP + nDP + (mixture=='NB')
+  nDPM<- ncol(Xdetm)
+
+  nP <- nLP + nPP + nDP + nDPM + (mixture=='NB')
   if(!missing(starts) && length(starts) != nP)
     stop(paste("The number of starting values should be", nP))
 
@@ -95,6 +112,9 @@ remGP <- function(lamformula, phiformula, detformula, data, mixture=c('P', 'NB')
   lfac.kmyt <- array(0, c(M, T, lk))
   fin <- matrix(NA, M, lk)
   naflag <- array(NA, c(M, T, R))
+  # remaining in each i,t,r, for every k
+  krem<- array(NA, c(M ,T, R, lk))
+
   for(i in 1:M) {
     fin[i, ] <- k - max(yt[i,], na.rm=TRUE) >= 0
     for(t in 1:T) {
@@ -102,6 +122,9 @@ remGP <- function(lamformula, phiformula, detformula, data, mixture=c('P', 'NB')
       if(!all(naflag[i,t,])) {
         kmyt[i,t,] <- k - yt[i,t]
         lfac.kmyt[i, t, fin[i,]] <- lgamma(kmyt[i, t, fin[i,]] + 1)
+        for(r in 1:R) {
+          krem[i,t,r,]<- ifelse(k - cumy[i,t,r] < 0, NA, k - cumy[i,t,r])
+        }
       }
     }
   }
@@ -113,6 +136,7 @@ remGP <- function(lamformula, phiformula, detformula, data, mixture=c('P', 'NB')
     else if(T>1)
       phi <- drop(plogis(Xphi %*% pars[(nLP+1):(nLP+nPP)] + Xphi.offset))
       p <- plogis(Xdet %*% pars[(nLP+nPP+1):(nLP+nPP+nDP)] + Xdet.offset)
+      pm <- plogis(Xdetm %*% pars[(nLP+nPP+nDP+1):(nLP+nPP+nDP+nDPM)])
 
     phi.mat <- matrix(phi, M, T, byrow=TRUE)
     phi <- as.numeric(phi.mat)
@@ -120,6 +144,11 @@ remGP <- function(lamformula, phiformula, detformula, data, mixture=c('P', 'NB')
     p <- matrix(p, nrow=M, byrow=TRUE)
     p <- array(p, c(M, R, T))
     p <- aperm(p, c(1,3,2))
+
+    pm<- matrix(pm, nrow=M, byrow=TRUE)
+    pm <- array(pm, c(M, R, T))
+    pm <- aperm(pm, c(1,3,2))
+
     cp <- array(as.numeric(NA), c(M, T, R+1))
 
     for(t in 1:T) cp[,t,1:R] <- do.call(piFun, list(p[,t,]))
@@ -144,7 +173,24 @@ remGP <- function(lamformula, phiformula, detformula, data, mixture=c('P', 'NB')
     }
     f[!fin] <- g[!fin] <- 0
     ll <- rowSums(f*g)
-    -sum(log(ll))
+    # Add index-removal LL for ym
+    gm <- matrix(as.numeric(NA), M, lk)
+    for(i in 1:M) {
+      AM <- array(0, c(lk, T, R))
+      for(t in 1:T) {
+        na <- naflag[i,t,]
+        if(!all(na))
+          for(r in 1:R) {
+            AM[, t, r] <- dpois(ym[i,t,r], krem[i,t,r,]*pm[i,t,r], log=TRUE)
+          }
+        }
+      gm[i,] <- exp(apply(AM, 1:2, sum))
+      gm[i,is.na(gm[i,])]<- 0  # account for -ve krem[i,t,r, ]
+    }
+    gm[!fin] <- 0
+    llm <- rowSums(f*gm)
+
+     (-1)*(sum(log(ll))+sum(log(llm)))
   }
 
   if(missing(starts)) starts <- rep(0, nP)
@@ -171,8 +217,8 @@ remGP <- function(lamformula, phiformula, detformula, data, mixture=c('P', 'NB')
     else availEstimates<- NULL
 
     detEstimates <- list(name = "Detection", short.name = "p",
-                       estimates = ests[(nLP+nPP+1):(nLP+nPP+nDP)],
-                       covMat = as.matrix(covMat[(nLP+nPP+1):(nLP+nPP+nDP),(nLP+nPP+1):(nLP+nPP+nDP)]),
+                       estimates = ests[(nLP+nPP+1):(nLP+nPP+nDP+nDPM)],
+                       covMat = as.matrix(covMat[(nLP+nPP+1):(nLP+nPP+nDP+nDPM),(nLP+nPP+1):(nLP+nPP+nDP+nDPM)]),
                        invlink = "logistic",
                        invlinkGrad = "logistic.grad")
 
@@ -188,7 +234,7 @@ remGP <- function(lamformula, phiformula, detformula, data, mixture=c('P', 'NB')
                phiformula=phiformula, state=stateEstimates,det=detEstimates, avail=availEstimates,
                sitesRemoved = D$removed.sites,AIC = fmAIC, opt = fm,
                negLogLike = fm$value, nllFun = nll, mixture=mixture, K=K, data = data)
-  class(efit) <- c('efitRGP','efit','list')
+  class(efit) <- c('efitR','efit','list')
 
   return(efit)
 }
