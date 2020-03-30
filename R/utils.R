@@ -102,7 +102,7 @@ exp1 <- function(x) exp(x) + 1
 
 identLink <- function(x) x
 
-identLinkGrad <- function(x) 1
+identLink.grad <- function(x) 1
 
 #Complimentary log log link
 cloglog <- function(x){
@@ -334,3 +334,5 @@ invertHessian <- function(optimOut, nparam, SE){
              return(blankMat)
            })
 }
+
+

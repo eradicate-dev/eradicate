@@ -7,7 +7,7 @@
 \usage{
 SE(obj, ...)
 
-\method{SE}{efit}(obj, type = c("state", "det", "avail", "stay"), ...)
+\method{SE}{efit}(obj, type, ...)
 }
 \arguments{
 \item{obj}{A fitted model object.}

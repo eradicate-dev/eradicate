@@ -92,6 +92,47 @@ summary.efit<- function(object, ...)
   invisible(out.list)
 }
 
+#' summary.efitGP
+#'
+#' \code{summary} summarises an efitGP object giving the estimated parameters for N
+#'  and catchability in \code{obj} (on the link scale) with associated SE and confidence
+#'  intervals.
+#'
+#' @param obj A fitted model object.
+#'
+#' @return a \code{data.frame}
+#'
+#' @examples
+#'  emf <- eFrame(y=counts, siteCovs=site.df)
+#'  mod <- nmix(~1, ~1, data=emf)
+#'  summary(emf)
+#'
+#' @export
+#'
+summary.efitGP<- function(object, ...)
+{
+  type<- object$types
+  out.list<- list()
+  for(i in 1:length(type)) {
+    ests <- object[[type[i]]]$estimates
+    SEs <- SE(object, type[i])
+    Z <- ests/SEs
+    p <- 2*pnorm(abs(Z), lower.tail = FALSE)
+    invlink <- object[[type[i]]]$invlink
+    link <- switch(invlink,
+                   identLink = "identity",
+                   logistic = "logit")
+    cat(object[[type[i]]]$name, " (", link, "-scale)", ":\n", sep="")
+    outDF <- data.frame(Estimate = ests, SE = SEs, z = Z, "P(>|z|)" = p,
+                        check.names = FALSE)
+    print(outDF, digits = 3)
+    out.list[[type[i]]]<- outDF
+    invisible(outDF)
+    cat(" ","\n")
+  }
+  invisible(out.list)
+}
+
 # Compute linear combinations of estimates using coefficients
 
 linearComb.efit<- function(obj, coefficients, off.set = NULL, ...)
@@ -201,7 +242,7 @@ calcN.efitR<- function(obj, off.set=NULL, CI.level=0.95, ...) {
     newdata <- siteCovs(origdata)
   }
   design<- getDesign(obj, newdata)
-  tot.rem<- sum(getY(origdata))
+  tot.rem<- sum(origdata$y, na.rm=TRUE)
   X<- design$X
   M<- nrow(X)
   if(!is.null(off.set) & length(off.set) == 1) off.set<- rep(off.set, M)
@@ -224,10 +265,33 @@ calcN.efitR<- function(obj, off.set=NULL, CI.level=0.95, ...) {
   list(cellpreds=est$estimates, Nhat=bigN, Nresid=littleN)
 }
 
+#' @rdname calcN
+#' @export
+calcN.efitGP<- function(obj, CI.level=0.95, ...) {
+  # Only need to calc sensible CI using the methods in
+  # Chao (1989) Biometrics 45(2), 427-438
+  x <- obj$data
+  R<- sum(x$catch)
+  N<- obj$state$estimates
+  se.N<- sqrt(diag(obj$state$covMat))
+  cv.N<- se.N/N
+  z <- qt((1-CI.level)/2, length(x$catch) - 2, lower.tail = FALSE)
+  asymp.N <- exp(z * sqrt(log(1 + ((se.N^2)/((N - R)^2)))))
+  lcl.N <- R + (N - R)/asymp.N
+  ucl.N <- R + (N - R)*asymp.N
+  Nr<- N - R
+  lcl.Nr<- (N - R)/asymp.N
+  ucl.Nr<- (N - R)*asymp.N
+  cv.Nr<- se.N/Nr
+  ests<- data.frame(Estimate=c(N,Nr),SE=c(se.N,se.N),CV=c(cv.N,cv.Nr),
+                    LCL=c(lcl.N,lcl.Nr),UCL=c(ucl.N,ucl.Nr))
+  row.names(ests)<- c("N","Nresid")
+  return(ests)
+}
+
 #' @rdname SE
 #' @export
-SE.efit<- function(obj, type=c("state","det","avail","stay"), ...){
-  type <- match.arg(type)
+SE.efit<- function(obj, type, ...){
   v<- obj[[type]]$covMat
   sqrt(diag(v))
 }

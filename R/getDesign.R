@@ -182,7 +182,7 @@ getDesign.eFrameGR<- function(emf, lamformula, phiformula, detformula, na.rm = T
   }
 
 #------------------------
-getDesign.eFrameGRM<- function(emf, lamformula, phiformula, detformula, na.rm = TRUE) {
+getDesign.eFrameGRM<- function(emf, lamformula, phiformula, detformula, mdetformula, na.rm = TRUE) {
 
   M <- numSites(emf)
   T <- emf$numPrimary
@@ -231,23 +231,26 @@ getDesign.eFrameGRM<- function(emf, lamformula, phiformula, detformula, na.rm = 
   Xdet.offset <- as.vector(model.offset(Xdet.mf))
   if(!is.null(Xdet.offset)) Xdet.offset[is.na(Xdet.offset)] <- 0
 
-  Xdetm.mf <- model.frame(as.formula(~1), obsCovs, na.action = NULL)
-  Xdetm <- model.matrix(as.formula(~1), Xdetm.mf)
+  Xdetm.mf <- model.frame(mdetformula, obsCovs, na.action = NULL)
+  Xdetm <- model.matrix(mdetformula, Xdetm.mf)
+  Xdetm.offset <- as.vector(model.offset(Xdetm.mf))
+  if(!is.null(Xdetm.offset)) Xdetm.offset[is.na(Xdetm.offset)] <- 0
 
 
   if(na.rm)
     out <- handleNA(emf, Xlam, Xlam.offset, Xphi, Xphi.offset, Xdet,
-                    Xdet.offset, Xdetm)
+                    Xdet.offset, Xdetm, Xdetm.offset)
   else
     out <- list(y=emf$y, ym=emf$ym, Xlam=Xlam, Xlam.offset = Xlam.offset,
                 Xphi=Xphi, Xphi.offset = Xphi.offset, Xdet=Xdet, Xdetm=Xdetm,
-                removed.sites=integer(0))
+                Xdetm.offset = Xdetm.offset, removed.sites=integer(0))
 
   return(list(y = out$y, ym=out$ym, Xlam = out$Xlam, Xphi = out$Xphi,
               Xdet = out$Xdet, Xdetm=out$Xdetm,
               Xlam.offset = out$Xlam.offset,
               Xphi.offset = out$Xphi.offset,
               Xdet.offset = out$Xdet.offset,
+              Xdetm.offset = out$Xdetm.offset,
               removed.sites = out$removed.sites))
 }
 
@@ -364,7 +367,8 @@ handleNA.eFrameGR<- function(emf, Xlam, Xlam.offset, Xphi, Xphi.offset, Xdet, Xd
 
   if(sum(y.new.na) > 0) {
     y.long[y.new.na] <- NA
-    warning("Some observations have been discarded because correspoding covariates were missing.", call. = FALSE)
+    warning("Some observations have been discarded because
+            correspoding covariates were missing.", call. = FALSE)
   }
 
   y <- matrix(y.long, M, numY(emf), byrow = TRUE)
@@ -389,7 +393,8 @@ handleNA.eFrameGR<- function(emf, Xlam, Xlam.offset, Xphi, Xphi.offset, Xdet, Xd
 }
 
 #-------------------------------------
-handleNA.eFrameGRM<- function(emf, Xlam, Xlam.offset, Xphi, Xphi.offset, Xdet, Xdet.offset, Xdetm) {
+handleNA.eFrameGRM<- function(emf, Xlam, Xlam.offset, Xphi, Xphi.offset, Xdet, Xdet.offset,
+                              Xdetm, Xdetm.offset) {
 
   M <- numSites(emf)
   T <- emf$numPrimary
@@ -414,27 +419,45 @@ handleNA.eFrameGRM<- function(emf, Xlam, Xlam.offset, Xphi, Xphi.offset, Xdet, X
     x.long > 0
   })
 
-  Xdet.long.na <- apply(Xdet.long.na, 1, any)
+  Xdetm.long.na <- apply(Xdetm, 2, function(x) {
+    x.mat <- matrix(x, M, R, byrow = TRUE)
+    x.mat <- is.na(x.mat)
+    x.mat <- x.mat %*% obsToY
+    x.long <- as.vector(t(x.mat))
+    x.long > 0
+  })
 
-  y.long <- as.vector(t(getY(emf)))
+  Xdet.long.na <- apply(Xdet.long.na, 1, any)
+  Xdetm.long.na <- apply(Xdetm.long.na, 1, any)
+
+  y.long <- as.vector(t(emf$y))
   y.long.na <- is.na(y.long)
 
-  covs.na <- apply(cbind(X.long.na, Xdet.long.na), 1, any)
+  ym.long <- as.vector(t(emf$ym))
+  ym.long.na <- is.na(ym.long)
+
+  covs.na <- apply(cbind(X.long.na, Xdet.long.na, Xdetm.long.na), 1, any)
 
   ## are any NA in covs not in y already?
-  y.new.na <- covs.na & !y.long.na
+  y.new.na <- covs.na & !y.long.na & !ym.long.na
 
   if(sum(y.new.na) > 0) {
     y.long[y.new.na] <- NA
-    warning("Some observations have been discarded because correspoding covariates were missing.", call. = FALSE)
+    ym.long[y.new.na]<- NA
+    warning("Some observations have been discarded because correspoding
+            covariates were missing.", call. = FALSE)
   }
 
   y <- matrix(y.long, M, numY(emf), byrow = TRUE)
-  sites.to.remove <- apply(y, 1, function(x) all(is.na(x)))
+  ym<- matrix(ym.long, M, numY(emf), byrow=TRUE)
 
+  y.to.remove <- apply(y, 1, function(x) all(is.na(x)))
+  ym.to.remove <- apply(ym, 1, function(x) all(is.na(x)))
+  sites.to.remove<- as.logical(y.to.remove + ym.to.remove) # merge NA's
   num.to.remove <- sum(sites.to.remove)
   if(num.to.remove > 0) {
     y <- y[!sites.to.remove,, drop = FALSE]
+    ym<- ym[!sites.to.remove,, drop = FALSE]
     Xlam <- Xlam[!sites.to.remove,, drop = FALSE]
     Xlam.offset <- Xlam.offset[!sites.to.remove]
     Xphi <- Xphi[!sites.to.remove[rep(1:M, each = T)],, drop = FALSE]
@@ -442,12 +465,15 @@ handleNA.eFrameGRM<- function(emf, Xlam, Xlam.offset, Xphi, Xphi.offset, Xdet, X
     Xdet <- Xdet[!sites.to.remove[rep(1:M, each = R)],,
                  drop=FALSE]
     Xdet.offset <- Xdet.offset[!sites.to.remove[rep(1:M, each=R)]]
+    Xdetm <- Xdetm[!sites.to.remove[rep(1:M, each = R)],,
+                 drop=FALSE]
+    Xdetm.offset <- Xdetm.offset[!sites.to.remove[rep(1:M, each=R)]]
     warning(paste(num.to.remove,
                   "sites have been discarded because of missing data."), call.=FALSE)
   }
   list(y = y, ym=ym, Xlam = Xlam, Xlam.offset = Xlam.offset, Xphi = Xphi,
        Xphi.offset = Xphi.offset, Xdet = Xdet, Xdet.offset = Xdet.offset,
-       Xdetm = Xdetm, removed.sites = which(sites.to.remove))
+       Xdetm = Xdetm, Xdetm.offset = Xdetm.offset, removed.sites = which(sites.to.remove))
 }
 
 #-------------------------

@@ -35,15 +35,15 @@
 #'
 #' @export
 #'
-remGRM <- function(lamformula, phiformula, detformula, data, mixture=c('P', 'NB'),
+remGRM <- function(lamformula, phiformula, detformula, mdetformula, data, mixture=c('P', 'NB'),
                   K, starts, method = "BFGS", se = TRUE, ...)
 {
   if(!is(data, "eFrameGRM"))
-    stop("Data is not a eFrameRGPM.")
+    stop("Data is not a eFrameGRM.")
 
   mixture <- match.arg(mixture)
 
-  D <- getDesign(data, lamformula, phiformula, detformula)
+  D <- getDesign(data, lamformula, phiformula, detformula, mdetformula)
 
   Xlam <- D$Xlam
   Xphi <- D$Xphi
