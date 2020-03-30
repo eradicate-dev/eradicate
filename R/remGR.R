@@ -4,7 +4,7 @@
 #' @name remGR
 #'
 #' @description
-#' \code{remGP} fits the generalized multinomial removal model to data collected from
+#' \code{remGR} fits the generalized removal model to data collected from
 #' repeated removal episodes from M sites over T primary periods with each primary consisting of J
 #' secondary periods.
 #'

@@ -4,11 +4,12 @@
 #' @name remGRM
 #'
 #' @description
-#' \code{remGP} fits the generalized multinomial removal model to data collected from
+#' \code{remGRM} fits the generalized removal model to data collected from
 #' repeated removal episodes from M sites over T primary periods with each primary consisting of J
-#' secondary periods.
+#' secondary periods. The model also facilitates the analysis of index (count) data collected
+#' in conjunction with the removal data to make joint inference on abundance.
 #'
-#' @usage remGRM(lamformula, phiformula, detformula, data, mixture = c("P", "NB"), K,
+#' @usage remGRM(lamformula, phiformula, detformula, mdetformula, data, mixture = c("P", "NB"), K,
 #'                   starts, method="BFGS", se=TRUE, ...)
 #'
 #' @param lamformula formula for the latent abundance component.
@@ -16,8 +17,10 @@
 #' @param detformula formula for the removal detection component.  Only
 #'  site-level covariates are allowed for the removal detection component.
 #'  This differs from the similar model in \code{unmarked}.
-#' @param data A \code{eFrameR} object containing the response (counts)
-#'  and site-level covariates. see \code{\link{eFrameR}} for how to format
+#' @param mdetformula formula for the index detection component.  Only
+#'  site-level covariates are allowed for the index detection component.
+#' @param data A \code{eFrameR} object containing the response (counts, index)
+#'  and site-level covariates. see \code{\link{eFrameGRM}} for how to format
 #'  the required data.
 #' @param model for abundance, either Poisson 'P' or negative binomial 'NB'
 #' @param K upper bound for superpopulation abundance
@@ -25,7 +28,7 @@
 #' @param method Optimisation method
 #' @param se flag to return the standard error (hessian).
 #'
-#' @return a \code{efit} model object.
+#' @return a \code{efitGRM} model object.
 #'
 #' @examples
 #'  rem<- san_nic_rem$rem

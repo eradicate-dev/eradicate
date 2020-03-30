@@ -11,12 +11,13 @@ remGP(catch, effort, index, starts, Nmax, se=TRUE, ...)
 
 \item{effort}{the overall effort expended in each period (i.e. trapnights)}
 
-\item{index}{Index (i.e. count) data collected just before each removal period.
-Index data can be any relative index of abundance.}
+\item{index}{Index (i.e. count) data collected in conjunction with the removal
+data.  The index data is assumed to be collected just before each removal period and
+can consist of any relative index of abundance.}
 
 \item{starts}{Initial values for parameters}
 
-\item{Nmax}{Maximum abundance considered in the optimisation}
+\item{Nmax}{Maximum search increment for abundance considered in the optimisation}
 
 \item{se}{flag to return the standard error (hessian).}
 }
@@ -27,7 +28,7 @@ a \code{efit} model object.
 \code{remGP} fits the catch-effort model of Gould & Pollock (1997) to removal
 data from a single site (or combined data from many sites).  At least 3 removal periods
 are required to fit this model.  Additionally, the model also accepts index (count)
-data collected contemporaneously with the removal data.
+data collected in conjunction with the removal data.
 }
 \examples{
  rem<- san_nic_rem$rem

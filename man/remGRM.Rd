@@ -4,7 +4,7 @@
 \alias{remGRM}
 \title{remGRM}
 \usage{
-remGRM(lamformula, phiformula, detformula, data, mixture = c("P", "NB"), K,
+remGRM(lamformula, phiformula, detformula, mdetformula, data, mixture = c("P", "NB"), K,
                   starts, method="BFGS", se=TRUE, ...)
 }
 \arguments{
@@ -16,8 +16,11 @@ remGRM(lamformula, phiformula, detformula, data, mixture = c("P", "NB"), K,
 site-level covariates are allowed for the removal detection component.
 This differs from the similar model in \code{unmarked}.}
 
-\item{data}{A \code{eFrameR} object containing the response (counts)
-and site-level covariates. see \code{\link{eFrameR}} for how to format
+\item{mdetformula}{formula for the index detection component.  Only
+site-level covariates are allowed for the index detection component.}
+
+\item{data}{A \code{eFrameR} object containing the response (counts, index)
+and site-level covariates. see \code{\link{eFrameGRM}} for how to format
 the required data.}
 
 \item{K}{upper bound for superpopulation abundance}
@@ -31,12 +34,13 @@ the required data.}
 \item{model}{for abundance, either Poisson 'P' or negative binomial 'NB'}
 }
 \value{
-a \code{efit} model object.
+a \code{efitGRM} model object.
 }
 \description{
-\code{remGP} fits the generalized multinomial removal model to data collected from
+\code{remGRM} fits the generalized removal model to data collected from
 repeated removal episodes from M sites over T primary periods with each primary consisting of J
-secondary periods.
+secondary periods. The model also facilitates the analysis of index (count) data collected
+in conjunction with the removal data to make joint inference on abundance.
 }
 \examples{
  rem<- san_nic_rem$rem

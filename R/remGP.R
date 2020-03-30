@@ -6,17 +6,19 @@
 #' \code{remGP} fits the catch-effort model of Gould & Pollock (1997) to removal
 #' data from a single site (or combined data from many sites).  At least 3 removal periods
 #' are required to fit this model.  Additionally, the model also accepts index (count)
-#' data collected contemporaneously with the removal data.
+#' data collected in conjunction with the removal data.
 #'
 #' @usage remGP(catch, effort, index, starts, Nmax, se=TRUE, ...)
 #'
 #' @param catch the number of removals recorded for each period.
 #' @param effort the overall effort expended in each period (i.e. trapnights)
-#' @param index Index (i.e. count) data collected just before each removal period.
-#' Index data can be any relative index of abundance.
+#' @param index Index (i.e. count) data collected in conjunction with the removal
+#' data.  The index data is assumed to be collected just before each removal period and
+#' can consist of any relative index of abundance.
 #' @param starts Initial values for parameters
-#' @param Nmax Maximum abundance considered in the optimisation
+#' @param Nmax Maximum search increment for abundance considered in the optimisation
 #' @param se flag to return the standard error (hessian).
+#' @alpha quantile for (1-alpha) level confidence intervals
 #'
 #' @return a \code{efit} model object.
 #'
@@ -35,7 +37,7 @@ remGP<- function (catch, effort, index=NULL, starts, Nmax=1000, se = TRUE, alpha
   x <- as.data.frame(cbind(catch, effort))
   nobs<- length(x$catch)
   names(x) <- c("catch", "effort")
-  x$samp <- seq(1, length(x$catch), 1)
+  x$samp <- seq_len(nobs)
   x$cpue <- x$catch/x$effort
   x$cumcatch<- cumsum(x$catch) - x$catch
   x$cumeffort<- cumsum(x$effort) - x$effort
@@ -43,8 +45,7 @@ remGP<- function (catch, effort, index=NULL, starts, Nmax=1000, se = TRUE, alpha
 
   if (length(x$catch) < 3)
     stop("ml method requires at least 3 observations!")
-  if(missing(starts)) starts<- c(0, R)
-   nP<- length(starts)
+  if(missing(starts)) starts<- c(0.01, R)
 
     nll2 <- function(parm) {
       k <- parm
@@ -54,31 +55,26 @@ remGP<- function (catch, effort, index=NULL, starts, Nmax=1000, se = TRUE, alpha
       for (i in 2:nobs)
         qp[i] <- p[i] * (1-p[i])^(i-1)
       Q <- prod(1-p)
-      pn <- x$catch * log(qp/(1 - Q))
-      SP <- sum(pn)
-      Rf <- lgamma(R + 1)
-      cf <- lgamma(x$catch + 1)
-      ll <- Rf - sum(cf) + SP
+      pr <- x$catch * log(qp/(1 - Q))
+      MP <- sum(pr)
+      RF <- lgamma(R + 1)
+      CF <- sum(lgamma(x$catch + 1))
+      ll <- RF - CF + MP
       (-1)*ll
     }
-    nll1<- function(parm) {
-      N<- parm
+    nll1<- function(parm, idx=FALSE) {
+      N<- parm[1]
       p <- 1 - exp(-k * x$effort)
       Q <- prod(1-p)
       ll<- lgamma(N + 1) - (lgamma((N - R) + 1) + lgamma(R + 1)) + R*log(1-Q) + (N-R)*log(Q)
-      (-1)*ll
+      if(idx){
+        pm<- plogis(parm[2])
+        Nr<- N - x$cumcatch
+        lli<- sum(dpois(index, Nr*pm, log=TRUE))
+      }
+      else lli<- 0
+      (-1)*(ll + lli)
     }
-    nllm<- function(parm) {
-      N<- parm[1]
-      pm<- plogis(parm[2])
-      p <- 1 - exp(-k * x$effort)
-      Q <- prod(1-p)
-      Nr<- N - x$cumcatch
-      ll1<- lgamma(N + 1) - (lgamma((N - R) + 1) + lgamma(R + 1)) + R*log(1-Q) + (N-R)*log(Q)
-      ll2<- sum(dpois(index, Nr*pm, log=TRUE))
-      (-1)*(ll1+ll2)
-    }
-
     # Estimate of catch coefficient lambda (k)
     upper <- -log(1e-6)/max(x$effort)
     m1 <- optim(starts[1], nll2, lower = 0, upper = upper, method="Brent", hessian=se)
@@ -91,9 +87,8 @@ remGP<- function (catch, effort, index=NULL, starts, Nmax=1000, se = TRUE, alpha
       else {
         cat("Index data detected - adding index-removal estimation","\n\n")
         nP<- 2
-        nll<- nllm
         starts<- c(starts, 0)
-        m2 <- optim(starts[2:3], nll, method="BFGS", hessian=se)
+        m2 <- optim(starts[2:3], nll1, idx=TRUE, method="BFGS", hessian=se)
         ests<- m2$par
         covMat<- invertHessian(m2, nP, se)
       }
@@ -101,9 +96,8 @@ remGP<- function (catch, effort, index=NULL, starts, Nmax=1000, se = TRUE, alpha
     else {
       cat("Gould and Pollock removal estimator","\n\n")
       nP<- 1
-      nll<- nll1
       upper <- R+Nmax
-      m2 <- optim(starts[2], nll, lower = R, upper = upper, method="Brent", hessian=se)
+      m2 <- optim(starts[2], nll1, idx=FALSE, lower = R, upper = upper, method="Brent", hessian=se)
       ests<- m2$par
       covMat<- invertHessian(m2, nP, se)
     }

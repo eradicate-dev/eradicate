@@ -453,27 +453,28 @@ handleNA.eFrameGRM<- function(emf, Xlam, Xlam.offset, Xphi, Xphi.offset, Xdet, X
 
   y.to.remove <- apply(y, 1, function(x) all(is.na(x)))
   ym.to.remove <- apply(ym, 1, function(x) all(is.na(x)))
-  sites.to.remove<- as.logical(y.to.remove + ym.to.remove) # merge NA's
-  num.to.remove <- sum(sites.to.remove)
+  all.sites.to.remove<- as.logical(y.to.remove + ym.to.remove)
+
+  num.to.remove <- sum(all.sites.to.remove)
   if(num.to.remove > 0) {
-    y <- y[!sites.to.remove,, drop = FALSE]
-    ym<- ym[!sites.to.remove,, drop = FALSE]
-    Xlam <- Xlam[!sites.to.remove,, drop = FALSE]
-    Xlam.offset <- Xlam.offset[!sites.to.remove]
-    Xphi <- Xphi[!sites.to.remove[rep(1:M, each = T)],, drop = FALSE]
-    Xphi.offset <- Xphi.offset[!sites.to.remove[rep(1:M, each = T)]]
-    Xdet <- Xdet[!sites.to.remove[rep(1:M, each = R)],,
+    y <- y[!y.to.remove,, drop = FALSE]
+    ym<- ym[!all.sites.to.remove,, drop = FALSE]
+    Xlam <- Xlam[!y.to.remove,, drop = FALSE]
+    Xlam.offset <- Xlam.offset[!y.to.remove]
+    Xphi <- Xphi[!y.to.remove[rep(1:M, each = T)],, drop = FALSE]
+    Xphi.offset <- Xphi.offset[!y.to.remove[rep(1:M, each = T)]]
+    Xdet <- Xdet[!y.to.remove[rep(1:M, each = R)],,
                  drop=FALSE]
-    Xdet.offset <- Xdet.offset[!sites.to.remove[rep(1:M, each=R)]]
-    Xdetm <- Xdetm[!sites.to.remove[rep(1:M, each = R)],,
+    Xdet.offset <- Xdet.offset[!y.to.remove[rep(1:M, each=R)]]
+    Xdetm <- Xdetm[!all.sites.to.remove[rep(1:M, each = R)],,
                  drop=FALSE]
-    Xdetm.offset <- Xdetm.offset[!sites.to.remove[rep(1:M, each=R)]]
+    Xdetm.offset <- Xdetm.offset[!all.sites.to.remove[rep(1:M, each=R)]]
     warning(paste(num.to.remove,
                   "sites have been discarded because of missing data."), call.=FALSE)
   }
   list(y = y, ym=ym, Xlam = Xlam, Xlam.offset = Xlam.offset, Xphi = Xphi,
        Xphi.offset = Xphi.offset, Xdet = Xdet, Xdet.offset = Xdet.offset,
-       Xdetm = Xdetm, Xdetm.offset = Xdetm.offset, removed.sites = which(sites.to.remove))
+       Xdetm = Xdetm, Xdetm.offset = Xdetm.offset, removed.sites = which(all.sites.to.remove))
 }
 
 #-------------------------
