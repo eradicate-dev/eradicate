@@ -93,8 +93,9 @@ remGP<- function (data, starts, Nmax=1000, se = TRUE, alpha=0.05, ...){
     else {
       cat("Gould and Pollock removal estimator","\n\n")
       nP<- 1
-      upper <- R+Nmax
-      m2 <- optim(starts[2], nll1, k=k, idx=FALSE, lower = R, upper = upper, method="Brent", hessian=se)
+
+      m2 <- optim(starts[2], nll1, k=k, idx=FALSE, lower = log(R), upper = log(R+Nmax),
+                  method="Brent", hessian=se)
       ests<- m2$par
       covMat<- invertHessian(m2, nP, se)
     }
