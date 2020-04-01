@@ -16,7 +16,7 @@ support”.
 Currently the package is only available on GitHub. Install the package
 using
 
-`install_github("dslramsey/eradicate", build_vignettes=TRUE)`
+`install_github("eradicate-dev/eradicate", build_vignettes=TRUE)`
 
 The vignette contains a fully worked case study with examples of all the
 current models. This can be accessed by
