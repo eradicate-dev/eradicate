@@ -44,8 +44,9 @@ in conjunction with the removal data to make joint inference on abundance.
 }
 \examples{
  rem<- san_nic_rem$rem
- emf <- eFrameR(y=rem)
- mod <- remPois(~1, ~1, data=emf)
+ ym<- san_nic_rem$ym
+ emf <- eFrameGRM(rem, ym, numPrimary=1)
+ mod <- remGRM(~1, ~1, ~1, ~1, data=emf)
  Nhat<- calcN(mod)
 
 }

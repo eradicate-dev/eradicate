@@ -32,8 +32,9 @@
 #'
 #' @examples
 #'  rem<- san_nic_rem$rem
-#'  emf <- eFrameR(y=rem)
-#'  mod <- remPois(~1, ~1, data=emf)
+#'  ym<- san_nic_rem$ym
+#'  emf <- eFrameGRM(rem, ym, numPrimary=1)
+#'  mod <- remGRM(~1, ~1, ~1, ~1, data=emf)
 #'  Nhat<- calcN(mod)
 #'
 #' @export
@@ -58,9 +59,11 @@ remGRM <- function(lamformula, phiformula, detformula, mdetformula, data, mixtur
   Xlam.offset <- D$Xlam.offset
   Xphi.offset <- D$Xphi.offset
   Xdet.offset <- D$Xdet.offset
+  Xdetm.offset <- D$Xdetm.offset
   if(is.null(Xlam.offset)) Xlam.offset <- rep(0, nrow(Xlam))
   if(is.null(Xphi.offset)) Xphi.offset <- rep(0, nrow(Xphi))
   if(is.null(Xdet.offset)) Xdet.offset <- rep(0, nrow(Xdet))
+  if(is.null(Xdetm.offset)) Xdet.offset <- rep(0, nrow(Xdet))
 
   if(missing(K) || is.null(K)) K <- max(y, na.rm=TRUE) + 100
   k <- 0:K
@@ -92,15 +95,19 @@ remGRM <- function(lamformula, phiformula, detformula, mdetformula, data, mixtur
 
    piFun <- data$piFun
 
-  lamPars <- colnames(Xlam)
-  detPars <- colnames(Xdet)
+  lamParms <- colnames(Xlam)
+  detParms <- colnames(Xdet)
+  detmParms<- colnames(Xdetm)
+  detmParms[1]<- "(mIntercept)"
+  detParms<- c(detParms,detmParms)
+
   nLP <- ncol(Xlam)
   if(T==1) {
     nPP <- 0
-    phiPars <- character(0)
+    phiParms <- character(0)
   } else if(T>1) {
     nPP <- ncol(Xphi)
-    phiPars <- colnames(Xphi)
+    phiParms <- colnames(Xphi)
   }
   nDP <- ncol(Xdet)
   nDPM<- ncol(Xdetm)
@@ -117,11 +124,13 @@ remGRM <- function(lamformula, phiformula, detformula, mdetformula, data, mixtur
   naflag <- array(NA, c(M, T, R))
   # remaining in each i,t,r, for every k
   krem<- array(NA, c(M ,T, R, lk))
+  namflag<- array(NA, c(M, T, R))
 
   for(i in 1:M) {
     fin[i, ] <- k - max(yt[i,], na.rm=TRUE) >= 0
     for(t in 1:T) {
       naflag[i,t,] <- is.na(y[i,t,])
+      namflag[i,t,]<- is.na(ym[i,t,])
       if(!all(naflag[i,t,])) {
         kmyt[i,t,] <- k - yt[i,t]
         lfac.kmyt[i, t, fin[i,]] <- lgamma(kmyt[i, t, fin[i,]] + 1)
@@ -138,8 +147,8 @@ remGRM <- function(lamformula, phiformula, detformula, mdetformula, data, mixtur
       phi <- 1
     else if(T>1)
       phi <- drop(plogis(Xphi %*% pars[(nLP+1):(nLP+nPP)] + Xphi.offset))
-      p <- plogis(Xdet %*% pars[(nLP+nPP+1):(nLP+nPP+nDP)] + Xdet.offset)
-      pm <- plogis(Xdetm %*% pars[(nLP+nPP+nDP+1):(nLP+nPP+nDP+nDPM)])
+      p <- cloglog(Xdet %*% pars[(nLP+nPP+1):(nLP+nPP+nDP)] + Xdet.offset)
+      pm <- cloglog(Xdetm %*% pars[(nLP+nPP+nDP+1):(nLP+nPP+nDP+nDPM)])
 
     phi.mat <- matrix(phi, M, T, byrow=TRUE)
     phi <- as.numeric(phi.mat)
@@ -160,8 +169,8 @@ remGRM <- function(lamformula, phiformula, detformula, mdetformula, data, mixtur
     cp[,,R+1] <- 1 - apply(cp[,,1:R,drop=FALSE], 1:2, sum, na.rm=TRUE)
 
     switch(mixture,
-           P = f <- sapply(k, function(x) dpois(x, lambda)),
-           NB = f <- sapply(k, function(x) dnbinom(x, mu=lambda, size=exp(pars[nP]))))
+           P = ff <- sapply(k, function(x) dpois(x, lambda)),
+           NB = ff <- sapply(k, function(x) dnbinom(x, mu=lambda, size=exp(pars[nP]))))
     g <- matrix(as.numeric(NA), M, lk)
     for(i in 1:M) {
       A <- matrix(0, lk, T)
@@ -174,24 +183,27 @@ remGRM <- function(lamformula, phiformula, detformula, mdetformula, data, mixtur
       }
       g[i,] <- exp(rowSums(A))
     }
-    f[!fin] <- g[!fin] <- 0
-    ll <- rowSums(f*g)
+    ff[!fin] <- g[!fin] <- 0
+    ll <- rowSums(ff*g)
     # Add index-removal LL for ym
     gm <- matrix(as.numeric(NA), M, lk)
     for(i in 1:M) {
       AM <- array(0, c(lk, T, R))
       for(t in 1:T) {
         na <- naflag[i,t,]
+        nam <- namflag[i,t,]
+        isr<- which(!as.logical(na + nam))
         if(!all(na))
-          for(r in 1:R) {
+          for(r in isr) {
             AM[, t, r] <- dpois(ym[i,t,r], krem[i,t,r,]*pm[i,t,r], log=TRUE)
           }
         }
       gm[i,] <- exp(apply(AM, 1:2, sum))
       gm[i,is.na(gm[i,])]<- 0  # account for -ve krem[i,t,r, ]
+      if(all(nam)) ff[i,]<- 1
     }
     gm[!fin] <- 0
-    llm <- rowSums(f*gm)
+    llm <- rowSums(ff*gm)
 
      (-1)*(sum(log(ll))+sum(log(llm)))
   }
@@ -202,12 +214,25 @@ remGRM <- function(lamformula, phiformula, detformula, mdetformula, data, mixtur
   ests <- fm$par
   fmAIC <- 2 * fm$value + 2 * nP
 
-  typeNames<- c("state","det")
+  if(identical(mixture,"NB"))
+    names(ests)<- c(lamParms,phiParms,detParms,"alpha")
+  else
+    names(ests)<- c(lamParms,phiParms,detParms)
 
+  typeNames<- c("state","det")
+  if(identical(mixture,"NB")) {
     stateEstimates <- list(name = "Abundance", short.name = "lambda",
-                         estimates = ests[1:nLP],
-                         covMat = as.matrix(covMat[1:nLP, 1:nLP]), invlink = "exp",
-                         invlinkGrad = "exp")
+                           estimates = ests[c(1:nLP,nP)],
+                           covMat = as.matrix(covMat[c(1:nLP,nP), c(1:nLP,nP)]), invlink = "exp",
+                           invlinkGrad = "exp")
+  }
+  else {
+    stateEstimates <- list(name = "Abundance", short.name = "lambda",
+                           estimates = ests[1:nLP],
+                           covMat = as.matrix(covMat[1:nLP, 1:nLP]), invlink = "exp",
+                           invlinkGrad = "exp")
+  }
+
   if(T>1) {
     typeNames<- c(typeNames,"avail")
     availEstimates <- list(name = "Availability",
@@ -222,15 +247,8 @@ remGRM <- function(lamformula, phiformula, detformula, mdetformula, data, mixtur
     detEstimates <- list(name = "Detection", short.name = "p",
                        estimates = ests[(nLP+nPP+1):(nLP+nPP+nDP+nDPM)],
                        covMat = as.matrix(covMat[(nLP+nPP+1):(nLP+nPP+nDP+nDPM),(nLP+nPP+1):(nLP+nPP+nDP+nDPM)]),
-                       invlink = "logistic",
-                       invlinkGrad = "logistic.grad")
-
-  if(identical(mixture,"NB")) {
-    stateEstimates$alpha <- list(name="Dispersion",
-                                 short.name = "alpha", estimates = ests[nP],
-                                 covMat = as.matrix(covMat[nP, nP]), invlink = "exp",
-                                 invlinkGrad = "exp")
-  }
+                       invlink = "cloglog",
+                       invlinkGrad = "cloglog.grad")
 
   efit <- list(fitType = "generalised removal",
                call = match.call(), types=typeNames,lamformula = lamformula, detformula=detformula,

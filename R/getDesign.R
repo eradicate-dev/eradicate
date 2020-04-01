@@ -434,12 +434,11 @@ handleNA.eFrameGRM<- function(emf, Xlam, Xlam.offset, Xphi, Xphi.offset, Xdet, X
   y.long.na <- is.na(y.long)
 
   ym.long <- as.vector(t(emf$ym))
-  ym.long.na <- is.na(ym.long)
 
   covs.na <- apply(cbind(X.long.na, Xdet.long.na, Xdetm.long.na), 1, any)
 
   ## are any NA in covs not in y already?
-  y.new.na <- covs.na & !y.long.na & !ym.long.na
+  y.new.na <- covs.na & !y.long.na
 
   if(sum(y.new.na) > 0) {
     y.long[y.new.na] <- NA
@@ -451,30 +450,28 @@ handleNA.eFrameGRM<- function(emf, Xlam, Xlam.offset, Xphi, Xphi.offset, Xdet, X
   y <- matrix(y.long, M, numY(emf), byrow = TRUE)
   ym<- matrix(ym.long, M, numY(emf), byrow=TRUE)
 
-  y.to.remove <- apply(y, 1, function(x) all(is.na(x)))
-  ym.to.remove <- apply(ym, 1, function(x) all(is.na(x)))
-  all.sites.to.remove<- as.logical(y.to.remove + ym.to.remove)
+  sites.to.remove <- apply(y, 1, function(x) all(is.na(x)))
 
-  num.to.remove <- sum(all.sites.to.remove)
+  num.to.remove <- sum(sites.to.remove)
   if(num.to.remove > 0) {
-    y <- y[!y.to.remove,, drop = FALSE]
-    ym<- ym[!all.sites.to.remove,, drop = FALSE]
-    Xlam <- Xlam[!y.to.remove,, drop = FALSE]
-    Xlam.offset <- Xlam.offset[!y.to.remove]
-    Xphi <- Xphi[!y.to.remove[rep(1:M, each = T)],, drop = FALSE]
-    Xphi.offset <- Xphi.offset[!y.to.remove[rep(1:M, each = T)]]
-    Xdet <- Xdet[!y.to.remove[rep(1:M, each = R)],,
+    y <- y[!sites.to.remove,, drop = FALSE]
+    ym<- ym[!sites.to.remove,, drop = FALSE]
+    Xlam <- Xlam[!sites.to.remove,, drop = FALSE]
+    Xlam.offset <- Xlam.offset[!sites.to.remove]
+    Xphi <- Xphi[!sites.to.remove[rep(1:M, each = T)],, drop = FALSE]
+    Xphi.offset <- Xphi.offset[!sites.to.remove[rep(1:M, each = T)]]
+    Xdet <- Xdet[!sites.to.remove[rep(1:M, each = R)],,
                  drop=FALSE]
-    Xdet.offset <- Xdet.offset[!y.to.remove[rep(1:M, each=R)]]
-    Xdetm <- Xdetm[!all.sites.to.remove[rep(1:M, each = R)],,
+    Xdet.offset <- Xdet.offset[!sites.to.remove[rep(1:M, each=R)]]
+    Xdetm <- Xdetm[!sites.to.remove[rep(1:M, each = R)],,
                  drop=FALSE]
-    Xdetm.offset <- Xdetm.offset[!all.sites.to.remove[rep(1:M, each=R)]]
+    Xdetm.offset <- Xdetm.offset[!sites.to.remove[rep(1:M, each=R)]]
     warning(paste(num.to.remove,
                   "sites have been discarded because of missing data."), call.=FALSE)
   }
   list(y = y, ym=ym, Xlam = Xlam, Xlam.offset = Xlam.offset, Xphi = Xphi,
        Xphi.offset = Xphi.offset, Xdet = Xdet, Xdet.offset = Xdet.offset,
-       Xdetm = Xdetm, Xdetm.offset = Xdetm.offset, removed.sites = which(all.sites.to.remove))
+       Xdetm = Xdetm, Xdetm.offset = Xdetm.offset, removed.sites = which(sites.to.remove))
 }
 
 #-------------------------

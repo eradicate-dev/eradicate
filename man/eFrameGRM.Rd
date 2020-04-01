@@ -41,11 +41,9 @@ combined removal + index/removal method (Chen, Pollock & Hoenig (1998) Biometric
 }
 \examples{
  rem<- san_nic_rem$rem
- y1<- san_nic_rem$y1 # detections from additional monitoring
- mtraps<- san_nic_rem$cells
- nights<- san_nic_rem$nights
+ ym<- san_nic_rem$ym # detections from additional monitoring
 
- emf<-eFrameRM(rem, y1, mtraps, nights, type="removal")
+ emf<-eFrameGRM(rem, ym, numPrimary=1, type="removal")
  summary(emf)
 
 }

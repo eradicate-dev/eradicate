@@ -18,7 +18,7 @@
 #' @param starts Initial values for parameters
 #' @param Nmax Maximum search increment for abundance considered in the optimisation
 #' @param se flag to return the standard error (hessian).
-#' @alpha quantile for (1-alpha) level confidence intervals
+#' @param alpha quantile for (1-alpha) level confidence intervals
 #'
 #' @return a \code{efit} model object.
 #'
@@ -30,26 +30,27 @@
 #'
 #' @export
 #'
-remGP<- function (catch, effort, index=NULL, starts, Nmax=1000, se = TRUE, alpha=0.05, ...){
-
-  if (length(catch) != length(effort))
-    stop("unequal catch/effort vector lengths.")
-  x <- as.data.frame(cbind(catch, effort))
-  nobs<- length(x$catch)
-  names(x) <- c("catch", "effort")
+remGP<- function (data, starts, Nmax=1000, se = TRUE, alpha=0.05, ...){
+  if(!is(data, "eFrameGP"))
+    stop("Data is not a eFrameGP")
+  x<- data$counts
+  nobs<- nrow(x)
   x$samp <- seq_len(nobs)
   x$cpue <- x$catch/x$effort
   x$cumcatch<- cumsum(x$catch) - x$catch
   x$cumeffort<- cumsum(x$effort) - x$effort
   R <- sum(x$catch)
 
-  if (length(x$catch) < 3)
+  if (nobs < 3)
     stop("ml method requires at least 3 observations!")
-  if(missing(starts)) starts<- c(0.01, R)
+  cstart<- -log(max(x$effort))
+  if(!is.null(x$index)) istart<- -log(max(x$ieffort))
+  else istart<- 0
+
+  if(missing(starts)) starts<- c(cstart, log(R), istart)
 
     nll2 <- function(parm) {
-      k <- parm
-      p <- 1 - exp(-k * x$effort)
+      p <- 1 - exp(-exp(parm + log(x$effort)))
       qp<- rep(NA, nobs)
       qp[1]<- p[1]
       for (i in 2:nobs)
@@ -62,42 +63,38 @@ remGP<- function (catch, effort, index=NULL, starts, Nmax=1000, se = TRUE, alpha
       ll <- RF - CF + MP
       (-1)*ll
     }
-    nll1<- function(parm, idx=FALSE) {
-      N<- parm[1]
+    nll1<- function(parm, k, idx=FALSE) {
+      N<- exp(parm[1])
       p <- 1 - exp(-k * x$effort)
       Q <- prod(1-p)
       ll<- lgamma(N + 1) - (lgamma((N - R) + 1) + lgamma(R + 1)) + R*log(1-Q) + (N-R)*log(Q)
       if(idx){
-        pm<- plogis(parm[2])
-        Nr<- N - x$cumcatch
-        lli<- sum(dpois(index, Nr*pm, log=TRUE))
+        pm<- 1 - exp(-exp(parm[2]+ log(x$ieffort)))
+        Nr<- N - x$cumcatch + 1e-10
+        lli<- sum(dpois(x$index, Nr*pm, log=TRUE))
       }
       else lli<- 0
       (-1)*(ll + lli)
     }
     # Estimate of catch coefficient lambda (k)
-    upper <- -log(1e-6)/max(x$effort)
-    m1 <- optim(starts[1], nll2, lower = 0, upper = upper, method="Brent", hessian=se)
-    k <- m1$par
+    m1 <- optim(starts[1], nll2, lower= -20, upper = 2, method="Brent", hessian=se)
+    k <- exp(m1$par)
     var.k<- invertHessian(m1, 1, se)
 
     # conditional LL of abundance | lambda
-    if(!is.null(index)){
-      if(length(index) != nobs) stop("Index data must be same length as catch data")
-      else {
+    if(!is.null(x$index)){
         cat("Index data detected - adding index-removal estimation","\n\n")
         nP<- 2
-        starts<- c(starts, 0)
-        m2 <- optim(starts[2:3], nll1, idx=TRUE, method="BFGS", hessian=se)
+        m2 <- optim(starts[2:3], nll1, k=k, idx=TRUE, method="L-BFGS-B", lower=c(log(R), -20),
+                    upper=c(log(R+Nmax), 2), hessian=se)
         ests<- m2$par
         covMat<- invertHessian(m2, nP, se)
-      }
     }
     else {
       cat("Gould and Pollock removal estimator","\n\n")
       nP<- 1
       upper <- R+Nmax
-      m2 <- optim(starts[2], nll1, idx=FALSE, lower = R, upper = upper, method="Brent", hessian=se)
+      m2 <- optim(starts[2], nll1, k=k, idx=FALSE, lower = R, upper = upper, method="Brent", hessian=se)
       ests<- m2$par
       covMat<- invertHessian(m2, nP, se)
     }
@@ -107,21 +104,21 @@ remGP<- function (catch, effort, index=NULL, starts, Nmax=1000, se = TRUE, alpha
     state <- list(name = "Abundance", short.name = "N",
                   estimates = ests[1],
                   covMat = as.matrix(covMat[1,1]),
-                  invlink = "identLink",
-                  invlinkGrad = "identLink.grad")
+                  invlink = "exp",
+                  invlinkGrad = "exp")
 
     catch <- list(name = "catchability", short.name = "lambda",
-                estimates = k,
+                estimates = m1$par,
                 covMat = var.k,
-                invlink = "identLink",
-                invlinkGrad = "identLink.grad")
+                invlink = "cloglog",
+                invlinkGrad = "cloglog.grad")
     if(nP==2) {
       typeNames<- c(typeNames,"det")
       det<- list(name = "detection", short.name = "p",
            estimates = ests[2],
            covMat = as.matrix(covMat[2,2]),
-           invlink = "logistic",
-           invlinkGrad = "logistic.grad")
+           invlink = "cloglog",
+           invlinkGrad = "cloglog.grad")
     }
     else
       det<- NULL

@@ -40,8 +40,8 @@ secondary periods.
 }
 \examples{
  rem<- san_nic_rem$rem
- emf <- eFrameR(y=rem)
- mod <- remPois(~1, ~1, data=emf)
+ emf <- eFrameGR(y=rem, numPrimary=1)
+ mod <- remPois(~1, ~1, ~1, data=emf)
  Nhat<- calcN(mod)
 
 }

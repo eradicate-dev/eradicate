@@ -80,7 +80,8 @@ summary.efit<- function(object, ...)
     invlink <- object[[type[i]]]$invlink
     link <- switch(invlink,
                    exp = "log",
-                   logistic = "logit")
+                   logistic = "logit",
+                   cloglog = "cloglog")
     cat(object[[type[i]]]$name, " (", link, "-scale)", ":\n", sep="")
     outDF <- data.frame(Estimate = ests, SE = SEs, z = Z, "P(>|z|)" = p,
                         check.names = FALSE)
@@ -120,7 +121,8 @@ summary.efitGP<- function(object, ...)
     p <- 2*pnorm(abs(Z), lower.tail = FALSE)
     invlink <- object[[type[i]]]$invlink
     link <- switch(invlink,
-                   identLink = "identity",
+                   exp = "log",
+                   cloglog = "cloglog",
                    logistic = "logit")
     cat(object[[type[i]]]$name, " (", link, "-scale)", ":\n", sep="")
     outDF <- data.frame(Estimate = ests, SE = SEs, z = Z, "P(>|z|)" = p,
@@ -158,6 +160,25 @@ backTransform.efit<- function(obj, ...) {
   invlinkGrad<- obj$invlinkGrad
   estimate<- obj$estimates
   covMat<- obj$covMat
+  e <- do.call(invlink,list(estimate))
+  grad <- do.call(invlinkGrad,list(estimate))
+
+  if(length(estimate) > 1) {
+    v <- diag(grad) %*% covMat %*% diag(grad)
+  } else {
+    v <- grad^2 * covMat
+  }
+  umbt <- list(estimates = e, covMat = v)
+  umbt
+}
+
+backTransform.efitGP<- function(obj, type="state", ...) {
+  # Delta method VAR
+  ests<- obj[[type]]
+  invlink<- ests$invlink
+  invlinkGrad<- ests$invlinkGrad
+  estimate<- ests$estimates
+  covMat<- ests$covMat
   e <- do.call(invlink,list(estimate))
   grad <- do.call(invlinkGrad,list(estimate))
 
@@ -272,8 +293,9 @@ calcN.efitGP<- function(obj, CI.level=0.95, ...) {
   # Chao (1989) Biometrics 45(2), 427-438
   x <- obj$data
   R<- sum(x$catch)
-  N<- obj$state$estimates
-  se.N<- sqrt(diag(obj$state$covMat))
+  ests<- backTransform(obj, type="state")
+  N<- ests$estimates
+  se.N<- sqrt(diag(ests$covMat))
   cv.N<- se.N/N
   z <- qt((1-CI.level)/2, length(x$catch) - 2, lower.tail = FALSE)
   asymp.N <- exp(z * sqrt(log(1 + ((se.N^2)/((N - R)^2)))))

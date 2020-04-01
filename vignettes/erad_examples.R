@@ -68,8 +68,7 @@ calcN(m4)
 
 ## -----------------------------------------------------------------------------
 rem<- san_nic_rem$rem
-y1<- san_nic_rem$y1 # detections from additional monitoring
-mtraps<- san_nic_rem$cells
+ym<- san_nic_rem$ym # detections from additional monitoring
 nights<- san_nic_rem$nights
 traps<- san_nic_rem$traps
 
@@ -77,16 +76,33 @@ habvals<- raster::extract(habitat, traps, buffer=500)
 pgrass<- sapply(habvals, function(x) mean(x, na.rm=T))
 site.data<- cbind(traps, pgrass)
 
-
-emf<-eFrameRM(rem, y1, mtraps, nights, type="removal", siteCovs = site.data)
-r1<- remPoisM(~ pgrass,  ~ 1, data=emf, K=50)
+# Poisson abundance 
+emf<- eFrameR(rem, type="removal", siteCovs = site.data)
+r1<- remPois(~pgrass, ~1, data=emf)
 summary(r1)
 calcN(r1)
 
-
-emf<- eFrameR(rem, type="removal", siteCovs = site.data)
-r2<- remPois(~pgrass, ~1, data=emf)
+# Generalized Poisson
+emf<- eFrameGR(rem, numPrimary=1, type="removal", siteCovs = site.data)
+r2<- remGR(~pgrass, ~1, ~1, data=emf)
 summary(r2)
 calcN(r2)
+
+emf<- eFrameGRM(rem, ym, numPrimary=1, type="removal", siteCovs = site.data)
+r3<- remGRM(~pgrass, ~1, ~1, ~1, data=emf)
+summary(r3)
+calcN(r3)
+
+## -----------------------------------------------------------------------------
+catch<- apply(rem,2,sum)
+effort<- rep(nrow(rem), length(catch))
+# extra monitoring/effort data
+index<- apply(ym,2,sum)
+ieffort<- rep(nrow(ym), length(index))
+
+emf<- eFrameGP(catch, effort, index, ieffort)
+mod<- remGP(emf)
+summary(mod)
+calcN(mod)
 
 

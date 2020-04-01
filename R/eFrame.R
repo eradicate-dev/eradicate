@@ -207,11 +207,9 @@ eFrameGR<- function(y, numPrimary, siteCovs = NULL, primaryCovs = NULL, type) {
 #'
 #' @examples
 #'  rem<- san_nic_rem$rem
-#'  y1<- san_nic_rem$y1 # detections from additional monitoring
-#'  mtraps<- san_nic_rem$cells
-#'  nights<- san_nic_rem$nights
+#'  ym<- san_nic_rem$ym # detections from additional monitoring
 #'
-#'  emf<-eFrameRM(rem, y1, mtraps, nights, type="removal")
+#'  emf<-eFrameGRM(rem, ym, numPrimary=1, type="removal")
 #'  summary(emf)
 #'
 #' @export
@@ -231,6 +229,45 @@ eFrameGRM<- function(y, ym, numPrimary, siteCovs = NULL, primaryCovs = NULL, typ
   emf$numPrimary <- numPrimary
   emf$primaryCovs <- covsToDF(primaryCovs, "primaryCovs", numPrimary, nrow(y))
   class(emf) <- c("eFrameGRM",class(emf))
+  emf
+}
+
+#' eFrameGP
+#'
+#' \code{eFrameGP} creates an eFrameGP data object for use with the single site
+#' removal estimator \code{remGP()}.
+#'
+#' @param catch A vector of removals for each period.
+#' @param effort A vector of removal effort employed during each period (i.e. trapnights).
+#' @param index Optional vector of relative abundance indices for each period.
+#'
+#' @return a \code{eFrameGP} holding data suitable for use in \code{remGP}
+#'
+#' @examples
+#'  rem<- san_nic_rem$rem
+#'  ym<- san_nic_rem$ym # detections from additional monitoring
+#'  catch<- apply(rem,2,sum)
+#'  effort<- rep(nrow(rem), length(catch))
+#'  index<- apply(ym,2,sum)
+#'
+#'  emf<-eFrameGP(catch, effort, index)
+#'  summary(emf)
+#'
+#' @export
+#'
+eFrameGP<- function(catch, effort, index=NULL, ieffort=NULL) {
+  if(length(catch) != length(effort))
+    stop("catch and effort vectors must be same length")
+  x <- data.frame(catch=catch, effort=effort)
+  nobs<- nrow(x)
+  if(!is.null(index) & length(index) == nobs) {
+    x$index<- index
+    if(!is.null(ieffort) & length(ieffort) == nobs)
+      x$ieffort<- ieffort
+    else stop("index supplied with no or faulty effort data")
+  }
+  emf<- list(counts=x)
+  class(emf) <- c("eFrameGP")
   emf
 }
 

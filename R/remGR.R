@@ -29,8 +29,8 @@
 #'
 #' @examples
 #'  rem<- san_nic_rem$rem
-#'  emf <- eFrameR(y=rem)
-#'  mod <- remPois(~1, ~1, data=emf)
+#'  emf <- eFrameGR(y=rem, numPrimary=1)
+#'  mod <- remPois(~1, ~1, ~1, data=emf)
 #'  Nhat<- calcN(mod)
 #'
 #' @export
@@ -74,15 +74,16 @@ remGR <- function(lamformula, phiformula, detformula, data, mixture=c('P', 'NB')
 
   piFun <- data$piFun
 
-  lamPars <- colnames(Xlam)
-  detPars <- colnames(Xdet)
+  lamParms <- colnames(Xlam)
+  detParms <- colnames(Xdet)
+
   nLP <- ncol(Xlam)
   if(T==1) {
     nPP <- 0
-    phiPars <- character(0)
+    phiParms <- character(0)
   } else if(T>1) {
     nPP <- ncol(Xphi)
-    phiPars <- colnames(Xphi)
+    phiParms <- colnames(Xphi)
   }
   nDP <- ncol(Xdet)
   nP <- nLP + nPP + nDP + (mixture=='NB')
@@ -153,12 +154,26 @@ remGR <- function(lamformula, phiformula, detformula, data, mixture=c('P', 'NB')
   ests <- fm$par
   fmAIC <- 2 * fm$value + 2 * nP
 
+  if(identical(mixture,"NB"))
+    names(ests)<- c(lamParms,phiParms,detParms,"alpha")
+  else
+    names(ests)<- c(lamParms,phiParms,detParms)
+
   typeNames<- c("state","det")
 
+  if(identical(mixture,"NB")) {
     stateEstimates <- list(name = "Abundance", short.name = "lambda",
-                         estimates = ests[1:nLP],
-                         covMat = as.matrix(covMat[1:nLP, 1:nLP]), invlink = "exp",
-                         invlinkGrad = "exp")
+                           estimates = ests[c(1:nLP,nP)],
+                           covMat = as.matrix(covMat[c(1:nLP,nP), c(1:nLP,nP)]), invlink = "exp",
+                           invlinkGrad = "exp")
+  }
+  else {
+    stateEstimates <- list(name = "Abundance", short.name = "lambda",
+                           estimates = ests[1:nLP],
+                           covMat = as.matrix(covMat[1:nLP, 1:nLP]), invlink = "exp",
+                           invlinkGrad = "exp")
+  }
+
   if(T>1) {
     typeNames<- c(typeNames,"avail")
     availEstimates <- list(name = "Availability",
@@ -175,13 +190,6 @@ remGR <- function(lamformula, phiformula, detformula, data, mixture=c('P', 'NB')
                        covMat = as.matrix(covMat[(nLP+nPP+1):(nLP+nPP+nDP),(nLP+nPP+1):(nLP+nPP+nDP)]),
                        invlink = "logistic",
                        invlinkGrad = "logistic.grad")
-
-  if(identical(mixture,"NB")) {
-    stateEstimates$alpha <- list(name="Dispersion",
-                                 short.name = "alpha", estimates = ests[nP],
-                                 covMat = as.matrix(covMat[nP, nP]), invlink = "exp",
-                                 invlinkGrad = "exp")
-  }
 
   efit <- list(fitType = "generalised removal",
                call = match.call(), types=typeNames,lamformula = lamformula, detformula=detformula,

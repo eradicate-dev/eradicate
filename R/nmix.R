@@ -109,18 +109,28 @@ nmix <- function(lamformula, detformula, data, K, mixture = c("P", "NB"), starts
     if(missing(starts)) starts <- rep(0, nP)
     fm <- optim(starts, nll, method=method, hessian=se, ...)
     ests <- fm$par
-    nbParm <- switch(mixture,
-                     NB = "alpha",
-                     P = character(0))
+    if(identical(mixture,"NB"))
+        names(ests)<- c(lamParms,detParms,"alpha")
+    else
+        names(ests)<- c(lamParms, detParms)
 
     covMat <- invertHessian(fm, nP, se)
     fmAIC <- 2 * fm$value + 2 * nP
 
     typeNames<- c("state","det")
-    stateEstimates <- list(name="Abundance", short.name="lam",
-        estimates = ests[1:nAP],
-        covMat = as.matrix(covMat[1:nAP,1:nAP]),
-	invlink = "exp", invlinkGrad = "exp")
+
+    if(identical(mixture,"NB")) {
+        stateEstimates <- list(name="Abundance", short.name="lam",
+                            estimates = ests[c(1:nAP,nP)],
+                            covMat = as.matrix(covMat[c(1:nAP,nP),c(1:nAP,nP)]),
+	                        invlink = "exp", invlinkGrad = "exp")
+    }
+    else {
+        stateEstimates <- list(name="Abundance", short.name="lam",
+                               estimates = ests[1:nAP],
+                               covMat = as.matrix(covMat[1:nAP,1:nAP]),
+                               invlink = "exp", invlinkGrad = "exp")
+    }
 
     detEstimates <- list(name = "Detection", short.name = "p",
         estimates = ests[(nAP + 1) : (nAP + nDP)],
@@ -128,13 +138,6 @@ nmix <- function(lamformula, detformula, data, K, mixture = c("P", "NB"), starts
                                   (nAP + 1):(nAP + nDP)]),
         invlink = "logistic", invlinkGrad = "logistic.grad")
 
-
-    if(identical(mixture,"NB")) {
-        stateEstimates$alpha <- list(name="Dispersion",
-            short.name = "alpha", estimates = ests[nP],
-            covMat = as.matrix(covMat[nP, nP]), invlink = "exp",
-            invlinkGrad = "exp")
-    }
 
     efit <- list(fitType="nmix", call=match.call(), types=typeNames,
                  lamformula = lamformula, detformula=detformula,

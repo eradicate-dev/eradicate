@@ -20,7 +20,7 @@ The `eradicate` package contains some functions to undertake basic populaton est
 
 Here we illustrate the basic use of the models in the `eradicate` package by running through a theoretical  program to eradicate feral cats on San Nicolas Island, off the coast of California. We start by undertaking a preliminary assessment of the population (assessment phase) using camera trap sampling before attempting to eradicate the population using removal trapping with leg-hold traps (removal phase).  During the removal phase we will undertake periodic assessments of the population to track our progress towards eradication.
 
-Before we start we load various the packages necessary for our analysis ...
+Since this is a simulated dataset, we know exactly what the population size was before the eradication program began (86 cats).  Before we start we load various the packages necessary for our analysis ...
 
 ```{r setup, message=FALSE, warning=FALSE}
 library(eradicate)
@@ -113,16 +113,15 @@ calcN(m4)
 
 ## Eradication phase
 
-Now that we have some idea of the size of the cat population on San Nicolas (i.e. around 70-90 individuals), we now turn to the eradication phase.  The eradication will be attempted using 100 leg-hold traps located across the island.  At a proportion of these trap locations, additional monitoring will also be undertaken using camera traps.  This two-technique approach is useful as the cameras could detect a cat that approaches a trap, but does not get captured.  Along with the data on cat removals, information from these extra detections can be used to update the estimate of the residual population size.
+Now that we have some idea of the size of the cat population on San Nicolas (i.e. around 70-90 individuals, which compares well with the true population size of 86), we now turn to the eradication phase.  The eradication will be attempted using 100 leg-hold traps located across the island.  At a proportion of these trap locations, additional monitoring will also be undertaken using camera traps.  This two-technique approach is useful as the cameras could detect a cat that approaches a trap, but does not get captured.  Along with the data on cat removals, information from these extra detections can be used to update the estimate of the residual population size.
 
-The dataset `san_nic_rem` contains example data from an eradication phase conducted over 20 separate (primary) periods.  During each period, the leg-hold traps and cameras were operated for 10 consecutive nights (secondary periods).  As well as the leg-hold trap locations, the dataset also contains information on the IDs of the traps where the cameras were placed.
+The dataset `san_nic_rem` contains example data from an eradication phase conducted over 10 separate (primary) periods.  During each period, the leg-hold traps and cameras were operated for 20 consecutive nights (secondary periods).  As well as the leg-hold trap locations, the dataset also contains information on the IDs of the traps where the cameras were placed.  Again, since this is a simulated dataset, we know exactly how many cats remained following the eradication effort (9 cats).
 
-The `eradicate` package contains a two functions for use with removal type data `remPois()` and `remPoisM()`. The former is applied to the data on removals only while the latter is applied to the joint removal and additional detection data.  We start by collating the data and extracting habitat info for use in the models as before.
+The `eradicate` package contains a several functions for use with removal type data. The function `remPois()` can be applied to removal data for the particular case when the latent abundance is assumed to follow a Poisson distribution. `remPois` also assumes that the population is closed over the primary periods.  There are two other functions that employ generalized removal models, `remGR()` and `remGRM()` where the former is applied to removal only data while the latter is applied to the joint removal and additional detection data.  These models are more flexible than `remPois()` as abundance can be modeled as a negative binomial distribution as well as the Poisson.  In addition, the models also allow for a specific form of lack of closure over the sampling period by allowing for temporary emigration.  This allows for the estimation of the proportion of the population that is available for detection during each sampling period (availability).  We start by collating the data and extracting habitat info for use in the models as before.
 
 ```{r}
 rem<- san_nic_rem$rem
-y1<- san_nic_rem$y1 # detections from additional monitoring
-mtraps<- san_nic_rem$cells
+ym<- san_nic_rem$ym # detections from additional monitoring
 nights<- san_nic_rem$nights
 traps<- san_nic_rem$traps
 
@@ -130,21 +129,41 @@ habvals<- raster::extract(habitat, traps, buffer=500)
 pgrass<- sapply(habvals, function(x) mean(x, na.rm=T))
 site.data<- cbind(traps, pgrass)
 
-
-emf<-eFrameRM(rem, y1, mtraps, nights, type="removal", siteCovs = site.data)
-r1<- remPoisM(~ pgrass,  ~ 1, data=emf, K=50)
+# Poisson abundance 
+emf<- eFrameR(rem, type="removal", siteCovs = site.data)
+r1<- remPois(~pgrass, ~1, data=emf)
 summary(r1)
 calcN(r1)
 
-
-emf<- eFrameR(rem, type="removal", siteCovs = site.data)
-r2<- remPois(~pgrass, ~1, data=emf)
+# Generalized Poisson
+emf<- eFrameGR(rem, numPrimary=1, type="removal", siteCovs = site.data)
+r2<- remGR(~pgrass, ~1, ~1, data=emf)
 summary(r2)
 calcN(r2)
 
+emf<- eFrameGRM(rem, ym, numPrimary=1, type="removal", siteCovs = site.data)
+r3<- remGRM(~pgrass, ~1, ~1, ~1, data=emf)
+summary(r3)
+calcN(r3)
 ```
 
-Using data on extra detections has resulted in a higher estimate of the initial population size compared with the model without extra detections.  This is due to the fact that cats were detected in a camera in the periods following the last capture of a cat in the leg-hold traps. The `calcN()` function also produces an estimate of the residual population remaining, which is simply the difference between the estimated initial population and the number removed. This indicates 12 cats are likely still extant using inference from the removal + extra detections model compared with nominal eradication using the removal only model.  Again, this highlights the advantages of using extra monitoring data for inference
+Using data on extra detections has resulted in a higher estimate of the initial population size compared with the model without extra detections.  This is due to the fact that cats were detected in a camera in the periods following the last capture of a cat in the leg-hold traps. The `calcN()` function also produces an estimate of the residual population remaining, which is simply the difference between the estimated initial population and the number removed. This indicates 18 cats are likely still extant using inference from the removal + extra detections model compared with nominal eradication using the removal only model. The estimate of 18 is somewhat higher than the true number of cats remaining (9), but this is better than the inference of complete eradication using the removal only models. Again, this highlights the advantages of using extra monitoring data for inference.
 
+Finally, `eradicate` also contains a function for estimating the pre-removal and residual population size for data collected from a single site.  This might be applicable when the region of interest has no obvious spatial heterogeneity that can be modeled with covariate information using the other functions (i.e. toad eradication from a small lake or pond).  This model `remGP()`, employs the catch-effort maximum likelihood model of Gould & Pollock (1997). It can also make use of additional monitoring data for joint inference. We can run the `remGP()` model with the current data by pooling the captures and trapnight data from all traps.
 
+```{r}
+catch<- apply(rem,2,sum)
+effort<- rep(nrow(rem), length(catch))
+# extra monitoring/effort data
+index<- apply(ym,2,sum)
+ieffort<- rep(nrow(ym), length(index))
+
+emf<- eFrameGP(catch, effort, index, ieffort)
+mod<- remGP(emf)
+summary(mod)
+calcN(mod)
+
+```
+
+This model indicates that there might be one cat remaining following the eradication program. 
  

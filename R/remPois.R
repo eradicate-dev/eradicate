@@ -78,6 +78,8 @@ remPois <- function(lamformula, detformula, data, starts, method = "BFGS", se = 
     ests <- fm$par
     fmAIC <- 2 * fm$value + 2 * nP
 
+    names(ests)<- c(lamParms, detParms)
+
     typeNames<- c("state","det")
 
     stateEstimates <- list(name = "Abundance",
