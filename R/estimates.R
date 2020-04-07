@@ -244,6 +244,7 @@ calcN.efitM<- function(obj, newdata, off.set=NULL, CI.level=0.95, ...) {
   Pocc<- sum(est$estimates)/ M # mean occupancy
   varN<- sum(est$covMat) * (1/M^2) # delta method VAR
   seN<- sqrt(varN)
+  cv<- seN/Pocc
   z <- qnorm((1-CI.level)/2, lower.tail = FALSE)
   lwr<- Pocc - seN*z
   upr<- Pocc + seN*z
@@ -282,7 +283,7 @@ calcN.efitR<- function(obj, off.set=NULL, CI.level=0.95, ...) {
   upr1<- Nresid/z
 
   bigN<- data.frame(N=round(Nhat,1),se=round(seN,1), lcl=round(lwr,1), ucl=round(upr,1))
-  littleN<- data.frame(N = round(Nresid,1),se=round(Nresid*cv,1),lcl=round(lwr1,1), ucl=round(upr1,1))
+  littleN<- data.frame(N = round(Nresid,1),se=round(seN,1), lcl=round(lwr1,1), ucl=round(upr1,1))
   list(cellpreds=est$estimates, Nhat=bigN, Nresid=littleN)
 }
 
@@ -305,10 +306,9 @@ calcN.efitGP<- function(obj, CI.level=0.95, ...) {
   lcl.Nr<- (N - R)/asymp.N
   ucl.Nr<- (N - R)*asymp.N
   cv.Nr<- se.N/Nr
-  ests<- data.frame(Estimate=c(N,Nr),SE=c(se.N,se.N),CV=c(cv.N,cv.Nr),
-                    LCL=c(lcl.N,lcl.Nr),UCL=c(ucl.N,ucl.Nr))
-  row.names(ests)<- c("N","Nresid")
-  return(ests)
+  bigN<- data.frame(N=round(N), se=round(se.N,1), lcl=round(lcl.N,1), ucl=round(ucl.N,1))
+  littleN<- data.frame(N = round(Nr), se=round(se.N,1),lcl=round(lcl.Nr,1), ucl=round(ucl.Nr,1))
+  list(Nhat=bigN, Nresid=littleN)
 }
 
 #' @rdname SE
