@@ -119,32 +119,32 @@ nmix <- function(lamformula, detformula, data, K, mixture = c("P", "NB"), starts
 
     typeNames<- c("state","det")
 
-    if(identical(mixture,"NB")) {
-        stateEstimates <- list(name="Abundance", short.name="lam",
-                            estimates = ests[c(1:nAP,nP)],
-                            covMat = as.matrix(covMat[c(1:nAP,nP),c(1:nAP,nP)]),
-	                        invlink = "exp", invlinkGrad = "exp")
-    }
-    else {
-        stateEstimates <- list(name="Abundance", short.name="lam",
-                               estimates = ests[1:nAP],
-                               covMat = as.matrix(covMat[1:nAP,1:nAP]),
-                               invlink = "exp", invlinkGrad = "exp")
-    }
+    stateEstimates <- list(name="Abundance", short.name="lam",
+                           estimates = ests[1:nAP],
+                           covMat = as.matrix(covMat[1:nAP,1:nAP]),
+                           invlink = "exp", invlinkGrad = "exp")
 
     detEstimates <- list(name = "Detection", short.name = "p",
-        estimates = ests[(nAP + 1) : (nAP + nDP)],
-        covMat = as.matrix(covMat[(nAP + 1):(nAP + nDP),
-                                  (nAP + 1):(nAP + nDP)]),
-        invlink = "logistic", invlinkGrad = "logistic.grad")
+                         estimates = ests[(nAP + 1) : (nAP + nDP)],
+                         covMat = as.matrix(covMat[(nAP + 1):(nAP + nDP),
+                                                   (nAP + 1):(nAP + nDP)]),
+                         invlink = "logistic", invlinkGrad = "logistic.grad")
 
+    if(identical(mixture,"NB")) {
+        typeNames<- c(typeNames,"disp")
+        dispEstimates <- list(name="Dispersion", short.name="disp",
+                            estimates = ests[nP],
+                            covMat = as.matrix(covMat[nP,nP]),
+	                        invlink = "exp", invlinkGrad = "exp")
+    }
+    else dispEstimates<- NULL
 
     efit <- list(fitType="nmix", call=match.call(), types=typeNames,
                  lamformula = lamformula, detformula=detformula,
                  sitesRemoved = designMats$removed.sites,
-                 state=stateEstimates, det=detEstimates, AIC = fmAIC, opt = fm,
-                 negLogLike = fm$value, nllFun = nll, K = K, mixture = mixture,
-                 data = data)
+                 state=stateEstimates, det=detEstimates, disp=dispEstimates,
+                 AIC = fmAIC, opt = fm, negLogLike = fm$value, nllFun = nll,
+                 K = K, mixture = mixture, data = data)
     class(efit) <- c('efit','list')
     return(efit)
 }

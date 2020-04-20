@@ -161,18 +161,20 @@ remGR <- function(lamformula, phiformula, detformula, data, mixture=c('P', 'NB')
 
   typeNames<- c("state","det")
 
+  stateEstimates <- list(name = "Abundance", short.name = "lambda",
+                         estimates = ests[1:nLP],
+                         covMat = as.matrix(covMat[1:nLP, 1:nLP]), invlink = "exp",
+                         invlinkGrad = "exp")
+
   if(identical(mixture,"NB")) {
-    stateEstimates <- list(name = "Abundance", short.name = "lambda",
-                           estimates = ests[c(1:nLP,nP)],
-                           covMat = as.matrix(covMat[c(1:nLP,nP), c(1:nLP,nP)]), invlink = "exp",
+    typeNames<- c(typeNames,"disp")
+
+    dispEstimates <- list(name = "Dispersion", short.name = "disp",
+                           estimates = ests[nP],
+                           covMat = as.matrix(covMat[nP, nP]), invlink = "exp",
                            invlinkGrad = "exp")
   }
-  else {
-    stateEstimates <- list(name = "Abundance", short.name = "lambda",
-                           estimates = ests[1:nLP],
-                           covMat = as.matrix(covMat[1:nLP, 1:nLP]), invlink = "exp",
-                           invlinkGrad = "exp")
-  }
+  else dispEstimates<- NULL
 
   if(T>1) {
     typeNames<- c(typeNames,"avail")
@@ -194,7 +196,7 @@ remGR <- function(lamformula, phiformula, detformula, data, mixture=c('P', 'NB')
   efit <- list(fitType = "generalised removal",
                call = match.call(), types=typeNames,lamformula = lamformula, detformula=detformula,
                phiformula=phiformula, state=stateEstimates,det=detEstimates, avail=availEstimates,
-               sitesRemoved = D$removed.sites,AIC = fmAIC, opt = fm,
+               disp=dispEstimates, sitesRemoved = D$removed.sites,AIC = fmAIC, opt = fm,
                negLogLike = fm$value, nllFun = nll, mixture=mixture, K=K, data = data)
   class(efit) <- c('efitR','efit','list')
 

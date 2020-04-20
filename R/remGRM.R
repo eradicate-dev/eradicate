@@ -148,7 +148,7 @@ remGRM <- function(lamformula, phiformula, detformula, mdetformula, data, mixtur
     else if(T>1)
       phi <- drop(plogis(Xphi %*% pars[(nLP+1):(nLP+nPP)] + Xphi.offset))
       p <- cloglog(Xdet %*% pars[(nLP+nPP+1):(nLP+nPP+nDP)] + Xdet.offset)
-      pm <- cloglog(Xdetm %*% pars[(nLP+nPP+nDP+1):(nLP+nPP+nDP+nDPM)])
+      pm <- exp(Xdetm %*% pars[(nLP+nPP+nDP+1):(nLP+nPP+nDP+nDPM)])
 
     phi.mat <- matrix(phi, M, T, byrow=TRUE)
     phi <- as.numeric(phi.mat)
@@ -220,18 +220,21 @@ remGRM <- function(lamformula, phiformula, detformula, mdetformula, data, mixtur
     names(ests)<- c(lamParms,phiParms,detParms)
 
   typeNames<- c("state","det")
+
+  stateEstimates <- list(name = "Abundance", short.name = "lambda",
+                         estimates = ests[1:nLP],
+                         covMat = as.matrix(covMat[1:nLP, 1:nLP]), invlink = "exp",
+                         invlinkGrad = "exp")
+
   if(identical(mixture,"NB")) {
-    stateEstimates <- list(name = "Abundance", short.name = "lambda",
-                           estimates = ests[c(1:nLP,nP)],
-                           covMat = as.matrix(covMat[c(1:nLP,nP), c(1:nLP,nP)]), invlink = "exp",
-                           invlinkGrad = "exp")
+    typeNames<- c(typeNames,"disp")
+
+    dispEstimates <- list(name = "Dispersion", short.name = "disp",
+                          estimates = ests[nP],
+                          covMat = as.matrix(covMat[nP, nP]), invlink = "exp",
+                          invlinkGrad = "exp")
   }
-  else {
-    stateEstimates <- list(name = "Abundance", short.name = "lambda",
-                           estimates = ests[1:nLP],
-                           covMat = as.matrix(covMat[1:nLP, 1:nLP]), invlink = "exp",
-                           invlinkGrad = "exp")
-  }
+  else dispEstimates<- NULL
 
   if(T>1) {
     typeNames<- c(typeNames,"avail")
@@ -253,7 +256,7 @@ remGRM <- function(lamformula, phiformula, detformula, mdetformula, data, mixtur
   efit <- list(fitType = "generalised removal",
                call = match.call(), types=typeNames,lamformula = lamformula, detformula=detformula,
                phiformula=phiformula, state=stateEstimates,det=detEstimates, avail=availEstimates,
-               sitesRemoved = D$removed.sites,AIC = fmAIC, opt = fm,
+               disp=dispEstimates, sitesRemoved = D$removed.sites,AIC = fmAIC, opt = fm,
                negLogLike = fm$value, nllFun = nll, mixture=mixture, K=K, data = data)
   class(efit) <- c('efitR','efit','list')
 
