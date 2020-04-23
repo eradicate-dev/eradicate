@@ -7,12 +7,21 @@
 # Both p and the returned matrix are M x J for M sites and J sampling occasions.
 
 removalPiFun <- function(p){
-  M <- nrow(p)
-  J <- ncol(p)
-  pi <- matrix(NA, M, J)
-  pi[,1] <- p[,1]
-  for(i in seq(from = 2, length = J - 1)) {
-    pi[, i] <- pi[,i-1] / p[,i-1] * (1-p[,i-1]) * p[,i]
+  if(is.matrix(p)) {
+    M <- nrow(p)
+    J <- ncol(p)
+    pi <- matrix(NA, M, J)
+    pi[,1] <- p[,1]
+    for(i in seq(from = 2, length = J - 1)) {
+      pi[, i] <- pi[,i-1] / p[,i-1] * (1-p[,i-1]) * p[,i]
+    }
+  }
+  else {
+    J<- length(p)
+    pi<- rep(NA, J)
+    pi[1]<- p[1]
+    for (i in 2:J)
+      pi[i] <- p[i] * (1-p[i])^(i-1)
   }
   return(pi)
 }

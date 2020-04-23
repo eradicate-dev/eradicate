@@ -9,11 +9,7 @@ remGP(catch, effort, index, starts, Nmax, se=TRUE, ...)
 \arguments{
 \item{starts}{Initial values for parameters}
 
-\item{Nmax}{Maximum search increment for abundance considered in the optimisation}
-
 \item{se}{flag to return the standard error (hessian).}
-
-\item{alpha}{quantile for (1-alpha) level confidence intervals}
 
 \item{catch}{the number of removals recorded for each period.}
 
@@ -22,6 +18,10 @@ remGP(catch, effort, index, starts, Nmax, se=TRUE, ...)
 \item{index}{Index (i.e. count) data collected in conjunction with the removal
 data.  The index data is assumed to be collected just before each removal period and
 can consist of any relative index of abundance.}
+
+\item{Nmax}{Maximum search increment for abundance considered in the optimisation}
+
+\item{alpha}{quantile for (1-alpha) level confidence intervals}
 }
 \value{
 a \code{efit} model object.

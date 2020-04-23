@@ -30,7 +30,7 @@
 #'
 #' @export
 #'
-remGP<- function (data, starts, Nmax=1000, se = TRUE, alpha=0.05, ...){
+remGP<- function (data, starts, se = TRUE, ...){
   if(!is(data, "eFrameGP"))
     stop("Data is not a eFrameGP")
   x<- data$counts
@@ -43,64 +43,42 @@ remGP<- function (data, starts, Nmax=1000, se = TRUE, alpha=0.05, ...){
 
   if (nobs < 3)
     stop("ml method requires at least 3 observations!")
-  cstart<- -log(max(x$effort))
-  if(!is.null(x$index)) istart<- -log(max(x$ieffort))
-  else istart<- 0
+  if(missing(starts)) {
+    cstart<- -log(max(x$effort))
+      if(!is.null(x$index)) {
+        istart<- -log(max(x$ieffort))
+        starts<- c(log(R), cstart, istart)
+      }
+      else {
+        starts<- c(log(R), cstart)
+      }
+  }
 
-  if(missing(starts)) starts<- c(cstart, log(R), istart)
-
-    nll2 <- function(parm) {
-      p <- 1 - exp(-exp(parm + log(x$effort)))
-      qp<- rep(NA, nobs)
-      qp[1]<- p[1]
-      for (i in 2:nobs)
-        qp[i] <- p[i] * (1-p[i])^(i-1)
-      Q <- prod(1-p)
-      pr <- x$catch * log(qp/(1 - Q))
-      MP <- sum(pr)
-      RF <- lgamma(R + 1)
-      CF <- sum(lgamma(x$catch + 1))
-      ll <- RF - CF + MP
-      (-1)*ll
-    }
-    nll1<- function(parm, k, idx=FALSE) {
-      N<- exp(parm[1])
-      p <- 1 - exp(-k * x$effort)
-      Q <- prod(1-p)
-      ll<- lgamma(N + 1) - (lgamma((N - R) + 1) + lgamma(R + 1)) + R*log(1-Q) + (N-R)*log(Q)
-      if(idx){
-        pm<- 1 - exp(-exp(parm[2]+ log(x$ieffort)))
-        #Nr<- N - x$cumcatch + 1e-10
-        Nr<- N - x$cumcatch
-        lli<- sum(dpois(x$index, Nr*pm, log=TRUE))
-        lli[!is.finite(lli)]<- -1e20
+    nll <- function(parm, idx=FALSE) {
+      lambda<- exp(parm[1])
+      p <- 1 - exp(-exp(parm[2] + log(x$effort)))
+      pi<- removalPiFun(p)
+      ll<- sum(dpois(x$catch, lambda*pi, log=TRUE))
+      if(idx) {
+        pm <- 1 - exp(-exp(parm[3] + log(x$ieffort)))
+        pmi<- removalPiFun(pm)
+        lli<- sum(dpois(x$index, lambda*pmi, log=TRUE))
       }
       else lli<- 0
-      (-1)*(ll + lli)
+      return((-1)*(ll+lli))
     }
-    # Estimate of catch coefficient lambda (k)
-    m1 <- optim(starts[1], nll2, lower= -20, upper = 2, method="Brent", hessian=se)
-    k <- exp(m1$par)
-    var.k<- invertHessian(m1, 1, se)
 
-    # conditional LL of abundance | lambda
-    if(!is.null(x$index)){
-        cat("Index data detected - adding index-removal estimation","\n\n")
-        nP<- 2
-        m2 <- optim(starts[2:3], nll1, k=k, idx=TRUE, method="L-BFGS-B", lower=c(log(R), -20),
-                    upper=c(log(R+Nmax), 2), hessian=se)
-        ests<- m2$par
-        covMat<- invertHessian(m2, nP, se)
+    if(!is.null(x$index)) {
+      nP<- 3
+      m <- optim(starts, nll, idx=TRUE, method="BFGS", hessian=se)
     }
     else {
-      cat("Gould and Pollock removal estimator","\n\n")
-      nP<- 1
-
-      m2 <- optim(starts[2], nll1, k=k, idx=FALSE, lower = log(R), upper = log(R+Nmax),
-                  method="Brent", hessian=se)
-      ests<- m2$par
-      covMat<- invertHessian(m2, nP, se)
+      nP<- 2
+      m <- optim(starts, nll, idx=FALSE, method="BFGS", hessian=se)
     }
+
+    ests<- m$par
+    covMat<- invertHessian(m, nP, se)
 
     state <- list(name = "Abundance", short.name = "N",
                   estimates = ests[1],
@@ -109,22 +87,22 @@ remGP<- function (data, starts, Nmax=1000, se = TRUE, alpha=0.05, ...){
                   invlinkGrad = "exp")
 
     catch <- list(name = "catchability", short.name = "lambda",
-                estimates = m1$par,
-                covMat = var.k,
+                estimates = ests[2],
+                covMat = as.matrix(covMat[2,2]),
                 invlink = "cloglog",
                 invlinkGrad = "cloglog.grad")
 
     estimates<- list(state=state, catch=catch)
-    if(nP==2) {
+    if(nP==3) {
       det<- list(name = "detection", short.name = "p",
-           estimates = ests[2],
-           covMat = as.matrix(covMat[2,2]),
+           estimates = ests[3],
+           covMat = as.matrix(covMat[3,3]),
            invlink = "cloglog",
-           invlinkGrad = "cloglog.grad")
+           invlinkGrad = "cloglog")
       estimates$det<- det
     }
 
-    efit <- list(fitType = "remGP", estimates=estimates, opt = list(m1=m1,m2=m2), data=x)
+    efit <- list(fitType = "remGP", estimates=estimates, opt = m, data=x)
     class(efit) <- c('efitGP','efit','list')
 
     return(efit)
