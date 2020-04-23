@@ -47,10 +47,10 @@ remGP<- function (data, starts, se = TRUE, ...){
     cstart<- -log(max(x$effort))
       if(!is.null(x$index)) {
         istart<- -log(max(x$ieffort))
-        starts<- c(log(R), cstart, istart)
+        starts<- c(log(R+1), cstart, istart)
       }
       else {
-        starts<- c(log(R), cstart)
+        starts<- c(log(R+1), cstart)
       }
   }
 
@@ -70,11 +70,15 @@ remGP<- function (data, starts, se = TRUE, ...){
 
     if(!is.null(x$index)) {
       nP<- 3
-      m <- optim(starts, nll, idx=TRUE, method="BFGS", hessian=se)
+      lb<- c(log(R+1),-20,-20)
+      ub<- c(log(R*10),2,2)
+      m <- optim(starts, nll, idx=TRUE, method="L-BFGS-B", lower=lb, upper=ub, hessian=se)
     }
     else {
       nP<- 2
-      m <- optim(starts, nll, idx=FALSE, method="BFGS", hessian=se)
+      lb<- c(log(R+1),-20)
+      ub<- c(log(R*10),2)
+      m <- optim(starts, nll, idx=FALSE, method="L-BFGS-B", lower=lb, upper=ub, hessian=se)
     }
 
     ests<- m$par

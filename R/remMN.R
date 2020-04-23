@@ -149,7 +149,7 @@ remMN <- function(lamformula, detformula, data, mixture=c("P","NB","ZIP"), start
                            invlinkGrad = "exp")
 
     detEstimates <- list(name = "Detection", short.name = "p",
-                         estimates = ests[(nAP + 1) : (nDP + nDP)],
+                         estimates = ests[(nAP + 1) : (nAP + nDP)],
                          covMat = as.matrix(covMat[(nAP + 1):(nAP + nDP), (nAP + 1):(nAP + nDP)]),
                          invlink = "logistic",
                          invlinkGrad = "logistic.grad")
