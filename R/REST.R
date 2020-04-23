@@ -96,7 +96,6 @@ REST <- function(lamformula, data, starts, method = "BFGS",
     ests <- fm$par
     fmAIC <- 2 * fm$value + 2 * nP
     names(ests)<- c(lamParms, stayParm)
-    typeNames<- c("state","stay")
 
     stateEstimates <- list(name = "Abundance",
                                    short.name = "lambda",
@@ -111,9 +110,10 @@ REST <- function(lamformula, data, starts, method = "BFGS",
                                  invlink = "exp",
                                  invlinkGrad = "exp")
 
+    estimates<- list(state=stateEstimates, stay=rhoEstimates)
+
     efit <- list(fitType = "REST model",
-        call = match.call(), types=typeNames,lamformula = lamformula,
-        state=stateEstimates, stay=rhoEstimates,
+        call = match.call(), lamformula = lamformula, estimates=estimates,
         sitesRemoved = designMats$removed.sites,AIC = fmAIC, opt = opt,
         negLogLike = fm$value, nllFun = nll, data = data)
     class(efit) <- c('efitREST','efit','list')

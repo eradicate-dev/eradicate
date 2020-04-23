@@ -117,7 +117,6 @@ nmix <- function(lamformula, detformula, data, K, mixture = c("P", "NB"), starts
     covMat <- invertHessian(fm, nP, se)
     fmAIC <- 2 * fm$value + 2 * nP
 
-    typeNames<- c("state","det")
 
     stateEstimates <- list(name="Abundance", short.name="lam",
                            estimates = ests[1:nAP],
@@ -130,20 +129,20 @@ nmix <- function(lamformula, detformula, data, K, mixture = c("P", "NB"), starts
                                                    (nAP + 1):(nAP + nDP)]),
                          invlink = "logistic", invlinkGrad = "logistic.grad")
 
+    estimates<- list(state=stateEstimates, det=detEstimates)
+
     if(identical(mixture,"NB")) {
-        typeNames<- c(typeNames,"disp")
         dispEstimates <- list(name="Dispersion", short.name="disp",
                             estimates = ests[nP],
                             covMat = as.matrix(covMat[nP,nP]),
 	                        invlink = "exp", invlinkGrad = "exp")
+        estimates$disp<- dispEstimates
     }
-    else dispEstimates<- NULL
 
-    efit <- list(fitType="nmix", call=match.call(), types=typeNames,
-                 lamformula = lamformula, detformula=detformula,
-                 sitesRemoved = designMats$removed.sites,
-                 state=stateEstimates, det=detEstimates, disp=dispEstimates,
-                 AIC = fmAIC, opt = fm, negLogLike = fm$value, nllFun = nll,
+    efit <- list(fitType="nmix", call=match.call(), lamformula = lamformula,
+                 detformula=detformula, estimates=estimates,
+                 sitesRemoved = designMats$removed.sites, AIC = fmAIC,
+                 opt = fm, negLogLike = fm$value, nllFun = nll,
                  K = K, mixture = mixture, data = data)
     class(efit) <- c('efit','list')
     return(efit)

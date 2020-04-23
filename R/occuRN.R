@@ -106,7 +106,6 @@ occuRN <- function(lamformula, detformula, data, K = 25, starts, method = "BFGS"
   ests <- fm$par
   fmAIC <- 2 * fm$value + 2 * nP
   names(ests)<- c(occParms, detParms)
-  typeNames<- c("state","det")
 
   stateEstimates <- list(name = "Abundance",
       short.name = "lam",
@@ -119,10 +118,11 @@ occuRN <- function(lamformula, detformula, data, K = 25, starts, method = "BFGS"
       covMat = as.matrix(covMat[(nOP + 1) : nP, (nOP + 1) : nP]),
       invlink = "logistic", invlinkGrad = "logistic.grad")
 
-  efit <- list(fitType = "occuRN",call = match.call(), types=typeNames,
-               lamformula = lamformula, detformula=detformula,
-               sitesRemoved = designMats$removed.sites,
-               state=stateEstimates, det=detEstimates, AIC = fmAIC, opt = opt,
+  estimates<- list(state=stateEstimates, det=detEstimates)
+
+  efit <- list(fitType = "occuRN",call = match.call(),
+               lamformula = lamformula, detformula=detformula, estimates=estimates,
+               sitesRemoved = designMats$removed.sites, AIC = fmAIC, opt = opt,
                negLogLike = fm$value, nllFun = nll, data = data)
   class(efit) <- c('efit','list')
   return(efit)

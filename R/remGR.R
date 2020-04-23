@@ -159,45 +159,42 @@ remGR <- function(lamformula, phiformula, detformula, data, mixture=c('P', 'NB')
   else
     names(ests)<- c(lamParms,phiParms,detParms)
 
-  typeNames<- c("state","det")
-
   stateEstimates <- list(name = "Abundance", short.name = "lambda",
                          estimates = ests[1:nLP],
                          covMat = as.matrix(covMat[1:nLP, 1:nLP]), invlink = "exp",
                          invlinkGrad = "exp")
 
-  if(identical(mixture,"NB")) {
-    typeNames<- c(typeNames,"disp")
+  detEstimates <- list(name = "Detection", short.name = "p",
+                       estimates = ests[(nLP+nPP+1):(nLP+nPP+nDP)],
+                       covMat = as.matrix(covMat[(nLP+nPP+1):(nLP+nPP+nDP),(nLP+nPP+1):(nLP+nPP+nDP)]),
+                       invlink = "logistic",
+                       invlinkGrad = "logistic.grad")
 
+  estimates<- list(state=stateEstimates,det=detEstimates)
+
+  if(identical(mixture,"NB")) {
     dispEstimates <- list(name = "Dispersion", short.name = "disp",
                            estimates = ests[nP],
                            covMat = as.matrix(covMat[nP, nP]), invlink = "exp",
                            invlinkGrad = "exp")
+    estimates$disp<- dispEstimates
   }
-  else dispEstimates<- NULL
 
   if(T>1) {
-    typeNames<- c(typeNames,"avail")
     availEstimates <- list(name = "Availability",
                          short.name = "phi",
                          estimates = ests[(nLP+1):(nLP+nPP)],
                          covMat = as.matrix(covMat[(nLP+1):(nLP+nPP),(nLP+1):(nLP+nPP)]),
                          invlink = "logistic",
                          invlinkGrad = "logistic.grad")
+    estimates$avail<- availEstimates
   }
-    else availEstimates<- NULL
-
-    detEstimates <- list(name = "Detection", short.name = "p",
-                       estimates = ests[(nLP+nPP+1):(nLP+nPP+nDP)],
-                       covMat = as.matrix(covMat[(nLP+nPP+1):(nLP+nPP+nDP),(nLP+nPP+1):(nLP+nPP+nDP)]),
-                       invlink = "logistic",
-                       invlinkGrad = "logistic.grad")
 
   efit <- list(fitType = "generalised removal",
-               call = match.call(), types=typeNames,lamformula = lamformula, detformula=detformula,
-               phiformula=phiformula, state=stateEstimates,det=detEstimates, avail=availEstimates,
-               disp=dispEstimates, sitesRemoved = D$removed.sites,AIC = fmAIC, opt = fm,
-               negLogLike = fm$value, nllFun = nll, mixture=mixture, K=K, data = data)
+               call = match.call(), lamformula = lamformula, detformula=detformula,
+               phiformula=phiformula, estimates=estimates, sitesRemoved = D$removed.sites,
+               AIC = fmAIC, opt = fm, negLogLike = fm$value, nllFun = nll,
+               mixture=mixture, K=K, data = data)
   class(efit) <- c('efitR','efit','list')
 
   return(efit)

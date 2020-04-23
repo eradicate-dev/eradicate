@@ -70,8 +70,10 @@ remGP<- function (data, starts, Nmax=1000, se = TRUE, alpha=0.05, ...){
       ll<- lgamma(N + 1) - (lgamma((N - R) + 1) + lgamma(R + 1)) + R*log(1-Q) + (N-R)*log(Q)
       if(idx){
         pm<- 1 - exp(-exp(parm[2]+ log(x$ieffort)))
-        Nr<- N - x$cumcatch + 1e-10
+        #Nr<- N - x$cumcatch + 1e-10
+        Nr<- N - x$cumcatch
         lli<- sum(dpois(x$index, Nr*pm, log=TRUE))
+        lli[!is.finite(lli)]<- -1e20
       }
       else lli<- 0
       (-1)*(ll + lli)
@@ -100,8 +102,6 @@ remGP<- function (data, starts, Nmax=1000, se = TRUE, alpha=0.05, ...){
       covMat<- invertHessian(m2, nP, se)
     }
 
-    typeNames<- c("state","catch")
-
     state <- list(name = "Abundance", short.name = "N",
                   estimates = ests[1],
                   covMat = as.matrix(covMat[1,1]),
@@ -113,20 +113,18 @@ remGP<- function (data, starts, Nmax=1000, se = TRUE, alpha=0.05, ...){
                 covMat = var.k,
                 invlink = "cloglog",
                 invlinkGrad = "cloglog.grad")
+
+    estimates<- list(state=state, catch=catch)
     if(nP==2) {
-      typeNames<- c(typeNames,"det")
       det<- list(name = "detection", short.name = "p",
            estimates = ests[2],
            covMat = as.matrix(covMat[2,2]),
            invlink = "cloglog",
            invlinkGrad = "cloglog.grad")
+      estimates$det<- det
     }
-    else
-      det<- NULL
 
-
-    efit <- list( fitType = "remGP", types=typeNames,
-                  state=state, catch=catch, det=det, opt = list(m1=m1,m2=m2), data=x)
+    efit <- list(fitType = "remGP", estimates=estimates, opt = list(m1=m1,m2=m2), data=x)
     class(efit) <- c('efitGP','efit','list')
 
     return(efit)

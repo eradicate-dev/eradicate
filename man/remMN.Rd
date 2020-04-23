@@ -17,6 +17,9 @@ This differs from the similar model in \code{unmarked}.}
 and site-level covariates. see \code{\link{eFrameR}} for how to format
 the required data.}
 
+\item{mixture}{model for the latent abundance, either Poisson (\code{P}), negative binomial
+(\code{NB}) or zero-inflated Poisson (\code{ZIP}).}
+
 \item{starts}{Initial values for parameters}
 
 \item{method}{Optimisation method}
@@ -27,13 +30,15 @@ the required data.}
 a \code{efit} model object.
 }
 \description{
-\code{remPois} fits the multinomial-Poisson removal model to data from
-a number of primary periods where individuals removed are recorded for each site.
+\code{remMN} fits multinomial removal models (e.g. Haines 2019, Dorazio et al 2005)
+to data from a number of primary periods where individuals removed are recorded for each site.
+Currently supported models include the Poisson, Negative binomial and
+zero-inflated Poisson (ZIP).
 }
 \examples{
  rem<- san_nic_rem$rem
  emf <- eFrameR(y=rem)
- mod <- remPois(~1, ~1, data=emf)
+ mod <- remMN(~1, ~1, data=emf)
  Nhat<- calcN(mod)
 
 }

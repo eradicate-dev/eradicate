@@ -94,7 +94,6 @@ occuM<- function(lamformula, detformula, data, knownOcc = numeric(0), starts,
     ests <- fm$par
     fmAIC <- 2 * fm$value + 2 * nP #+ 2*nP*(nP + 1)/(M - nP - 1)
     names(ests)<- c(occParms, detParms)
-    typeNames<- c("state","det")
 
     state <- list(name = "Occupancy", short.name = "psi",
                               estimates = ests[1:nOP],
@@ -109,12 +108,12 @@ occuM<- function(lamformula, detformula, data, knownOcc = numeric(0), starts,
                             invlink = "logistic",
                             invlinkGrad = "logistic.grad")
 
+    estimates<- list(state=state, det=det)
 
-    efit <- list( fitType = "occuM", call = match.call(), types=typeNames,
-                  lamformula = lamformula, detformula=detformula, state=state, det=det,
-                 sitesRemoved = designMats$removed.sites,
-                 AIC = fmAIC, opt = opt, negLogLike = fm$value,
-                 nllFun = nll, knownOcc = knownOccLog, data= data)
+    efit <- list( fitType = "occuM", call = match.call(),
+                  lamformula = lamformula, detformula=detformula, estimates=estimates,
+                 sitesRemoved = designMats$removed.sites,AIC = fmAIC, opt = opt,
+                 negLogLike = fm$value, nllFun = nll, knownOcc = knownOccLog, data= data)
     class(efit) <- c('efitM','efit','list')
     return(efit)
 }

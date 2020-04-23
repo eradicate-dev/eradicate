@@ -28,14 +28,14 @@ calcN <- function(obj, ...){
   UseMethod("calcN", obj)
 }
 
-linearComb <- function(obj, ...){
+linearC <- function(obj, ...){
   # method generic
-  UseMethod("linearComb", obj)
+  UseMethod("linearC", obj)
 }
 
-backTransform <- function(obj, ...){
+backTrans <- function(obj, ...){
   # method generic
-  UseMethod("backTransform", obj)
+  UseMethod("backTrans", obj)
 }
 
 #' SE
@@ -70,61 +70,19 @@ SE <- function(obj, ...){
 #'
 summary.efit<- function(object, ...)
 {
-  type<- object$types
+  type<- names(object$estimates)
   out.list<- list()
   for(i in 1:length(type)) {
-    ests <- object[[type[i]]]$estimates
+    ests <- object$estimates[[type[i]]]$estimates
     SEs <- SE(object, type[i])
     Z <- ests/SEs
     p <- 2*pnorm(abs(Z), lower.tail = FALSE)
-    invlink <- object[[type[i]]]$invlink
+    invlink <- object$estimates[[type[i]]]$invlink
     link <- switch(invlink,
                    exp = "log",
                    logistic = "logit",
                    cloglog = "cloglog")
-    cat(object[[type[i]]]$name, " (", link, "-scale)", ":\n", sep="")
-    outDF <- data.frame(Estimate = ests, SE = SEs, z = Z, "P(>|z|)" = p,
-                        check.names = FALSE)
-    print(outDF, digits = 3)
-    out.list[[type[i]]]<- outDF
-    invisible(outDF)
-    cat(" ","\n")
-  }
-  invisible(out.list)
-}
-
-#' summary.efitGP
-#'
-#' \code{summary} summarises an efitGP object giving the estimated parameters for N
-#'  and catchability in \code{obj} (on the link scale) with associated SE and confidence
-#'  intervals.
-#'
-#' @param obj A fitted model object.
-#'
-#' @return a \code{data.frame}
-#'
-#' @examples
-#'  emf <- eFrame(y=counts, siteCovs=site.df)
-#'  mod <- nmix(~1, ~1, data=emf)
-#'  summary(emf)
-#'
-#' @export
-#'
-summary.efitGP<- function(object, ...)
-{
-  type<- object$types
-  out.list<- list()
-  for(i in 1:length(type)) {
-    ests <- object[[type[i]]]$estimates
-    SEs <- SE(object, type[i])
-    Z <- ests/SEs
-    p <- 2*pnorm(abs(Z), lower.tail = FALSE)
-    invlink <- object[[type[i]]]$invlink
-    link <- switch(invlink,
-                   exp = "log",
-                   cloglog = "cloglog",
-                   logistic = "logit")
-    cat(object[[type[i]]]$name, " (", link, "-scale)", ":\n", sep="")
+    cat(object$estimates[[type[i]]]$name, " (", link, "-scale)", ":\n", sep="")
     outDF <- data.frame(Estimate = ests, SE = SEs, z = Z, "P(>|z|)" = p,
                         check.names = FALSE)
     print(outDF, digits = 3)
@@ -137,10 +95,10 @@ summary.efitGP<- function(object, ...)
 
 # Compute linear combinations of estimates using coefficients
 
-linearComb.efit<- function(obj, coefficients, off.set = NULL, ...)
+linearC.efit<- function(obj, coefficients, off.set = NULL, ...)
 {
-  estimates<- obj$state$estimates
-  covMat<- obj$state$covMat
+  estimates<- obj$estimates$state$estimates
+  covMat<- obj$estimates$state$covMat
   if(!is(coefficients, "matrix"))
     coefficients <- t(as.matrix(coefficients))
   if(ncol(coefficients) != length(estimates)) stop("error - wrong number of covariates")
@@ -149,36 +107,17 @@ linearComb.efit<- function(obj, coefficients, off.set = NULL, ...)
   e <- as.vector(coefficients %*% estimates) + off.set
   v <- coefficients %*% covMat %*% t(coefficients)
   umlc <- list(estimates = e, covMat = v, coefficients = coefficients,
-               invlink = obj$state$invlink, invlinkGrad = obj$state$invlinkGrad)
+               invlink = obj$estimates$state$invlink, invlinkGrad = obj$estimates$state$invlinkGrad)
   class(umlc)<- c("efit", class(umlc))
   umlc
 }
 
-backTransform.efit<- function(obj, ...) {
+backTrans.efit<- function(obj, ...) {
   # Delta method VAR
   invlink<- obj$invlink
   invlinkGrad<- obj$invlinkGrad
   estimate<- obj$estimates
   covMat<- obj$covMat
-  e <- do.call(invlink,list(estimate))
-  grad <- do.call(invlinkGrad,list(estimate))
-
-  if(length(estimate) > 1) {
-    v <- diag(grad) %*% covMat %*% diag(grad)
-  } else {
-    v <- grad^2 * covMat
-  }
-  umbt <- list(estimates = e, covMat = v)
-  umbt
-}
-
-backTransform.efitGP<- function(obj, type="state", ...) {
-  # Delta method VAR
-  ests<- obj[[type]]
-  invlink<- ests$invlink
-  invlinkGrad<- ests$invlinkGrad
-  estimate<- ests$estimates
-  covMat<- ests$covMat
   e <- do.call(invlink,list(estimate))
   grad <- do.call(invlinkGrad,list(estimate))
 
@@ -207,8 +146,8 @@ calcN.efit<- function(obj, newdata, off.set=NULL, CI.level=0.95, ...) {
   X<- design$X
   M<- nrow(X)
   if(!is.null(off.set) & length(off.set) == 1) off.set<- rep(off.set, M)
-  lc<- linearComb(obj, coefficients=X, off.set=off.set)
-  est<- backTransform(lc)
+  lc<- linearC(obj, coefficients=X, off.set=off.set)
+  est<- backTrans(lc)
   V<- est$covMat
   Nhat<- sum(est$estimates)
   varN<- sum(est$covMat)
@@ -238,8 +177,8 @@ calcN.efitM<- function(obj, newdata, off.set=NULL, CI.level=0.95, ...) {
   X<- design$X
   M<- nrow(X)
   if(!is.null(off.set) & length(off.set) == 1) off.set<- rep(off.set, M)
-  lc<- linearComb(obj, coefficients=X, off.set=off.set)
-  est<- backTransform(lc)
+  lc<- linearC(obj, coefficients=X, off.set=off.set)
+  est<- backTrans(lc)
   V<- est$covMat
   Pocc<- sum(est$estimates)/ M # mean occupancy
   varN<- sum(est$covMat) * (1/M^2) # delta method VAR
@@ -268,8 +207,8 @@ calcN.efitR<- function(obj, off.set=NULL, CI.level=0.95, ...) {
   X<- design$X
   M<- nrow(X)
   if(!is.null(off.set) & length(off.set) == 1) off.set<- rep(off.set, M)
-  lc<- linearComb(obj, coefficients=X, off.set=off.set)
-  est<- backTransform(lc)
+  lc<- linearC(obj, coefficients=X, off.set=off.set)
+  est<- backTrans(lc)
   V<- est$covMat
   Nhat<- sum(est$estimates)
   Nresid<- Nhat - tot.rem
@@ -294,7 +233,7 @@ calcN.efitGP<- function(obj, CI.level=0.95, ...) {
   # Chao (1989) Biometrics 45(2), 427-438
   x <- obj$data
   R<- sum(x$catch)
-  ests<- backTransform(obj, type="state")
+  ests<- backTrans(linearC(obj, 1))
   N<- ests$estimates
   se.N<- sqrt(diag(ests$covMat))
   cv.N<- se.N/N
@@ -314,7 +253,7 @@ calcN.efitGP<- function(obj, CI.level=0.95, ...) {
 #' @rdname SE
 #' @export
 SE.efit<- function(obj, type, ...){
-  v<- obj[[type]]$covMat
+  v<- obj$estimates[[type]]$covMat
   sqrt(diag(v))
 }
 
@@ -330,7 +269,7 @@ SE.efit<- function(obj, type, ...){
 #' @export
 #'
 profileCI<- function(object, type, level = 0.95) {
-  parm <- 1:length(object[[type]]$estimates)
+  parm <- 1:length(object$estimates[[type]]$estimates)
   nllFun <- nllFun(object)
   ests <- mle(object)
   nP <- length(parm)
@@ -338,7 +277,7 @@ profileCI<- function(object, type, level = 0.95) {
   types <- object$types
   numbertable <- list()
   for(i in 1:length(types)) {
-    length.est <- length(object[[types[i]]]$estimates)
+    length.est <- length(object$estimates[[types[i]]]$estimates)
     numbertable[[i]] <- data.frame(type = rep(types[i], length.est), num = seq(length.est))
   }
   numbertable<- do.call('rbind', numbertable)
