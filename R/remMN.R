@@ -71,8 +71,6 @@ remMN <- function(lamformula, detformula, data, mixture=c("P","NB","ZIP"), start
             p <- plogis(V %*% parms[(nAP + 1) : nP] + V.offset)
             p.matrix <- matrix(p, M, J, byrow = TRUE)
             pi <- do.call(piFun, list(p = p.matrix))
-            log.lam.pi<- sweep(log(pi),1,log(lambda),'+')
-            lam.pi<- sweep(pi, 1, lambda, '*')
             logLike <- y * (log(lambda.mat) + log(pi)) - (lambda.mat * pi) - ylogfact
             logLike[namat] <- 0
             -sum(logLike)
@@ -90,8 +88,8 @@ remMN <- function(lamformula, detformula, data, mixture=c("P","NB","ZIP"), start
             ptot<- rowSums(pi)
             logLike<- rep(NA, M)
             for(i in 1:M){
-                ll1<- lgamma(alpha+yrow[i]) - (lgamma(alpha) + yrlogfact[i])
                 notna<- !namat[i,]
+                ll1<- lgamma(alpha+yrow[i]) - (lgamma(alpha) + yrlogfact[i])
                 ll2<- y[i,notna] * (log(lambda[i]) + log(pi[i,notna]) - log(alpha + lambda[i]*ptot[i]))
                 ll3<- alpha * (log(alpha) - log(alpha + lambda[i] * ptot[i]))
                 logLike[i]<- ll1 + sum(ll2) + ll3
