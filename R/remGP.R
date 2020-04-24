@@ -47,22 +47,22 @@ remGP<- function (data, starts, se = TRUE, ...){
     cstart<- -log(max(x$effort))
       if(!is.null(x$index)) {
         istart<- -log(max(x$ieffort))
-        starts<- c(log(R+1), cstart, istart)
+        starts<- c(log(R+10), cstart, istart)
       }
       else {
-        starts<- c(log(R+1), cstart)
+        starts<- c(log(R+10), cstart)
       }
   }
 
     nll <- function(parm, idx=FALSE) {
-      lambda<- exp(parm[1])
+      N<- exp(parm[1])
       p <- 1 - exp(-exp(parm[2] + log(x$effort)))
       pi<- removalPiFun(p)
-      ll<- sum(dpois(x$catch, lambda*pi, log=TRUE))
+      ll<- sum(dpois(x$catch, N*pi, log=TRUE))
       if(idx) {
-        pm <- 1 - exp(-exp(parm[3] + log(x$ieffort)))
-        pmi<- removalPiFun(pm)
-        lli<- sum(dpois(x$index, lambda*pmi, log=TRUE))
+        pm <- exp(parm[3]) * x$ieffort
+        Nr <- N - x$cumcatch
+        lli<- sum(dpois(x$index, Nr*pm, log=TRUE))
       }
       else lli<- 0
       return((-1)*(ll+lli))
@@ -70,14 +70,14 @@ remGP<- function (data, starts, se = TRUE, ...){
 
     if(!is.null(x$index)) {
       nP<- 3
-      lb<- c(log(R+1),-20,-20)
-      ub<- c(log(R*10),2,2)
+      lb<- c(log(R),-20,-20)
+      ub<- c(log(R*10),20,20)
       m <- optim(starts, nll, idx=TRUE, method="L-BFGS-B", lower=lb, upper=ub, hessian=se)
     }
     else {
       nP<- 2
-      lb<- c(log(R+1),-20)
-      ub<- c(log(R*10),2)
+      lb<- c(log(R),-20)
+      ub<- c(log(R*10),20)
       m <- optim(starts, nll, idx=FALSE, method="L-BFGS-B", lower=lb, upper=ub, hessian=se)
     }
 
