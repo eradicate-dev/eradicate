@@ -18,8 +18,7 @@
 #' @param starts Initial values for parameters
 #' @param Nmax Maximum search increment for abundance considered in the optimisation
 #' @param se flag to return the standard error (hessian).
-#' @param alpha quantile for (1-alpha) level confidence intervals
-#'
+
 #' @return a \code{efit} model object.
 #'
 #' @examples
@@ -30,7 +29,7 @@
 #'
 #' @export
 #'
-remGP<- function (data, starts, Nmax=1000, se = TRUE, alpha=0.05, ...){
+remGP<- function (data, starts, Nmax=1000, se = TRUE, ...){
   if(!is(data, "eFrameGP"))
     stop("Data is not a eFrameGP")
   x<- data$counts
@@ -69,9 +68,11 @@ remGP<- function (data, starts, Nmax=1000, se = TRUE, alpha=0.05, ...){
       Q <- prod(1-p)
       ll<- lgamma(N + 1) - (lgamma((N - R) + 1) + lgamma(R + 1)) + R*log(1-Q) + (N-R)*log(Q)
       if(idx){
-        pm<- 1 - exp(-exp(parm[2]+ log(x$ieffort)))
-        Nr<- N - x$cumcatch + 1e-10
-        lli<- sum(dpois(x$index, Nr*pm, log=TRUE))
+        pm<- exp(parm[2])*x$ieffort
+        Nr<- N - x$cumcatch
+        llvec<- dpois(x$index, Nr*pm, log=TRUE)
+        llvec[!is.finite(llvec)]<- 0
+        lli<- sum(llvec)
       }
       else lli<- 0
       (-1)*(ll + lli)
@@ -86,7 +87,7 @@ remGP<- function (data, starts, Nmax=1000, se = TRUE, alpha=0.05, ...){
         cat("Index data detected - adding index-removal estimation","\n\n")
         nP<- 2
         m2 <- optim(starts[2:3], nll1, k=k, idx=TRUE, method="L-BFGS-B", lower=c(log(R), -20),
-                    upper=c(log(R+Nmax), 2), hessian=se)
+                    upper=c(log(R+Nmax), 20), hessian=se)
         ests<- m2$par
         covMat<- invertHessian(m2, nP, se)
     }

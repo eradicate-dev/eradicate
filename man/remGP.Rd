@@ -13,8 +13,6 @@ remGP(catch, effort, index, starts, Nmax, se=TRUE, ...)
 
 \item{se}{flag to return the standard error (hessian).}
 
-\item{alpha}{quantile for (1-alpha) level confidence intervals}
-
 \item{catch}{the number of removals recorded for each period.}
 
 \item{effort}{the overall effort expended in each period (i.e. trapnights)}
