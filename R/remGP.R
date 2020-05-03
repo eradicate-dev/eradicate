@@ -47,10 +47,10 @@ remGP<- function (data, starts, se = TRUE, ...){
     cstart<- -log(max(x$effort))
       if(!is.null(x$index)) {
         istart<- -log(max(x$ieffort))
-        starts<- c(log(R+10), cstart, istart)
+        starts<- c(log(R+1), cstart, istart)
       }
       else {
-        starts<- c(log(R+10), cstart)
+        starts<- c(log(R+1), cstart)
       }
   }
 
@@ -61,7 +61,7 @@ remGP<- function (data, starts, se = TRUE, ...){
       ll<- sum(dpois(x$catch, N*pi, log=TRUE))
       if(idx) {
         pm <- exp(parm[3]) * x$ieffort
-        Nr <- N - x$cumcatch
+        Nr <- N - x$cumcatch + 1e-10
         lli<- sum(dpois(x$index, Nr*pm, log=TRUE))
       }
       else lli<- 0
