@@ -28,16 +28,6 @@ calcN <- function(obj, ...){
   UseMethod("calcN", obj)
 }
 
-linearComb <- function(obj, ...){
-  # method generic
-  UseMethod("linearComb", obj)
-}
-
-backTransform <- function(obj, ...){
-  # method generic
-  UseMethod("backTransform", obj)
-}
-
 #' SE
 #'
 #' @description extracts standard errors for efit model objects.
