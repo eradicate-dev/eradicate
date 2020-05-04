@@ -69,7 +69,7 @@ remGP<- function (data, starts, Nmax=1000, se = TRUE, ...){
       ll<- lgamma(N + 1) - (lgamma((N - R) + 1) + lgamma(R + 1)) + R*log(1-Q) + (N-R)*log(Q)
       if(idx){
         pm<- exp(parm[2])*x$ieffort
-        Nr<- N - x$cumcatch
+        Nr<- N - x$cumcatch + 1e-10
         llvec<- dpois(x$index, Nr*pm, log=TRUE)
         llvec[!is.finite(llvec)]<- 0
         lli<- sum(llvec)

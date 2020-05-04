@@ -278,11 +278,13 @@ getDesign.efit<- function(obj, siteCovs, na.rm=TRUE) {
       warning(paste(num.to.remove,"sites have been discarded because of missing data."), call. = FALSE)
     }
     removed.sites <- which(sites.to.remove)
+    retained.sites <- which(!sites.to.remove)
   } else {
-    removed.sites=integer(0)
+    removed.sites<- integer(0)
+    retained.sites<- 1:nrow(X)
   }
 
-  return(list(X = X, X.offset = X.offset, removed.sites = removed.sites))
+  return(list(X = X, X.offset = X.offset, retained.sites = retained.sites))
 }
 #-------------------------------------------------------
 # Handle missing data methods
