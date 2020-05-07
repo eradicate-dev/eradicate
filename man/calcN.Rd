@@ -14,7 +14,7 @@ calcN(obj, ...)
 
 \method{calcN}{efitM}(obj, newdata, off.set = NULL, CI.level = 0.95, ...)
 
-\method{calcN}{efitR}(obj, off.set = NULL, CI.level = 0.95, ...)
+\method{calcN}{efitR}(obj, newdata, off.set = NULL, CI.level = 0.95, ...)
 
 \method{calcN}{efitGP}(obj, CI.level = 0.95, ...)
 }

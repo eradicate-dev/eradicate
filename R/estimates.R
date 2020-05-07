@@ -186,16 +186,18 @@ calcN.efitM<- function(obj, newdata, off.set=NULL, CI.level=0.95, ...) {
 
 #' @rdname calcN
 #' @export
-calcN.efitR<- function(obj, off.set=NULL, CI.level=0.95, ...) {
+calcN.efitR<- function(obj, newdata, off.set=NULL, CI.level=0.95, ...) {
   # Currently only makes sense to predict to original data
-  origdata <- obj$data
-  M <- numSites(origdata)
-  if(is.null(siteCovs(origdata))) {
-    newdata <- data.frame(Intercept = rep(1, M))
-  } else {
-    newdata <- siteCovs(origdata)
+  if(missing(newdata) || is.null(newdata)) {
+    origdata <- obj$data
+    M <- numSites(origdata)
+    if(is.null(siteCovs(origdata))) {
+      newdata <- data.frame(Intercept = rep(1, M))
+    } else {
+      newdata <- siteCovs(origdata)
+    }
   }
-  tot.rem<- sum(origdata$y, na.rm=TRUE)
+  tot.rem<- sum(obj$data$y, na.rm=TRUE)
   design <- getDesign(obj, newdata)
   X<- design$X
   M<- nrow(X)
