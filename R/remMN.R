@@ -163,17 +163,17 @@ remMN <- function(lamformula, detformula, data, mixture=c("P","NB","ZIP"), start
     }
 
     if(identical(mixture,"ZIP")) {
-        zeroinfEstimates <- list(name="Zero inflation", short.name="phi",
+        zeroinflEstimates <- list(name="Zero inflation", short.name="phi",
                               estimates = ests[nP],
                               covMat = as.matrix(covMat[nP,nP]),
                               invlink = "logistic", invlinkGrad = "logistic.grad")
-        estimates$zeroinf<- zeroinfEstimates
+        estimates$zeroinfl<- zeroinflEstimates
     }
 
 
     efit <- list(fitType = "Multinomial removal",
         call = match.call(), lamformula = lamformula, detformula=detformula,
-        estimates=estimates, sitesRemoved = designMats$removed.sites,
+        estimates=estimates, sitesRemoved = designMats$removed.sites, mixture=mixture,
         AIC = fmAIC, opt = fm, negLogLike = fm$value, nllFun = nll, data = data)
     class(efit) <- c('efitR','efit','list')
     return(efit)
