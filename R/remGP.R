@@ -18,8 +18,7 @@
 #' @param starts Initial values for parameters
 #' @param Nmax Maximum search increment for abundance considered in the optimisation
 #' @param se flag to return the standard error (hessian).
-#' @param alpha quantile for (1-alpha) level confidence intervals
-#'
+
 #' @return a \code{efit} model object.
 #'
 #' @examples

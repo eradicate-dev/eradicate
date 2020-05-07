@@ -20,8 +20,6 @@ data.  The index data is assumed to be collected just before each removal period
 can consist of any relative index of abundance.}
 
 \item{Nmax}{Maximum search increment for abundance considered in the optimisation}
-
-\item{alpha}{quantile for (1-alpha) level confidence intervals}
 }
 \value{
 a \code{efit} model object.
