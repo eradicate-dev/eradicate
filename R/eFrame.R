@@ -271,6 +271,41 @@ eFrameGP<- function(catch, effort, index=NULL, ieffort=NULL) {
   emf
 }
 
+#' eFrameMS
+#'
+#' \code{eFrameMS} creates an eFrameMS data object for use with multi-season
+#' occupancy models \code{occuMS} where sampling occurs over a number of
+#' primary and secondary periods.
+#'
+#' @param y An MxSJ matrix of the observed detection/non-detection data
+#' where M is the number of sites, S is the number of seasons and J is
+#' the maximum number of observations per season.
+#' @param obsPerSeason scalar of the maximum number of observations (replicates)
+#' per season.
+#' @param siteCovs A \code{data.frame} of covariates that vary at the
+#'    site level. This should have M rows and one column per covariate
+#
+#' @return a \code{eFrameMS} holding data containing the response and
+#'  covariates required for \code{occuMS}
+#'
+#' @examples
+#' ### NEED TO SUPPLY GOOD EXAMPLE DATA
+#'  rem<- san_nic_rem
+#'  #'
+#'  emf<-eFrameMS(y=rem, obsPerSeason=XXX, type="removal")
+#'  summary(emf)
+#'
+#' @export
+#'
+eFrameMS<- function(y, obsPerSeason, siteCovs = NULL) {
+  emf <- eFrame(y, siteCovs)
+  if(ncol(y)%%obsPerSeason > 0) stop("obsPerSeason does not match dimensions of y")
+  emf$obsPerSeason <- obsPerSeason
+  class(emf) <- c("eFrameMS",class(emf))
+  emf
+}
+
+
 ############################ EXTRACTORS ##################################
 
 siteCovs<- function(object) return(object$siteCovs)

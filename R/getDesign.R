@@ -195,7 +195,6 @@ getDesign.eFrameGRM<- function(emf, lamformula, phiformula, detformula, mdetform
     primaryCovs <- data.frame(placeHolder = rep(1, M*T))
   } else primaryCovs <- emf$primaryCovs
 
-
   # add siteCovs in so they can be used as well
   if(!is.null(emf$siteCovs)) {
     sC <- emf$siteCovs[rep(1:M, each = T),,drop=FALSE]
@@ -253,6 +252,79 @@ getDesign.eFrameGRM<- function(emf, lamformula, phiformula, detformula, mdetform
               Xdetm.offset = out$Xdetm.offset,
               removed.sites = out$removed.sites))
 }
+#---------------------------------------------
+# Method for for occuMS
+getDesign.eFrameMS<- function(emf, psiformula, gamformula, epsformula, detformula, na.rm = TRUE) {
+
+    M <- numSites(emf)
+    R <- numY(emf)
+    J <- emf$obsPerSeason
+    nY<- R / J
+
+
+    ## Compute default design matrix for gamma/epsilon
+    seasCovs <- data.frame(.season = as.factor(rep(1:nY, M)))
+
+    ## add siteCovs in so they can be used as well
+    if(!is.null(emf$siteCovs)) {
+      sC <- emf$siteCovs[rep(1:M, each = nY),,drop=FALSE]
+      seasCovs <- cbind(seasCovs, sC)
+    }
+
+    ## Compute site-level design matrix for psi
+    if(is.null(siteCovs(emf)))
+      siteCovs <- data.frame(placeHolder = rep(1, M))
+    else
+      siteCovs <- siteCovs(emf)
+
+    W.mf <- model.frame(psiformula, siteCovs, na.action = NULL)
+    if(!is.null(model.offset(W.mf)))
+      stop("offsets not currently allowed in occuMS", call.=FALSE)
+    W <- model.matrix(psiformula, W.mf)
+
+
+    ## Compute detection design matrix
+    obsCovs <- data.frame(placeHolder = rep(1, M*R))
+
+    ## add site and season covariates, which contain siteCovs
+    cnames <- c(colnames(obsCovs), colnames(seasCovs))
+    obsCovs <- cbind(obsCovs, seasCovs[rep(1:(M*nY), each = J),])
+    colnames(obsCovs) <- cnames
+
+    ## add observation number if not present
+    if(!("obsNum" %in% names(obsCovs)))
+      obsCovs <- cbind(obsCovs, obsNum = as.factor(rep(1:R, M)))
+
+    V.mf <- model.frame(detformula, obsCovs, na.action = NULL)
+    if(!is.null(model.offset(V.mf)))
+      stop("offsets not currently allowed in occuMS", call.=FALSE)
+    V <- model.matrix(detformula, V.mf)
+
+    ## in order to drop factor levels that only appear in last year,
+    ## replace last year with NAs and use drop=TRUE
+    seasCovs[seq(nY,M*nY,by=nY),] <- NA
+    seasCovs <- as.data.frame(lapply(seasCovs, function(x) {x[,drop = TRUE]}))
+
+    X.mf.gam <- model.frame(gamformula, seasCovs, na.action = NULL)
+    if(!is.null(model.offset(X.mf.gam)))
+      stop("offsets not currently allowed in occuMS", call.=FALSE)
+    X.gam <- model.matrix(gamformula, X.mf.gam)
+    X.mf.eps <- model.frame(epsformula, seasCovs, na.action = NULL)
+    if(!is.null(model.offset(X.mf.eps)))
+      stop("offsets not currently allowed in occuMS", call.=FALSE)
+    X.eps <- model.matrix(epsformula, X.mf.eps)
+
+    if(na.rm)
+      out <- handleNA(emf, W, X.gam, X.eps, V)
+    else
+      out <- list(y=getY(emf), X.gam=X.gam, X.eps=X.eps, W=W, V=V,
+                  removed.sites=integer(0))
+
+    return(list(y = out$y, X.eps = out$X.eps, X.gam = out$X.gam, W = out$W,
+                V = out$V, removed.sites = out$removed.sites))
+}
+
+
 
 #---------------------------------------------
 # Method for prediction
@@ -517,5 +589,70 @@ handleNA.eFrameREST<- function(emf, X, X.offset) {
   }
 
   list(y = y, X = X, X.offset = X.offset, effort=effort, removed.sites = which(sites.to.remove))
+}
+
+#-------------------------
+
+handleNA.eFrameMS<- function(emf, W, X.gam, X.eps, V) {
+
+  M <- numSites(emf)
+  R <- numY(emf)
+  J <- emf$obsPerSeason
+  nY<- R / J
+
+  obsToY <- diag(R)
+
+  ## treat both X's #######no: and W together
+  #    X <- cbind(X.gam, X.eps, W[rep(1:M, each = nY), ])
+  X <- cbind(X.gam, X.eps)
+
+  X.na <- is.na(X)
+  X.na[seq(nY,M*nY,by=nY),] <- FALSE  ## final years are unimportant.
+  ## not true for W covs!!!
+  W.expand <- W[rep(1:M, each=nY),,drop=FALSE]
+  W.na <- is.na(W.expand)
+  X.na <- cbind(X.na, W.na) # NAs in siteCovs results in removed site
+
+  X.long.na <- X.na[rep(1:(M*nY), each = J),]
+
+  V.long.na <- apply(V, 2, function(x) {
+    x.mat <- matrix(x, M, R, byrow = TRUE)
+    x.mat <- is.na(x.mat)
+    x.mat <- x.mat %*% obsToY
+    x.long <- as.vector(t(x.mat))
+    x.long > 0
+  })
+  V.long.na <- apply(V.long.na, 1, any)
+
+  y.long <- as.vector(t(getY(emf)))
+  y.long.na <- is.na(y.long)
+
+  # It doesn't make sense to combine X.gam/eps with W here b/c
+  # a X.eps does not map correctly to y
+  covs.na <- apply(cbind(X.long.na, V.long.na), 1, any)
+
+  ## are any NA in covs not in y already?
+  y.new.na <- covs.na & !y.long.na
+
+  if(sum(y.new.na) > 0) {
+    y.long[y.new.na] <- NA
+    warning("Some observations have been discarded because correspoding
+            covariates were missing.", call. = FALSE)
+  }
+
+  y <- matrix(y.long, M, R, byrow = TRUE)
+  sites.to.remove <- apply(y, 1, function(x) all(is.na(x)))
+
+  num.to.remove <- sum(sites.to.remove)
+  if(num.to.remove > 0) {
+    y <- y[!sites.to.remove, ,drop = FALSE]
+    X.gam <- X.gam[!sites.to.remove[rep(1:M, each = nY)],,drop = FALSE]
+    X.eps <- X.eps[!sites.to.remove[rep(1:M, each = nY)],,drop = FALSE]
+    W <- W[!sites.to.remove,, drop = FALSE] # !!! Recent bug fix
+    V <- V[!sites.to.remove[rep(1:M, each = R)], ,drop = FALSE]
+    warning(paste(num.to.remove,"sites have been discarded because of missing data."), call. = FALSE)
+  }
+  list(y = y, X.gam = X.gam, X.eps = X.eps, W = W, V = V,
+       removed.sites = which(sites.to.remove))
 }
 
