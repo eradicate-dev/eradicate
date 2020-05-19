@@ -18,5 +18,5 @@ Suggests:
     raster,
     unmarked
 VignetteBuilder: knitr
-URL: https://github.com/dslramsey/eradicate
-BugReports: https://github.com/dslramsey/eradicate/issues
+URL: https://github.com/eradicate-dev/eradicate
+BugReports: https://github.com/eradicate-dev/eradicate/issues

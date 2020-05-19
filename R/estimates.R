@@ -68,6 +68,32 @@ SE <- function(obj, ...){
   UseMethod("SE", obj)
 }
 
+#' calcP
+#'
+#' @description calculates detection probability from a fitted model.
+#'
+#' @param obj A fitted model object.
+#'
+#' @export
+#'
+calcP <- function(obj, ...){
+  # method generic
+  UseMethod("calcP", obj)
+}
+
+#' occTraject
+#'
+#' @description extracts occupancy trajectories from occuMS objects.
+#'
+#' @param obj A fitted model object.
+#'
+#' @export
+#'
+occTraject <- function(obj, ...){
+  # method generic
+  UseMethod("occTraject", obj)
+}
+
 
 #' summary.efit
 #'
@@ -315,6 +341,41 @@ SE.efit<- function(obj, type, ...){
   sqrt(diag(v))
 }
 
+#' @rdname calcP
+#' @export
+calcP.efitR<- function(obj, na.rm = TRUE) {
+  detformula <- as.formula(obj$detformula)
+  lamformula <- as.formula(obj$lamformula)
+  emf <- obj$data
+  designMats <- getDesign.eFrame(emf, lamformula, detformula, na.rm = na.rm)
+  y <- designMats$y
+  V <- designMats$V
+  V.offset <- designMats$V.offset
+  if (is.null(V.offset))
+    V.offset <- rep(0, nrow(V))
+  M <- nrow(y)
+  J <- ncol(y)
+  pars <- coef(obj, type = "det")
+  p <- plogis(V %*% pars + V.offset)
+  p <- matrix(p, M, J, byrow = TRUE)
+  pi <- do.call(removalPiFun, list(p = p))
+  return(pi)
+}
+
+#' @rdname occTraject
+#' @export
+occTraject.efitMS<- function(obj, type = c("projected","smoothed"), mean=TRUE, ...){
+  type <- match.arg(type, c("projected","smoothed"))
+  if(identical(type,"projected")) {
+    if(mean) obj$projected.mean
+    else obj$projected
+  }
+  else if(identical(type,"smoothed")) {
+    if(mean) obj$smoothed.mean
+    else obj$smoothed
+  }
+  else stop("type must be one of 'smoothed' or 'projected' ")
+}
 
 #' profileCI
 #'
