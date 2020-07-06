@@ -37,22 +37,23 @@ calcN <- function(obj, ...){
 #'
 #' @export
 #'
-coef <- function(obj, ...){
-  # method generic
-  UseMethod("coef", obj)
+coef.efit<- function(obj, type, ...){
+  if(is.null(type)) stop("estimate type required")
+  obj$estimates[[type]]$estimates
 }
 
-#' vcmat
+
+#' vcov
 #'
-#' @description extracts variance covaraiance matrix for efit model objects.
+#' @description extracts variance covariance matrix from efit model objects.
 #'
 #' @param obj A fitted model object.
 #'
 #' @export
 #'
-vcmat <- function(obj, ...){
-  # method generic
-  UseMethod("vcmat", obj)
+vcov.efit<- function(obj, type, ...){
+  if(is.null(type)) stop("estimate type required")
+  obj$estimates[[type]]$covMat
 }
 
 #' SE
@@ -79,6 +80,50 @@ SE <- function(obj, ...){
 calcP <- function(obj, ...){
   # method generic
   UseMethod("calcP", obj)
+}
+
+#' fitted
+#'
+#' @description calculates the fitted values for a efit model.
+#'
+#' @param obj A fitted model object.
+#'
+#' @export
+#'
+fitted.efitR<- function(obj, na.rm = TRUE) {
+  detformula <- as.formula(obj$detformula)
+  lamformula <- as.formula(obj$lamformula)
+  emf <- obj$data
+  designMats <- getDesign.eFrame(emf, lamformula, detformula, na.rm = na.rm)
+  X <- designMats$X
+  X.offset <- designMats$X.offset
+  if (is.null(X.offset)) {
+    X.offset <- rep(0, nrow(X))
+  }
+  mixture<- obj$mixture
+  invlink = obj$estimates$state$invlink
+  estimates<- coef(obj, "state")
+  eta <- as.vector(X %*% estimates + X.offset)
+  ests<- do.call(invlink,list(eta))
+  p <- calcP(obj, na.rm = na.rm) # P(detection | presence)
+  fitted <- ests * p  # true for models with E[Y] = p * E[X]
+  fitted
+}
+
+
+#' residuals
+#'
+#' @description calculates working residuals from an efit model object.
+#'
+#' @param obj A fitted model object.
+#'
+#' @export
+#'
+residuals.efitR<- function(obj) {
+  y <- getY(obj$data)
+  e <-  fitted(obj, na.rm=FALSE)
+  r <- y - e
+  return(r)
 }
 
 #' occTraject
@@ -246,10 +291,10 @@ calcN.efitR<- function(obj, newdata, off.set=NULL, CI.level=0.95, ...) {
   invlink = obj$estimates$state$invlink
   invlinkGrad = obj$estimates$state$invlinkGrad
   estimates<- coef(obj, "state")
-  covMat<- vcmat(obj, "state")
+  covMat<- vcov(obj, "state")
   if(mixture == "ZIP") {
     logit.psi<- coef(obj, "zeroinfl")
-    logit.psi.var<- vcmat(obj, "zeroinfl")
+    logit.psi.var<- vcov(obj, "zeroinfl")
     psi<- do.call(obj$estimates$zeroinfl$invlink, list(logit.psi))
     psi.grad<- 1/(exp(-logit.psi) + 1) # derivative of log(psi)
     psi.var<- psi.grad^2 * logit.psi.var
@@ -318,21 +363,6 @@ calcN.efitGP<- function(obj, CI.level=0.95, ...) {
   list(Nhat=bigN, Nresid=littleN)
 }
 
-
-#' @rdname coef
-#' @export
-coef.efit<- function(obj, type, ...){
-  if(is.null(type)) stop("estimate type required")
-  obj$estimates[[type]]$estimates
-}
-
-#' @rdname vcmat
-#' @export
-vcmat.efit<- function(obj, type, ...){
-  if(is.null(type)) stop("estimate type required")
-  obj$estimates[[type]]$covMat
-}
-
 #' @rdname SE
 #' @export
 SE.efit<- function(obj, type, ...){
@@ -361,6 +391,7 @@ calcP.efitR<- function(obj, na.rm = TRUE) {
   pi <- do.call(removalPiFun, list(p = p))
   return(pi)
 }
+
 
 #' @rdname occTraject
 #' @export

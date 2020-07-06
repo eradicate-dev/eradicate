@@ -87,6 +87,7 @@ postSamples.raneffects<- function(obj, nsims=100, ...) {
   out <- matrix(NA, N, nsims)
 
   for (i in 1:N) {
+    if(any(is.na(obj[i,]))) next
     out[i, ] <- sample(0:(K-1), nsims, replace=TRUE, prob=obj[i, ])
   }
   out
