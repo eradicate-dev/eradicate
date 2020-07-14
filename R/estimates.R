@@ -340,15 +340,18 @@ calcN.efitR<- function(obj, newdata, off.set=NULL, CI.level=0.95, ...) {
 #' @rdname calcN
 #' @export
 calcN.efitGP<- function(obj, CI.level=0.95, ...) {
-  # Only need to calc sensible CI using the methods in
+  # CI calculated using the methods in
   # Chao (1989) Biometrics 45(2), 427-438
   x <- obj$data
   R<- sum(x$catch)
-  invlink = obj$state$invlink
+  invlink = obj$estimates$state$invlink
+  invlinkGrad = obj$estimates$state$invlinkGrad
   eta<- obj$estimates$state$estimates
+  grad <- do.call(invlinkGrad,list(eta))
   covMat<- obj$estimates$state$covMat
   N<- do.call(invlink, list(eta))
-  se.N<- sqrt(diag(covMat))
+  V<- grad^2 * diag(covMat)
+  se.N<- sqrt(V)
   cv.N<- se.N/N
   z <- qt((1-CI.level)/2, length(x$catch) - 2, lower.tail = FALSE)
   asymp.N <- exp(z * sqrt(log(1 + ((se.N^2)/((N - R)^2)))))
