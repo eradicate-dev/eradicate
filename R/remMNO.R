@@ -3,12 +3,14 @@
 #' @name remMNO
 #'
 #' @description
-#' \code{remGR} fits the multinomial, open population removal model to data collected from
+#' \code{remMNO} fits the multinomial, open population removal model to data collected from
 #' repeated removal episodes from M sites over T primary periods with each primary consisting of J
 #' secondary periods.
 #'
-#' @usage remGMNO(lamformula, gamformula, omformula, detformula, data, mixture = c("P", "NB","ZIP"),
-#'                K, dynamics, fix, immigration=FALSE, iotaformula = ~1, starts, method="BFGS", se=TRUE, ...)
+#' @usage remMNO(lamformula, gamformula, omformula, detformula, data, mixture = c("P", "NB","ZIP"),
+#'                K, dynamics = c("constant", "autoreg", "notrend", "trend", "ricker", "gompertz"),
+#'                fix = c("none", "gamma", "omega"), immigration=FALSE, iotaformula = ~1,
+#'                starts, method="BFGS", se=TRUE, ...)
 #'
 #' @param lamformula formula for the latent abundance component.
 #' @param gamformula formula for availability
@@ -16,11 +18,25 @@
 #' @param detformula formula for the removal detection component.  Only
 #'  site-level covariates are allowed for the removal detection component.
 #'  This differs from the similar model in \code{unmarked}.
-#' @param data A \code{eFrameR} object containing the response (counts)
-#'  and site-level covariates. see \code{\link{eFrameR}} for how to format
+#' @param data A \code{eFrameMNO} object containing the removal data for each primary
+#' period and site-level covariates. see \code{\link{eFrameMNO}} for how to format
 #'  the required data.
-#' @param model for abundance, either Poisson 'P' or negative binomial 'NB'
+#' @param mixture for abundance, either Poisson 'P', negative binomial 'NB' or zero-inflated
+#' poisson 'ZIP'.
 #' @param K upper bound for superpopulation abundance
+#' @param dynamics Character string describing the type of population dynamics. "constant" indicates that there
+#' is no relationship between omega and gamma. "autoreg" is an auto-regressive model in which recruitment is
+#' modeled as gamma*N[i,t-1]. "notrend" model gamma as lambda*(1-omega) such that there is no temporal trend.
+#' "trend" is a model for exponential growth, N[i,t] = N[i,t-1]*gamma, where gamma in this case is finite rate of
+#' increase (normally referred to as lambda). "ricker" and "gompertz" are models for density-dependent population
+#' growth. "ricker" is the Ricker-logistic model, N[i,t] = N[i,t-1]*exp(gamma*(1-N[i,t-1]/omega)), where gamma is
+#' the maximum instantaneous population growth rate (normally referred to as r) and omega is the equilibrium
+#' abundance (normally referred to as K). "gompertz" is a modified version of the Gompertz-logistic model, N[i,t]
+#' = N[i,t-1]*exp(gamma*(1-log(N[i,t-1]+1)/log(omega+1))), where the interpretations of gamma and omega are
+#' similar to in the Ricker model.
+#' @param fix If "omega", omega is fixed at 1. If "gamma", gamma is fixed at 0.
+#' @param immigration Logical specifying whether immigration is included in the model
+#' @param iotaformula formula for the number of immigrants per site, per time step.
 #' @param starts Initial values for parameters
 #' @param method Optimisation method
 #' @param se flag to return the standard error (hessian).
@@ -29,8 +45,8 @@
 #'
 #' @examples
 #'  rem<- san_nic_rem$rem
-#'  emf <- eFrameGR(y=rem, numPrimary=1)
-#'  mod <- remPois(~1, ~1, ~1, data=emf)
+#'  emf <- eFrameMNO(y=rem, numPrimary=1)
+#'  mod <- remMNO(~1, ~1, ~1, ~1, data=emf)
 #'  Nhat<- calcN(mod)
 #'
 #' @export
@@ -54,13 +70,13 @@ remMNO <- function(lamformula, gamformula, omformula, detformula,
     stop("lamformula and omformula must be identical for notrend model")
   fix <- match.arg(fix)
 
-  D <- getDesign(data, lamformula, gamformula, omformula, detformula)
+  D <- getDesign(data, lamformula, gamformula, omformula, detformula, iotaformula)
   y <- D$y
 
   M <- nrow(y)
-  R <- ncol(y)
-  J <- data$obsPerSeason
-  T <- R / J
+  T <- data$numPrimary
+  J <- ncol(y) / T
+  piFun <- data$piFun
 
   y <- array(y, c(M, J, T))
   yt <- apply(y, c(1,3), function(x) {
@@ -178,7 +194,7 @@ remMNO <- function(lamformula, gamformula, omformula, detformula,
   #finding all unique likelihood transitions
   I <- cbind(rep(k, times=lk), rep(k, each=lk))
   I1 <- I[I[,1] <= I[,2],]
-  lik_trans <- .Call("get_lik_trans", I, I1, PACKAGE="eradicate")
+  lik_trans <- .Call("get_lik_trans", I, I1, PACKAGE="unmarked")
 
   beta_ind <- matrix(NA, 6, 2)
   beta_ind[1,] <- c(1, nAP) #Abundance
@@ -204,7 +220,7 @@ remMNO <- function(lamformula, gamformula, omformula, detformula,
           D$delta, dynamics, fix, D$go.dims, immigration,
           I, I1, lik_trans$Ib, lik_trans$Ip,
           piFun, lfac.k, kmyt, lfac.kmyt, fin,
-          PACKAGE = "eradicate")
+          PACKAGE = "unmarked")
   }
 
   if(missing(starts)){
@@ -217,16 +233,16 @@ remMNO <- function(lamformula, gamformula, omformula, detformula,
   covMat <- invertHessian(fm, nP, se)
   fmAIC <- 2*fm$value + 2*nP
 
-  lamEstimates <- unmarkedEstimate(name = "Abundance", short.name = "lam",
+  lamEstimates <- list(name = "Abundance", short.name = "lam",
                     estimates = ests[1:nAP], covMat = as.matrix(covMat[1:nAP,1:nAP]),
                     invlink = "exp", invlinkGrad = "exp")
-  estimateList <- unmarkedEstimateList(list(lambda=lamEstimates))
+  estimates <- list(lambda=lamEstimates)
 
   gamName <- switch(dynamics, constant = "gamConst", autoreg = "gamAR",
                               notrend = "", trend = "gamTrend",
                               ricker="gamRicker", gompertz = "gamGomp")
   if(!(identical(fix, "gamma") | identical(dynamics, "notrend"))){
-    estimateList@estimates$gamma <- unmarkedEstimate(name =
+    estimates$gamma <- list(name =
         ifelse(identical(dynamics, "constant") | identical(dynamics, "autoreg"),
         "Recruitment", "Growth Rate"), short.name = gamName,
         estimates = ests[(nAP+1) : (nAP+nGP)], covMat = as.matrix(covMat[(nAP+1) :
@@ -237,19 +253,19 @@ remMNO <- function(lamformula, gamformula, omformula, detformula,
   if(!(identical(fix, "omega") | identical(dynamics, "trend"))) {
     if(identical(dynamics, "constant") | identical(dynamics, "autoreg") |
        identical(dynamics, "notrend")){
-        estimateList@estimates$omega <- unmarkedEstimate( name="Apparent Survival",
+        estimates$omega <- list(name="Apparent Survival",
           short.name = "omega", estimates = ests[(nAP+nGP+1) :(nAP+nGP+nOP)],
           covMat = as.matrix(covMat[(nAP+nGP+1) : (nAP+nGP+nOP),
                                     (nAP+nGP+1) : (nAP+nGP+nOP)]),
           invlink = "logistic", invlinkGrad = "logistic.grad")
     } else if(identical(dynamics, "ricker")){
-        estimateList@estimates$omega <- unmarkedEstimate(name="Carrying Capacity",
+        estimates$omega <- list(name="Carrying Capacity",
           short.name = "omCarCap", estimates = ests[(nAP+nGP+1) :(nAP+nGP+nOP)],
           covMat = as.matrix(covMat[(nAP+nGP+1) : (nAP+nGP+nOP),
                             (nAP+nGP+1) : (nAP+nGP+nOP)]),
           invlink = "exp", invlinkGrad = "exp")
     } else{
-      estimateList@estimates$omega <- unmarkedEstimate(name="Carrying Capacity",
+      estimates$omega <- list(name="Carrying Capacity",
         short.name = "omCarCap", estimates = ests[(nAP+nGP+1) :(nAP+nGP+nOP)],
         covMat = as.matrix(covMat[(nAP+nGP+1) : (nAP+nGP+nOP),
                                   (nAP+nGP+1) : (nAP+nGP+nOP)]),
@@ -257,16 +273,14 @@ remMNO <- function(lamformula, gamformula, omformula, detformula,
     }
   }
 
-  estimateList@estimates$det <- unmarkedEstimate(
-      name = "Detection", short.name = "p",
+  estimates$det <- list(name = "Detection", short.name = "p",
       estimates = ests[(nAP+nGP+nOP+1) : (nAP+nGP+nOP+nDP)],
       covMat = as.matrix(covMat[(nAP+nGP+nOP+1) : (nAP+nGP+nOP+nDP),
                         (nAP+nGP+nOP+1) : (nAP+nGP+nOP+nDP)]),
       invlink = "logistic", invlinkGrad = "logistic.grad")
 
   if(immigration) {
-    estimateList@estimates$iota <- unmarkedEstimate(
-      name="Immigration", short.name = "iota",
+    estimates$iota <- list(name="Immigration", short.name = "iota",
       estimates = ests[(nAP+nGP+nOP+nDP+1) :(nAP+nGP+nOP+nDP+nIP)],
       covMat = as.matrix(covMat[(nAP+nGP+nOP+nDP+1) : (nAP+nGP+nOP+nDP+nIP),
                                 (nAP+nGP+nOP+nDP+1) : (nAP+nGP+nOP+nDP+nIP)]),
@@ -274,23 +288,26 @@ remMNO <- function(lamformula, gamformula, omformula, detformula,
   }
 
   if(identical(mixture, "NB")) {
-    estimateList@estimates$alpha <- unmarkedEstimate(name = "Dispersion",
+    estimates$alpha <- list(name = "Dispersion",
         short.name = "alpha", estimates = ests[nP],
         covMat = as.matrix(covMat[nP, nP]), invlink = "exp",
         invlinkGrad = "exp")
   }
   if(identical(mixture, "ZIP")) {
-    estimateList@estimates$psi <- unmarkedEstimate(name = "Zero-inflation",
+    estimates$psi <- list(name = "Zero-inflation",
         short.name = "psi", estimates = ests[nP],
         covMat = as.matrix(covMat[nP, nP]), invlink = "logistic",
         invlinkGrad = "logistic.grad")
   }
 
-  umfit <- new("unmarkedFitMMO", fitType = "multmixOpen",
-      call = match.call(), formula = formula, formlist = formlist, data = data,
-      sitesRemoved=D$removed.sites, estimates = estimateList, AIC = fmAIC,
+  efit <- list(fitType = "multmixOpen",
+      call = match.call(), lamformula = lamformula, detformula=detformula,
+      gamformula=gamformula, omformula=omformula, data = data,
+      sitesRemoved=D$removed.sites, estimates = estimates, AIC = fmAIC,
       opt = fm, negLogLike = fm$value, nllFun = nll, K = K, mixture = mixture,
       dynamics = dynamics, fix = fix, immigration=immigration)
 
-  return(umfit)
+  class(efit) <- c('efitMNO','efit','list')
+
+  return(efit)
 }

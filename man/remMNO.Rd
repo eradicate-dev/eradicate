@@ -4,8 +4,10 @@
 \alias{remMNO}
 \title{remMNO}
 \usage{
-remGMNO(lamformula, gamformula, omformula, detformula, data, mixture = c("P", "NB","ZIP"),
-               K, dynamics, fix, immigration=FALSE, iotaformula = ~1, starts, method="BFGS", se=TRUE, ...)
+remMNO(lamformula, gamformula, omformula, detformula, data, mixture = c("P", "NB","ZIP"),
+               K, dynamics = c("constant", "autoreg", "notrend", "trend", "ricker", "gompertz"),
+               fix = c("none", "gamma", "omega"), immigration=FALSE, iotaformula = ~1,
+               starts, method="BFGS", se=TRUE, ...)
 }
 \arguments{
 \item{lamformula}{formula for the latent abundance component.}
@@ -18,32 +20,50 @@ remGMNO(lamformula, gamformula, omformula, detformula, data, mixture = c("P", "N
 site-level covariates are allowed for the removal detection component.
 This differs from the similar model in \code{unmarked}.}
 
-\item{data}{A \code{eFrameR} object containing the response (counts)
-and site-level covariates. see \code{\link{eFrameR}} for how to format
-the required data.}
+\item{data}{A \code{eFrameMNO} object containing the removal data for each primary
+period and site-level covariates. see \code{\link{eFrameMNO}} for how to format
+ the required data.}
+
+\item{mixture}{for abundance, either Poisson 'P', negative binomial 'NB' or zero-inflated
+poisson 'ZIP'.}
 
 \item{K}{upper bound for superpopulation abundance}
+
+\item{dynamics}{Character string describing the type of population dynamics. "constant" indicates that there
+is no relationship between omega and gamma. "autoreg" is an auto-regressive model in which recruitment is
+modeled as gamma*N[i,t-1]. "notrend" model gamma as lambda*(1-omega) such that there is no temporal trend.
+"trend" is a model for exponential growth, N[i,t] = N[i,t-1]*gamma, where gamma in this case is finite rate of
+increase (normally referred to as lambda). "ricker" and "gompertz" are models for density-dependent population
+growth. "ricker" is the Ricker-logistic model, N[i,t] = N[i,t-1]*exp(gamma*(1-N[i,t-1]/omega)), where gamma is
+the maximum instantaneous population growth rate (normally referred to as r) and omega is the equilibrium
+abundance (normally referred to as K). "gompertz" is a modified version of the Gompertz-logistic model, N[i,t]
+= N[i,t-1]*exp(gamma*(1-log(N[i,t-1]+1)/log(omega+1))), where the interpretations of gamma and omega are
+similar to in the Ricker model.}
+
+\item{fix}{If "omega", omega is fixed at 1. If "gamma", gamma is fixed at 0.}
+
+\item{immigration}{Logical specifying whether immigration is included in the model}
+
+\item{iotaformula}{formula for the number of immigrants per site, per time step.}
 
 \item{starts}{Initial values for parameters}
 
 \item{method}{Optimisation method}
 
 \item{se}{flag to return the standard error (hessian).}
-
-\item{model}{for abundance, either Poisson 'P' or negative binomial 'NB'}
 }
 \value{
 a \code{efit} model object.
 }
 \description{
-\code{remGR} fits the multinomial, open population removal model to data collected from
+\code{remMNO} fits the multinomial, open population removal model to data collected from
 repeated removal episodes from M sites over T primary periods with each primary consisting of J
 secondary periods.
 }
 \examples{
  rem<- san_nic_rem$rem
- emf <- eFrameGR(y=rem, numPrimary=1)
- mod <- remPois(~1, ~1, ~1, data=emf)
+ emf <- eFrameMNO(y=rem, numPrimary=1)
+ mod <- remMNO(~1, ~1, ~1, ~1, data=emf)
  Nhat<- calcN(mod)
 
 }

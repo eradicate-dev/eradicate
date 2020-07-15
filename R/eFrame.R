@@ -305,6 +305,77 @@ eFrameMS<- function(y, obsPerSeason, siteCovs = NULL) {
   emf
 }
 
+#' eFrameMNO
+#'
+#' \code{eFrameMNO} creates an eFrameMNO data object for use with open population
+#' multinomial removal models using the robust design where sampling occurs over
+#' a number of primary and secondary periods.
+#'
+#' @param y An MxJxT matrix of the observed removal data, where M is the
+#'    number of sites, J is the maximum number of removal (secondary) periods
+#'    per site and T is the number of primary periods.
+#' @param numPrimary the number of primary periods. For each primary period, the
+#' population is assumed to be closed.
+#' @param SiteCovs A \code{data.frame} of covariates that vary at the
+#'    site level. This should have M rows and one column per covariate
+#' @param primaryCovs A \code{data.frame} of covariates that vary at the
+#'    site x primary period (M x T) level.
+#' @param primaryPeriod A MxT matrix of integers indicating the time gap between
+#' primary periods for each site
+#' @return a \code{eFrameMNO} holding data containing the response and
+#'  covariates required for open population removal models
+#'
+#' @examples
+#'  rem<- san_nic_rem$rem
+#'  ym<- san_nic_rem$ym # detections from additional monitoring
+#'
+#'  emf<-eFrameMNO(rem, numPrimary=1)
+#'  summary(emf)
+#'
+#' @export
+#'
+eFrameMNO<- function(y, numPrimary, siteCovs = NULL, primaryCovs = NULL, primaryPeriod = NULL) {
+
+  M <- nrow(y)
+  T <- numPrimary
+  J <- ncol(y) / T
+
+  if(is.null(primaryPeriod))
+    primaryPeriod <- matrix(1:T, M, T, byrow=TRUE)
+  if(nrow(primaryPeriod) != M | ncol(primaryPeriod) != T)
+    stop("Dimensions of primaryPeriod matrix should be MxT")
+  if(any(primaryPeriod < 0, na.rm=TRUE))
+    stop("Negative primaryPeriod values are not allowed.")
+  if(any(is.na(primaryPeriod)))
+    stop("Missing values are not allowed in primaryPeriod.")
+  if(!identical(typeof(primaryPeriod), "integer")) {
+    mode(primaryPeriod) <- "integer"
+    warning("primaryPeriod values have been converted to integers")
+  }
+
+  ya <- array(y, c(M, J, T))
+  yt.na <- apply(!is.na(ya), c(1,3), any)
+  yt.na <- which(!yt.na)
+  d.na <- which(is.na(primaryPeriod))
+  if(!all(d.na %in% yt.na))
+    stop("primaryPeriod values must be supplied for all non-missing values of y")
+  increasing <- function(x) {
+    x <- x[!is.na(x)]
+    all(order(x) == 1:length(x))
+  }
+  if(!all(apply(primaryPeriod, 1, increasing)))
+    stop("primaryPeriod values must increase over time for each site")
+
+  emf <- eFrame(y, siteCovs)
+  emf$piFun<- "removalPiFun"
+  emf$samplingMethod<- "removal"
+  emf$numPrimary <- numPrimary
+  emf$primaryCovs <- covsToDF(primaryCovs, "primaryCovs", numPrimary, nrow(y))
+  emf$primaryPeriod <- primaryPeriod
+  class(emf) <- c("eFrameMNO",class(emf))
+  emf
+}
+
 
 ############################ EXTRACTORS ##################################
 
