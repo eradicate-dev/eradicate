@@ -10,7 +10,8 @@
 #'
 #' @usage remGP(data, starts, K, method = "BFGS", se=TRUE, ...)
 #'
-#' @param data \code{eFrameGP} object containing the number removal/index data.
+#' @param data \code{eFrameGP} object containing the catch (removal), effort and
+#' optionally, the index data.  See \code{eFrameGP} for more details.
 #' @param starts Initial values for parameters
 #' @param K Integer representing upper bound for abundance for discrete integration
 #' @param method optimsation method (see \code{?optim} for details)

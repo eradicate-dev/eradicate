@@ -360,7 +360,7 @@ calcN.efitGP<- function(obj, CI.level=0.95, CI.calc = c("norm","lnorm","boot"), 
     C <- z*se.N
     lcl.N <- max(R, N - C)
     ucl.N <- N + C
-    lcl.Nr<- max((N - R), (N-R) - C)
+    lcl.Nr<- max(0, (N-R) - C)
     ucl.Nr<- (N - R) + C
   }
   else if(CI.calc == "lnorm") {
@@ -392,7 +392,7 @@ calcN.efitGP<- function(obj, CI.level=0.95, CI.calc = c("norm","lnorm","boot"), 
     C <- z*se.N
     lcl.N <- max(R, N - C)
     ucl.N <- N + C
-    lcl.Nr<- max((N - R), (N-R) - C)
+    lcl.Nr<- max(0, (N-R) - C)
     ucl.Nr<- (N - R) + C
   }
   else stop("Unknown CI method")
@@ -431,6 +431,18 @@ calcP.efitR<- function(obj, na.rm = TRUE) {
   p <- plogis(V %*% pars + V.offset)
   p <- matrix(p, M, J, byrow = TRUE)
   pi <- do.call(removalPiFun, list(p = p))
+  return(pi)
+}
+
+#' @rdname calcP
+#' @export
+calcP.efitGP<- function(obj, na.rm = TRUE) {
+  emf<- obj$data
+  eff<- emf$effort
+  pars <- coef(obj, type = "catch")
+  p0<- plogis(pars)
+  p <- 1 - (1-p0)^eff
+  pi <- removalPiFun(p)
   return(pi)
 }
 

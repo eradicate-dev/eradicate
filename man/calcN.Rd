@@ -16,7 +16,13 @@ calcN(obj, ...)
 
 \method{calcN}{efitR}(obj, newdata, off.set = NULL, CI.level = 0.95, ...)
 
-\method{calcN}{efitGP}(obj, CI.level = 0.95, ...)
+\method{calcN}{efitGP}(
+  obj,
+  CI.level = 0.95,
+  CI.calc = c("norm", "lnorm", "boot"),
+  nboot = 500,
+  ...
+)
 }
 \arguments{
 \item{obj}{A fitted model object.}

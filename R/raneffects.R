@@ -57,7 +57,7 @@ raneffects.efitR<- function(obj, K, ...) {
   y <- obj$data$y
   srm <- obj$sitesRemoved
   if(length(srm) > 0)
-    y <- y[-obj@sitesRemoved,]
+    y <- y[-obj$sitesRemoved,]
   if(missing(K)) {
     warning("K was set to max(y)+50 by default")
     K <- max(y, na.rm=TRUE)+50
@@ -92,7 +92,7 @@ raneffects.efitR<- function(obj, K, ...) {
   return(post)
 }
 
-
+#------------------------------------------------
 #' @rdname raneffects
 #' @export
 raneffects.efitMS<- function(obj, ...) {

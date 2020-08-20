@@ -3,6 +3,7 @@
 \name{calcP}
 \alias{calcP}
 \alias{calcP.efitR}
+\alias{calcP.efitGP}
 \alias{calcP.efitMNO}
 \alias{calcP.efitMS}
 \title{calcP}
@@ -10,6 +11,8 @@
 calcP(obj, ...)
 
 \method{calcP}{efitR}(obj, na.rm = TRUE)
+
+\method{calcP}{efitGP}(obj, na.rm = TRUE)
 
 \method{calcP}{efitMNO}(obj, na.rm = TRUE)
 
