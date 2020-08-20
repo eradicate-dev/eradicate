@@ -3,11 +3,17 @@
 \name{calcP}
 \alias{calcP}
 \alias{calcP.efitR}
+\alias{calcP.efitMNO}
+\alias{calcP.efitMS}
 \title{calcP}
 \usage{
 calcP(obj, ...)
 
 \method{calcP}{efitR}(obj, na.rm = TRUE)
+
+\method{calcP}{efitMNO}(obj, na.rm = TRUE)
+
+\method{calcP}{efitMS}(obj, na.rm = TRUE)
 }
 \arguments{
 \item{obj}{A fitted model object.}

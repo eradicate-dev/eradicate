@@ -13,7 +13,7 @@ removalPiFun <- function(p){
     pi <- matrix(NA, M, J)
     pi[,1] <- p[,1]
     for(i in seq(from = 2, length = J - 1)) {
-      pi[, i] <- pi[,i-1] / p[,i-1] * (1-p[,i-1]) * p[,i]
+      pi[, i] <- p[,i] * apply(as.matrix(p[,1:(i-1)]),1,function(x){prod(1-x)})
     }
   }
   else {
@@ -21,37 +21,30 @@ removalPiFun <- function(p){
     pi<- rep(NA, J)
     pi[1]<- p[1]
     for (i in 2:J)
-      pi[i] <- p[i] * (1-p[i])^(i-1)
+      pi[i] <- p[i] * prod(1-p[1:(i-1)])
   }
   return(pi)
 }
 
-# p is an M x 2 matrix of detection probabilities (site x observer).
-# returns an M x 3 matrix of row=(1 not 2, 2 not 1, 1 and 2).
-# Compute the cell probabilities for the observation classes
-# in double observer sampling.
-
-doublePiFun <- function(p){
-  M <- nrow(p)
-  pi <- matrix(NA, M, 3)
-  pi[,1] <- p[,1] * (1 - p[,2])
-  pi[,2] <- p[,2] * (1 - p[,1])
-  pi[,3] <- p[,1] * p[,2]
-  return(pi)
-}
-
-# p is an M x 2 matrix of detection probabilities (site x observer).
-# returns an M x 2 matrix of row=(1, 2 not 1).
-# Compute the cell probabilities for the observation classes
-# in double observer sampling.
-
-depDoublePiFun <- function(p){
-  M <- nrow(p)
-  pi <- matrix(NA, M, 2)
-  pi[,1] <- p[,1]
-  pi[,2] <- p[,2]*(1-p[,1])
-  return(pi)
-}
+# removalPiFun <- function(p){
+#   if(is.matrix(p)) {
+#     M <- nrow(p)
+#     J <- ncol(p)
+#     pi <- matrix(NA, M, J)
+#     pi[, 1] <- p[, 1]
+#     for (i in seq(from = 2, length = J - 1)) {
+#       pi[, i] <- pi[, i - 1]/p[, i - 1] * (1 - p[, i - 1]) * p[, i]
+#     }
+#   }
+#   else {
+#     J<- length(p)
+#     pi<- rep(NA, J)
+#     pi[1]<- p[1]
+#     for (i in 2:J)
+#       pi[i] <- p[i] * prod(1-p[1:(i-1)])
+#   }
+#   return(pi)
+# }
 
 genFixedNLL <- function(nll, whichFixed, fixedValues)
 {
@@ -105,7 +98,7 @@ log.grad <- function(x) {
   1/x
 }
 
-explink <- function(x) exp(x)
+exp.grad <- function(x) exp(x)
 
 exp1 <- function(x) exp(x) + 1
 
@@ -372,4 +365,25 @@ formatDelta <- function(d, yna)
     }
   }
   return(dout)
+}
+
+#---
+sd.trim <- function(x, trim=0, na.rm=FALSE, ...)
+{
+  if(!is.numeric(x) && !is.complex(x) && !is.logical(x)) {
+    warning("argument is not numeric or logical: returning NA")
+    return(NA_real_)
+  }
+  if(na.rm) x <- x[!is.na(x)]
+  if(!is.numeric(trim) || length(trim) != 1)
+    stop("'trim' must be numeric of length one")
+  n <- length(x)
+  if(trim > 0 && n > 0) {
+    if(is.complex(x)) stop("trimmed sd are not defined for complex data")
+    if(trim >= 0.5) return(0)
+    lo <- floor(n * trim) + 1
+    hi <- n + 1 - lo
+    x <- sort.int(x, partial = unique(c(lo, hi)))[lo:hi]
+  }
+  sd(x)
 }

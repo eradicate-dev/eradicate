@@ -31,7 +31,7 @@ poisson 'ZIP'.}
 
 \item{dynamics}{Character string describing the type of population dynamics. "constant" indicates that there
 is no relationship between omega and gamma. "autoreg" is an auto-regressive model in which recruitment is
-modeled as gamma*N[i,t-1]. "notrend" model gamma as lambda*(1-omega) such that there is no temporal trend.
+modeled as gamma*N[i,t-1]. "notrend" models gamma as lambda*(1-omega) such that there is no temporal trend.
 "trend" is a model for exponential growth, N[i,t] = N[i,t-1]*gamma, where gamma in this case is finite rate of
 increase (normally referred to as lambda). "ricker" and "gompertz" are models for density-dependent population
 growth. "ricker" is the Ricker-logistic model, N[i,t] = N[i,t-1]*exp(gamma*(1-N[i,t-1]/omega)), where gamma is
@@ -58,7 +58,7 @@ a \code{efit} model object.
 \description{
 \code{remMNO} fits the multinomial, open population removal model to data collected from
 repeated removal episodes from M sites over T primary periods with each primary consisting of J
-secondary periods.
+secondary periods. This is a port of the similar function in \code{unmarked}.
 }
 \examples{
  rem<- san_nic_rem$rem

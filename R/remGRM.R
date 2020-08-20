@@ -147,7 +147,7 @@ remGRM <- function(lamformula, phiformula, detformula, mdetformula, data, mixtur
       phi <- 1
     else if(T>1)
       phi <- drop(plogis(Xphi %*% pars[(nLP+1):(nLP+nPP)] + Xphi.offset))
-      p <- cloglog(Xdet %*% pars[(nLP+nPP+1):(nLP+nPP+nDP)] + Xdet.offset)
+      p <- plogis(Xdet %*% pars[(nLP+nPP+1):(nLP+nPP+nDP)] + Xdet.offset)
       pm <- exp(Xdetm %*% pars[(nLP+nPP+nDP+1):(nLP+nPP+nDP+nDPM)])
 
     phi.mat <- matrix(phi, M, T, byrow=TRUE)
@@ -228,8 +228,8 @@ remGRM <- function(lamformula, phiformula, detformula, mdetformula, data, mixtur
   detEstimates <- list(name = "Detection", short.name = "p",
                        estimates = ests[(nLP+nPP+1):(nLP+nPP+nDP+nDPM)],
                        covMat = as.matrix(covMat[(nLP+nPP+1):(nLP+nPP+nDP+nDPM),(nLP+nPP+1):(nLP+nPP+nDP+nDPM)]),
-                       invlink = "cloglog",
-                       invlinkGrad = "cloglog.grad")
+                       invlink = "logistic",
+                       invlinkGrad = "logictic.grad")
 
   estimates<- list(state=stateEstimates, det=detEstimates)
 

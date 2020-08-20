@@ -339,9 +339,10 @@ calcN.efitR<- function(obj, newdata, off.set=NULL, CI.level=0.95, ...) {
 
 #' @rdname calcN
 #' @export
-calcN.efitGP<- function(obj, CI.level=0.95, ...) {
-  # CI calculated using the methods in
+calcN.efitGP<- function(obj, CI.level=0.95, CI.calc = c("norm","lnorm","boot"), nboot=500, ...) {
+  # CI.calc = "LN" calculated using the log normal method in
   # Chao (1989) Biometrics 45(2), 427-438
+  CI.calc <- match.arg(CI.calc)
   x <- obj$data
   R<- sum(x$catch)
   invlink = obj$estimates$state$invlink
@@ -350,17 +351,53 @@ calcN.efitGP<- function(obj, CI.level=0.95, ...) {
   grad <- do.call(invlinkGrad,list(eta))
   covMat<- obj$estimates$state$covMat
   N<- do.call(invlink, list(eta))
+  Nr<- N - R
   V<- grad^2 * diag(covMat)
   se.N<- sqrt(V)
   cv.N<- se.N/N
   z <- qt((1-CI.level)/2, length(x$catch) - 2, lower.tail = FALSE)
-  asymp.N <- exp(z * sqrt(log(1 + ((se.N^2)/((N - R)^2)))))
-  lcl.N <- R + (N - R)/asymp.N
-  ucl.N <- R + (N - R)*asymp.N
-  Nr<- N - R
-  lcl.Nr<- (N - R)/asymp.N
-  ucl.Nr<- (N - R)*asymp.N
-  cv.Nr<- se.N/Nr
+  if(CI.calc == "norm") {
+    C <- z*se.N
+    lcl.N <- max(R, N - C)
+    ucl.N <- N + C
+    lcl.Nr<- max((N - R), (N-R) - C)
+    ucl.Nr<- (N - R) + C
+  }
+  else if(CI.calc == "lnorm") {
+    C <- exp(z * sqrt(log(1 + ((se.N^2)/((N - R)^2)))))
+    lcl.N <- R + (N - R)/C
+    ucl.N <- R + (N - R)*C
+    lcl.Nr<- (N - R)/C
+    ucl.Nr<- (N - R)*C
+  }
+  else if(CI.calc == "boot") {
+    Bout<- rep(NA, nboot)
+    k<- obj$estimates$catch$estimates
+    p0<- plogis(k)
+    pb<- 1-(1 - p0)^x$effort
+    pi<- removalPiFun(pb)
+    nllFun<- nllFun(obj)
+    for(j in 1:nboot) {
+      newc <- rmultinom(1, N, c(pi, 1 - sum(pi)))
+      Bdata <- data.frame(catch = newc[-length(newc)],effort = x$effort)
+      cstart<- -log(max(Bdata$effort))
+      starts<- c(log(sum(Bdata$catch)+1),cstart)
+      if(sum(Bdata$catch) > 0) {
+        m<- optim(starts, nllFun, x=Bdata)
+        Bout[j] <- do.call(invlink, list(m$par[1]))
+      }
+      else Bout[j]<- 0
+    }
+    se.N <- sd(Bout)
+    C <- z*se.N
+    lcl.N <- max(R, N - C)
+    ucl.N <- N + C
+    lcl.Nr<- max((N - R), (N-R) - C)
+    ucl.Nr<- (N - R) + C
+  }
+  else stop("Unknown CI method")
+
+
   bigN<- data.frame(N=round(N), se=round(se.N,1), lcl=round(lcl.N,1), ucl=round(ucl.N,1))
   littleN<- data.frame(N = round(Nr), se=round(se.N,1),lcl=round(lcl.Nr,1), ucl=round(ucl.Nr,1))
   list(Nhat=bigN, Nresid=littleN)
@@ -373,7 +410,9 @@ SE.efit<- function(obj, type, ...){
   v<- obj$estimates[[type]]$covMat
   sqrt(diag(v))
 }
-
+#--------------------------------------------------------------------
+# calcP methods
+#--------------------------------------------------------------------
 #' @rdname calcP
 #' @export
 calcP.efitR<- function(obj, na.rm = TRUE) {
@@ -395,7 +434,53 @@ calcP.efitR<- function(obj, na.rm = TRUE) {
   return(pi)
 }
 
+#' @rdname calcP
+#' @export
+calcP.efitMNO<- function(obj, na.rm = TRUE) {
+# multinomial open
+  data <- obj$data
+  D <- getDesign(data, obj$lamformula, obj$gamformula, obj$omformula, obj$detformula,
+                 obj$iotaformula, na.rm=na.rm)
+  detparms <- coef(obj, 'det')
+  Xp.offset <- D$Xp.offset
+  if(is.null(Xp.offset)) Xp.offset <- rep(0, nrow(D$Xp))
+  plong <- plogis(D$Xp %*% detparms + Xp.offset)
 
+  M <- nrow(D$y)
+  T <- data$numPrimary
+  J <- ncol(D$y) / T
+
+  pmat <- aperm(array(plong, c(J,T,M)), c(3,1,2))
+
+  pout <- array(NA, c(M,J,T))
+  for (t in 1:T){
+    pout[,,t] <- do.call(data$piFun, list(p=pmat[,,t]))
+  }
+  matrix(aperm(pout,c(2,3,1)), M, J*T, byrow=TRUE)
+
+}
+
+#' @rdname calcP
+#' @export
+calcP.efitMS<- function(obj, na.rm = TRUE) {
+  data <- obj$data
+  detParms <- coef(obj, 'det')
+  D <- getDesign(data, obj$psiformula, obj$gamformula, obj$epsformula, obj$detformula, na.rm=na.rm)
+  y <- D$y
+  V <- D$V
+
+  M <- nrow(y)	# M <- nrow(X.it)
+  nY <- data$numPrimary
+  J <- numY(data)/nY
+
+  p <- plogis(V %*% detParms)
+  p <- array(p, c(J, nY, M))
+  p <- aperm(p, c(3, 1, 2))
+  p <- matrix(p, nrow=M)
+  return(p)
+}
+
+#-------------------------------------------------------
 #' @rdname occTraject
 #' @export
 occTraject.efitMS<- function(obj, type = c("projected","smoothed"), mean=TRUE, ...){
@@ -411,6 +496,128 @@ occTraject.efitMS<- function(obj, type = c("projected","smoothed"), mean=TRUE, .
   else stop("type must be one of 'smoothed' or 'projected' ")
 }
 
+
+#' fitted.efitMNO
+#'
+#' @description calculates fitted values for the open population
+#' multinomial removal model.
+#'
+#' @param obj A fitted model object.
+#'
+#' @export
+#'
+fitted.efitMNO <- function(obj, K, na.rm=FALSE) {
+  dynamics <- obj$dynamics
+  mixture <- obj$mixture
+  fix <- obj$fix
+  immigration <- obj$immigration
+  data <- obj$data
+  D <- getDesign(data, obj$lamformula, obj$gamformula, obj$omformula, obj$detformula,
+                 obj$iotaformula, na.rm=na.rm)
+  Xlam <- D$Xlam; Xgam <- D$Xgam; Xom <- D$Xom; Xiota <- D$Xiota
+  Xlam.offset <- D$Xlam.offset; Xgam.offset <- D$Xgam.offset
+  Xom.offset <- D$Xom.offset
+  Xiota.offset <- D$Xiota.offset
+  delta <- D$delta
+
+  y <- D$y
+  M <- nrow(y)
+  T <- data$numPrimary
+  J <- ncol(y) / T
+
+  if(is.null(Xlam.offset)) Xlam.offset <- rep(0, M)
+  if(is.null(Xgam.offset)) Xgam.offset <- rep(0, M*(T-1))
+  if(is.null(Xom.offset)) Xom.offset <- rep(0, M*(T-1))
+  if(is.null(Xiota.offset)) Xiota.offset <- rep(0, M*(T-1))
+
+  lambda <- exp(Xlam %*% coef(obj, 'lambda') + Xlam.offset)
+  if(identical(mixture, "ZIP")) {
+    psi <- plogis(coef(obj, type="psi"))
+    lambda <- (1-psi)*lambda
+  }
+  if (fix == 'omega'){
+    omega <- matrix(1, M, T-1)
+  } else if(!identical(dynamics, "trend")) {
+    if(identical(dynamics, "ricker") || identical(dynamics, "gompertz"))
+      omega <- matrix(exp(Xom %*% coef(object, 'omega') + Xom.offset),
+                      M, T-1, byrow=TRUE)
+    else
+      omega <- matrix(plogis(Xom %*% coef(obj, 'omega') + Xom.offset),
+                      M, T-1, byrow=TRUE)
+  }
+  if(fix == "gamma"){
+    gamma <- matrix(0, M, T-1)
+  } else if(!identical(dynamics, "notrend")){
+    gamma <- matrix(exp(Xgam %*% coef(obj, 'gamma') + Xgam.offset),
+                    M, T-1, byrow=TRUE)
+  } else {
+    if(identical(dynamics, "notrend"))
+      gamma <- (1-omega)*lambda
+  }
+  if(immigration)
+    iota <- matrix(exp(Xiota %*% coef(obj, 'iota') + Xiota.offset),
+                   M, T-1, byrow=TRUE)
+  else
+    iota <- matrix(0, M, T-1)
+
+  N <- matrix(NA, M, T)
+  for(i in 1:M) {
+    N[i, 1] <- lambda[i]
+    if(delta[i, 1] > 1) {
+      for(d in 2:delta[i ,1]) {
+        if(identical(dynamics, "autoreg"))
+          N[i, 1] <- N[i, 1] * (omega[i,1] + gamma[i, 1]) + iota[i, 1]
+        else if(identical(dynamics, "trend"))
+          N[i,1] <- N[i,1] * gamma[i,1] + iota[i, 1]
+        else if(identical(dynamics, "ricker"))
+          N[i,1] <- N[i,1] * exp(gamma[i,1]*(1-N[i,1]/omega[i,1])) +
+            iota[i, 1]
+        else if(identical(dynamics, "gompertz"))
+          N[i,1] <- N[i,1] * exp(gamma[i,1]*(1-log(N[i,1]+1)/
+                                               log(omega[i,1]+1))) + iota[i, 1]
+        else
+          N[i,1] <- N[i,1] * omega[i,1] + gamma[i,1]
+      }
+    }
+    for(t in 2:T) {
+      if(identical(dynamics, "autoreg"))
+        N[i, t] <- N[i, t-1] * (omega[i, t-1] + gamma[i, t-1]) +
+          iota[i, t-1]
+      else if(identical(dynamics, "trend"))
+        N[i,t] <- N[i,t-1] * gamma[i,t-1] + iota[i, t-1]
+      else if(identical(dynamics, "ricker"))
+        N[i,t] <- N[i,t-1]*exp(gamma[i,t-1]*(1-N[i,t-1]/omega[i,t-1]))+
+          iota[i, t-1]
+      else if(identical(dynamics, "gompertz"))
+        N[i,1] <- N[i,t-1] * exp(gamma[i,t-1]*(1-log(N[i,t-1]+1)/
+                                                 log(omega[i,t-1]+1))) + iota[i, t-1]
+      else
+        N[i,t] <- N[i,t-1] * omega[i,t-1] + gamma[i,t-1]
+      if(delta[i, t] > 1) {
+        for(d in 2:delta[i, t]) {
+          if(identical(dynamics, "autoreg"))
+            N[i, t] <- N[i, t] * (omega[i, t-1] + gamma[i, t-1]) +
+              iota[i, t-1]
+          else if(identical(dynamics, "trend"))
+            N[i, t] <- N[i, t] * gamma[i, t-1] + iota[i, t-1]
+          else if(identical(dynamics, "ricker"))
+            N[i, t] <- N[i, t] * exp(gamma[i, t-1] * (1 - N[i,t] /
+                                                        omega[i,t-1]))+ iota[i, t-1]
+          else if(identical(dynamics, "gompertz"))
+            N[i, 1] <- N[i, t] * exp(gamma[i, t-1] * (1 -
+                                                        log(N[i, t]+1) / log(omega[i, t-1] + 1))) +
+              iota[i, t-1]
+          else
+            N[i,t] <- N[i,t] * omega[i, t-1] + gamma[i, t-1]
+        }
+      }
+    }
+  }
+  N <- N[,rep(1:T, each=J)]
+  N
+}
+
+#---------------------------
 #' profileCI
 #'
 #' @description extracts profile likelihood confidence intervals for parameters

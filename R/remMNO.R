@@ -5,7 +5,7 @@
 #' @description
 #' \code{remMNO} fits the multinomial, open population removal model to data collected from
 #' repeated removal episodes from M sites over T primary periods with each primary consisting of J
-#' secondary periods.
+#' secondary periods. This is a port of the similar function in \code{unmarked}.
 #'
 #' @usage remMNO(lamformula, gamformula, omformula, detformula, data, mixture = c("P", "NB","ZIP"),
 #'                K, dynamics = c("constant", "autoreg", "notrend", "trend", "ricker", "gompertz"),
@@ -26,7 +26,7 @@
 #' @param K upper bound for superpopulation abundance
 #' @param dynamics Character string describing the type of population dynamics. "constant" indicates that there
 #' is no relationship between omega and gamma. "autoreg" is an auto-regressive model in which recruitment is
-#' modeled as gamma*N[i,t-1]. "notrend" model gamma as lambda*(1-omega) such that there is no temporal trend.
+#' modeled as gamma*N[i,t-1]. "notrend" models gamma as lambda*(1-omega) such that there is no temporal trend.
 #' "trend" is a model for exponential growth, N[i,t] = N[i,t-1]*gamma, where gamma in this case is finite rate of
 #' increase (normally referred to as lambda). "ricker" and "gompertz" are models for density-dependent population
 #' growth. "ricker" is the Ricker-logistic model, N[i,t] = N[i,t-1]*exp(gamma*(1-N[i,t-1]/omega)), where gamma is
@@ -65,9 +65,14 @@ remMNO <- function(lamformula, gamformula, omformula, detformula,
   #Check state model arguments
   mixture <- match.arg(mixture)
   dynamics <- match.arg(dynamics)
+
+  if((identical(dynamics, "constant") || identical(dynamics, "notrend")) & immigration)
+    stop("You can not include immigration in the constant or notrend models")
+
   if(identical(dynamics, "notrend") &
    !identical(lamformula, omformula))
     stop("lamformula and omformula must be identical for notrend model")
+
   fix <- match.arg(fix)
 
   D <- getDesign(data, lamformula, gamformula, omformula, detformula, iotaformula)
@@ -302,8 +307,8 @@ remMNO <- function(lamformula, gamformula, omformula, detformula,
 
   efit <- list(fitType = "multmixOpen",
       call = match.call(), lamformula = lamformula, detformula=detformula,
-      gamformula=gamformula, omformula=omformula, data = data,
-      sitesRemoved=D$removed.sites, estimates = estimates, AIC = fmAIC,
+      gamformula=gamformula, omformula=omformula, iotaformula=iotaformula,
+      data = data, sitesRemoved=D$removed.sites, estimates = estimates, AIC = fmAIC,
       opt = fm, negLogLike = fm$value, nllFun = nll, K = K, mixture = mixture,
       dynamics = dynamics, fix = fix, immigration=immigration)
 

@@ -8,15 +8,12 @@
 #' are required to fit this model.  Additionally, the model also accepts index (count)
 #' data collected in conjunction with the removal data.
 #'
-#' @usage remGP(catch, effort, index, starts, Nmax, se=TRUE, ...)
+#' @usage remGP(data, starts, K, method = "BFGS", se=TRUE, ...)
 #'
-#' @param catch the number of removals recorded for each period.
-#' @param effort the overall effort expended in each period (i.e. trapnights)
-#' @param index Index (i.e. count) data collected in conjunction with the removal
-#' data.  The index data is assumed to be collected just before each removal period and
-#' can consist of any relative index of abundance.
+#' @param data \code{eFrameGP} object containing the number removal/index data.
 #' @param starts Initial values for parameters
-#' @param Nmax Maximum search increment for abundance considered in the optimisation
+#' @param K Integer representing upper bound for abundance for discrete integration
+#' @param method optimsation method (see \code{?optim} for details)
 #' @param se flag to return the standard error (hessian).
 
 #' @return a \code{efit} model object.
@@ -29,7 +26,7 @@
 #'
 #' @export
 #'
-remGP<- function (data, starts, se = TRUE, ...){
+remGP<- function (data, starts, K, method="Nelder-Mead", se = TRUE, ...){
   if(!is(data, "eFrameGP"))
     stop("Data is not a eFrameGP")
   x<- data$counts
@@ -38,46 +35,53 @@ remGP<- function (data, starts, se = TRUE, ...){
   x$cpue <- x$catch/x$effort
   x$cumcatch<- cumsum(x$catch) - x$catch
   x$cumeffort<- cumsum(x$effort) - x$effort
-  R <- sum(x$catch)
-
+  if(missing(K) || is.null(K)) K <- sum(x$catch) + 100
+  k <- 0:K
   if (nobs < 3)
     stop("ml method requires at least 3 observations!")
   if(missing(starts)) {
     cstart<- -log(max(x$effort))
       if(!is.null(x$index)) {
         istart<- -log(max(x$ieffort))
-        starts<- c(log(R+1), cstart, istart)
+        starts<- c(log(sum(x$catch)+1), cstart, istart)
       }
       else {
-        starts<- c(log(R+1), cstart)
+        starts<- c(log(sum(x$catch)+1), cstart)
       }
   }
 
-    nll <- function(parm, idx=FALSE) {
-      N<- exp(parm[1])
-      p <- 1 - exp(-exp(parm[2] + log(x$effort)))
-      pi<- removalPiFun(p)
-      ll<- sum(dpois(x$catch, N*pi, log=TRUE))
-      if(idx) {
-        pm <- exp(parm[3]) * x$ieffort
-        Nr <- N - x$cumcatch + 1e-10
-        lli<- sum(dpois(x$index, Nr*pm, log=TRUE))
+  nll <- function(parm, x, idx=FALSE) {
+    lambda<- exp(parm[1])
+    p0<- plogis(parm[2])
+    R<- sum(x$catch)
+    p <- 1 - (1 - p0)^x$effort
+    pi<- removalPiFun(p)
+    pic<- pi/sum(pi)
+    e<- dmultinom(x$catch, R, prob=pic)
+    f<- dpois(R+k,lambda)
+    g<- dbinom(R, R+k, sum(pi))
+    ll<- log(sum(f*g)) + log(e)
+    if(idx) {
+      lk<- length(k)
+      fin<- rep(NA, lk)
+      pm <- exp(parm[3]) * x$ieffort
+      for(i in 1:lk) {
+        Nr <- (R+k[i]) - x$cumcatch
+        fin[i]<- sum(dpois(x$index, Nr*pm))
       }
-      else lli<- 0
-      return((-1)*(ll+lli))
+      lli<- log(sum(fin*f))
     }
+    else lli<- 0
+    return((-1)*(ll+lli))
+  }
 
     if(!is.null(x$index)) {
       nP<- 3
-      lb<- c(log(R),-20,-20)
-      ub<- c(log(R*10),20,20)
-      m <- optim(starts, nll, idx=TRUE, method="L-BFGS-B", lower=lb, upper=ub, hessian=se)
+      m <- optim(starts, nll, x=x, idx=TRUE, method=method, hessian=se)
     }
     else {
       nP<- 2
-      lb<- c(log(R),-20)
-      ub<- c(log(R*10),20)
-      m <- optim(starts, nll, idx=FALSE, method="L-BFGS-B", lower=lb, upper=ub, hessian=se)
+      m <- optim(starts, nll, x=x, idx=FALSE, method=method, hessian=se)
     }
 
     ests<- m$par
@@ -87,25 +91,25 @@ remGP<- function (data, starts, se = TRUE, ...){
                   estimates = ests[1],
                   covMat = as.matrix(covMat[1,1]),
                   invlink = "exp",
-                  invlinkGrad = "exp")
+                  invlinkGrad = "exp.grad")
 
-    catch <- list(name = "catchability", short.name = "lambda",
+    catch <- list(name = "catchability", short.name = "p",
                 estimates = ests[2],
                 covMat = as.matrix(covMat[2,2]),
-                invlink = "cloglog",
-                invlinkGrad = "cloglog.grad")
+                invlink = "logistic",
+                invlinkGrad = "logistic.grad")
 
     estimates<- list(state=state, catch=catch)
     if(nP==3) {
-      det<- list(name = "detection", short.name = "p",
+      det<- list(name = "detection", short.name = "lambda",
            estimates = ests[3],
            covMat = as.matrix(covMat[3,3]),
-           invlink = "cloglog",
-           invlinkGrad = "cloglog")
+           invlink = "exp",
+           invlinkGrad = "exp.grad")
       estimates$det<- det
     }
 
-    efit <- list(fitType = "remGP", estimates=estimates, opt = m, data=x)
+    efit <- list(fitType = "remGP", estimates=estimates, opt = m, nllFun=nll, data=x)
     class(efit) <- c('efitGP','efit','list')
 
     return(efit)

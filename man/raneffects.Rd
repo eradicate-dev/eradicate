@@ -3,11 +3,17 @@
 \name{raneffects}
 \alias{raneffects}
 \alias{raneffects.efitR}
+\alias{raneffects.efitMS}
+\alias{raneffects.efitMNO}
 \title{raneffects}
 \usage{
 raneffects(obj, ...)
 
 \method{raneffects}{efitR}(obj, K, ...)
+
+\method{raneffects}{efitMS}(obj, ...)
+
+\method{raneffects}{efitMNO}(obj, ...)
 }
 \arguments{
 \item{obj}{A fitted model object.}
