@@ -9,9 +9,10 @@
 #'
 #' @param y An MxJ matrix of the observed measured data, where M is the
 #'    number of sites and J is the maximum number of observations per site.
-#' @param SiteCovs A \code{data.frame} of covariates that vary at the
+#' @param siteCovs A \code{data.frame} of covariates that vary at the
 #'    site level. This should have M rows and one column per covariate
-#'
+#' @param obsCovs A list of matrices or data.frames of variables varying within sites.
+#' Each matrix or data.frame must be of dimension MxJ.
 #' @return a \code{eFrame} holding data containing the response and
 #'  covariates required for each model
 #'
@@ -22,14 +23,17 @@
 #'
 #' @export
 #'
-eFrame <- function(y, siteCovs = NULL) {
+eFrame <- function(y, siteCovs = NULL, obsCovs = NULL) {
     if("data.frame" %in% class(y))
         y <- as.matrix(y)
     M <- nrow(y)
-    J <- ncol(y)
+    R <- ncol(y)
     if(!is.null(siteCovs))
       if(nrow(siteCovs) != M) stop("siteCov Data does not have same size number of sites as y")
-    emf <- list(y = y, siteCovs = siteCovs)
+    if(!is.null(obsCovs)) {
+      obsCovs <- covsToDF(obsCovs, "obsCovs", R, M)
+    }
+    emf <- list(y = y, siteCovs = siteCovs, obsCovs = obsCovs)
     class(emf) <- c('eFrame', 'list')
     return(emf)
 }
@@ -103,7 +107,8 @@ eFrameREST <- function(y, stay, cens, area, active_hours, siteCovs = NULL) {
 #' sampling and "double" for double observer sampling
 #' @param SiteCovs A \code{data.frame} of covariates that vary at the
 #'    site level. This should have M rows and one column per covariate
-#'
+#' @param obsCovs A list of matrices or data.frames of variables varying within sites.
+#' Each matrix or data.frame must be of dimension MxJ.
 #' @return a \code{eFrameR} holding data containing the response and
 #'  covariates required for removal models
 #'
@@ -114,16 +119,9 @@ eFrameREST <- function(y, stay, cens, area, active_hours, siteCovs = NULL) {
 #'
 #' @export
 #'
-eFrameR <- function(y, type, siteCovs = NULL) {
-  if(!missing(type)) {
-    switch(type,
-           removal = piFun <- "removalPiFun",
-           double = piFun <- "doublePiFun")
-  } else stop("Removal type required")
-
-  emf <- eFrame(y, siteCovs)
-  emf$piFun<- piFun
-  emf$samplingMethod<- type
+eFrameR <- function(y, siteCovs = NULL, obsCovs = NULL) {
+  emf <- eFrame(y, siteCovs, obsCovs)
+  emf$piFun<- "removalPiFun"
   class(emf) <- c("eFrameR",class(emf))
   emf
 }
@@ -145,6 +143,8 @@ eFrameR <- function(y, type, siteCovs = NULL) {
 #' is greater than 1.
 #' @param siteCovs A \code{data.frame} of covariates that vary at the
 #'    site level. This should have M rows and one column per covariate.
+#' @param obsCovs A list of matrices or data.frames of variables varying within sites.
+#' Each matrix or data.frame must be of dimension MxJ.
 #' @param primaryCovs A \code{data.frame} of covariates that vary at the
 #'    site x primary period level.
 #' @return a \code{eFrameGR} holding data containing the response and
@@ -161,17 +161,9 @@ eFrameR <- function(y, type, siteCovs = NULL) {
 #'
 #' @export
 #'
-eFrameGR<- function(y, numPrimary, siteCovs = NULL, primaryCovs = NULL, type) {
-
-  if(!missing(type)) {
-    switch(type,
-           removal = piFun <- "removalPiFun",
-           double = piFun <- "doublePiFun")
-  } else stop("Removal type required")
-
-  emf <- eFrame(y, siteCovs)
-  emf$piFun<- piFun
-  emf$samplingMethod<- type
+eFrameGR<- function(y, numPrimary, siteCovs = NULL, obsCovs = NULL, primaryCovs = NULL) {
+  emf <- eFrame(y, siteCovs, obsCovs)
+  emf$piFun<- "removalPiFun"
   emf$numPrimary <- numPrimary
   emf$primaryCovs <- covsToDF(primaryCovs, "primaryCovs", numPrimary, nrow(y))
   class(emf) <- c("eFrameGR",class(emf))
@@ -200,6 +192,8 @@ eFrameGR<- function(y, numPrimary, siteCovs = NULL, primaryCovs = NULL, type) {
 #' is greater than 1.
 #' @param SiteCovs A \code{data.frame} of covariates that vary at the
 #'    site level. This should have M rows and one column per covariate
+#' @param obsCovs A list of matrices or data.frames of variables varying within sites.
+#' Each matrix or data.frame must be of dimension MxJ.
 #' @param primaryCovs A \code{data.frame} of covariates that vary at the
 #'    site x primary period level.
 #' @return a \code{eFrameRGP} holding data containing the response and
@@ -214,18 +208,10 @@ eFrameGR<- function(y, numPrimary, siteCovs = NULL, primaryCovs = NULL, type) {
 #'
 #' @export
 #'
-eFrameGRM<- function(y, ym, numPrimary, siteCovs = NULL, primaryCovs = NULL, type) {
-
-  if(!missing(type)) {
-    switch(type,
-           removal = piFun <- "removalPiFun",
-           double = piFun <- "doublePiFun")
-  } else stop("Removal type required")
-
-  emf <- eFrame(y, siteCovs)
+eFrameGRM<- function(y, ym, numPrimary, siteCovs = NULL, obsCovs = NULL, primaryCovs = NULL) {
+  emf <- eFrame(y, siteCovs, obsCovs)
   emf$ym<- ym
-  emf$piFun<- piFun
-  emf$samplingMethod<- type
+  emf$piFun<- "removalPiFun"
   emf$numPrimary <- numPrimary
   emf$primaryCovs <- covsToDF(primaryCovs, "primaryCovs", numPrimary, nrow(y))
   class(emf) <- c("eFrameGRM",class(emf))
@@ -284,7 +270,8 @@ eFrameGP<- function(catch, effort, index=NULL, ieffort=NULL) {
 #' per season.
 #' @param siteCovs A \code{data.frame} of covariates that vary at the
 #'    site level. This should have M rows and one column per covariate
-#
+#' @param obsCovs A list of matrices or data.frames of variables varying within sites.
+#' Each matrix or data.frame must be of dimension MxJ.
 #' @return a \code{eFrameMS} holding data containing the response and
 #'  covariates required for \code{occuMS}
 #'
@@ -297,8 +284,8 @@ eFrameGP<- function(catch, effort, index=NULL, ieffort=NULL) {
 #'
 #' @export
 #'
-eFrameMS<- function(y, obsPerSeason, siteCovs = NULL) {
-  emf <- eFrame(y, siteCovs)
+eFrameMS<- function(y, obsPerSeason, siteCovs = NULL, obsCovs =  NULL) {
+  emf <- eFrame(y, siteCovs, obsCovs)
   if(ncol(y)%%obsPerSeason > 0) stop("obsPerSeason does not match dimensions of y")
   emf$obsPerSeason <- obsPerSeason
   class(emf) <- c("eFrameMS",class(emf))
@@ -318,6 +305,8 @@ eFrameMS<- function(y, obsPerSeason, siteCovs = NULL) {
 #' population is assumed to be closed.
 #' @param SiteCovs A \code{data.frame} of covariates that vary at the
 #'    site level. This should have M rows and one column per covariate
+#' @param obsCovs A list of matrices or data.frames of variables varying within sites.
+#' Each matrix or data.frame must be of dimension MxJ.
 #' @param primaryCovs A \code{data.frame} of covariates that vary at the
 #'    site x primary period (M x T) level.
 #' @param primaryPeriod A MxT matrix of integers indicating the time gap between
@@ -334,7 +323,7 @@ eFrameMS<- function(y, obsPerSeason, siteCovs = NULL) {
 #'
 #' @export
 #'
-eFrameMNO<- function(y, numPrimary, siteCovs = NULL, primaryCovs = NULL, primaryPeriod = NULL) {
+eFrameMNO<- function(y, numPrimary, siteCovs = NULL, obsCovs = NULL, primaryCovs = NULL, primaryPeriod = NULL) {
 
   M <- nrow(y)
   T <- numPrimary
@@ -366,9 +355,8 @@ eFrameMNO<- function(y, numPrimary, siteCovs = NULL, primaryCovs = NULL, primary
   if(!all(apply(primaryPeriod, 1, increasing)))
     stop("primaryPeriod values must increase over time for each site")
 
-  emf <- eFrame(y, siteCovs)
+  emf <- eFrame(y, siteCovs, obsCovs)
   emf$piFun<- "removalPiFun"
-  emf$samplingMethod<- "removal"
   emf$numPrimary <- numPrimary
   emf$primaryCovs <- covsToDF(primaryCovs, "primaryCovs", numPrimary, nrow(y))
   emf$primaryPeriod <- primaryPeriod
@@ -380,6 +368,21 @@ eFrameMNO<- function(y, numPrimary, siteCovs = NULL, primaryCovs = NULL, primary
 ############################ EXTRACTORS ##################################
 
 siteCovs<- function(object) return(object$siteCovs)
+
+obsCovs<- function(object, matrices=FALSE) {
+  M<- numSites(object)
+  R<- numY(object)
+  if(matrices) {
+    value <- list()
+    for(i in seq(length=length(object$obsCovs))){
+      value[[i]] <- matrix(object$obsCovs[,i], M, R, byrow = TRUE)
+    }
+    names(value) <- names(object$obsCovs)
+  } else {
+    value <- object$obsCovs
+  }
+  return(value)
+}
 
 numSites<- function(object) nrow(object$y)
 
@@ -431,6 +434,10 @@ print.eFrame<- function(object,...) {
     cat("\nSite-level covariates:\n")
     print(summary(object$siteCovs))
   }
+  if(!is.null(object$obsCovs)) {
+    cat("\nObservation-level covariates:\n")
+    print(summary(object$obsCovs))
+  }
 }
 #' summary.eFrame
 #'
@@ -462,6 +469,10 @@ summary.eFrame<- function(object,...) {
   if(!is.null(object$siteCovs)) {
     cat("\nSite-level covariates:\n")
     print(summary(object$siteCovs))
+  }
+  if(!is.null(object$obsCovs)) {
+    cat("\nObservation-level covariates:\n")
+    print(summary(object$obsCovs))
   }
 }
 #-----------------------------------------
@@ -499,6 +510,10 @@ print.eFrameR<- function(object,...) {
     cat("\nSite-level covariates:\n")
     print(summary(object$siteCovs))
   }
+  if(!is.null(object$obsCovs)) {
+    cat("\nObservation-level covariates:\n")
+    print(summary(object$obsCovs))
+  }
 }
 #' summary.eFrameR
 #'
@@ -534,6 +549,10 @@ summary.eFrameR<- function(object,...) {
     cat("\nSite-level covariates:\n")
     print(summary(object$siteCovs))
   }
+  if(!is.null(object$obsCovs)) {
+    cat("\nObservation-level covariates:\n")
+    print(summary(object$obsCovs))
+  }
 }
 #-----------------------------------------
 #' print.eFrameGR
@@ -557,7 +576,6 @@ print.eFrameGR<- function(object,...) {
   cat(nrow(object$y), " removal sites\n\n")
   cat("Number of primary periods:",object$numPrimary,"\n\n")
   cat("Maximum number of secondary periods:",numY(object)/object$numPrimary,"\n\n")
-  cat("Mean effort per secondary period:",mean(object$Z),"\n\n")
   cat("Number of removals per period:","\n")
   print(data.frame(Period=1:numY(object),Removed=colSums(object$y, na.rm=TRUE)))
   cat("\n")
@@ -571,6 +589,10 @@ print.eFrameGR<- function(object,...) {
   if(!is.null(object$siteCovs)) {
     cat("\nSite-level covariates:\n")
     print(summary(object$siteCovs))
+  }
+  if(!is.null(object$obsCovs)) {
+    cat("\nObservation-level covariates:\n")
+    print(summary(object$obsCovs))
   }
 }
 #' summary.eFrameGRM
@@ -594,7 +616,6 @@ summary.eFrameGR<- function(object,...) {
   cat(nrow(object$y), " removal sites\n\n")
   cat("Number of primary periods:",object$numPrimary,"\n\n")
   cat("Maximum number of secondary periods:",numY(object)/object$numPrimary,"\n\n")
-  cat("Mean effort per secondary period:",mean(object$Z),"\n\n")
   cat("Number of removals per period:","\n")
   print(data.frame(Period=1:numY(object),Removed=colSums(object$y, na.rm=TRUE)))
   cat("\n")
@@ -608,6 +629,10 @@ summary.eFrameGR<- function(object,...) {
   if(!is.null(object$siteCovs)) {
     cat("\nSite-level covariates:\n")
     print(summary(object$siteCovs))
+  }
+  if(!is.null(object$obsCovs)) {
+    cat("\nObservation-level covariates:\n")
+    print(summary(object$obsCovs))
   }
 }
 
@@ -633,7 +658,6 @@ print.eFrameGRM<- function(object,...) {
   cat(nrow(object$y), " removal sites\n")
   cat("Number of primary periods:",object$numPrimary,"\n\n")
   cat("Maximum number of secondary periods:",numY(object)/object$numPrimary,"\n\n")
-  cat("Mean effort per secondary period:",mean(object$Z),"\n\n")
   cat("Number of removals per period:","\n")
   print(data.frame(Period=1:numY(object),Removed=colSums(object$y, na.rm=TRUE)))
   cat("\n")
@@ -650,6 +674,10 @@ print.eFrameGRM<- function(object,...) {
   if(!is.null(object$siteCovs)) {
     cat("\nSite-level covariates:\n")
     print(summary(object$siteCovs))
+  }
+  if(!is.null(object$obsCovs)) {
+    cat("\nObservation-level covariates:\n")
+    print(summary(object$obsCovs))
   }
 }
 #' summary.eFrameGRM
@@ -672,7 +700,6 @@ summary.eFrameGRM<- function(object,...) {
   cat("eFrameGRM Object\n\n")
   cat("Number of primary periods:",object$numPrimary,"\n\n")
   cat("Maximum number of secondary periods:",numY(object)/object$numPrimary,"\n\n")
-  cat("Mean effort per secondary period:",mean(object$Z),"\n\n")
   cat("Number of removals per period:","\n")
   print(data.frame(Period=1:numY(object),Removed=colSums(object$y,na.rm=TRUE)))
   cat("\n")
@@ -689,6 +716,10 @@ summary.eFrameGRM<- function(object,...) {
   if(!is.null(object$siteCovs)) {
     cat("\nSite-level covariates:\n")
     print(summary(object$siteCovs))
+  }
+  if(!is.null(object$obsCovs)) {
+    cat("\nObservation-level covariates:\n")
+    print(summary(object$obsCovs))
   }
 }
 

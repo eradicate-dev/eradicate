@@ -22,18 +22,23 @@ getDesign.eFrame<- function(emf, lamformula, detformula, na.rm=TRUE) {
 
     if(is.null(siteCovs(emf))) {
         siteCovs <- data.frame(placeHolder = rep(1, M))
-        obsCovs <- data.frame(placeHolder = rep(1, M*R))
     } else {
         siteCovs <- siteCovs(emf)
-        obsCovs <- siteCovs[rep(1:M, each = R),]
     }
 
+    ## Compute detection design matrix
+    if(is.null(obsCovs(emf))) {
+      obsCovs <- data.frame(obsNum = as.factor(rep(1:R, M)))
+    } else {
+      obsCovs <- obsCovs(emf)
+      obsCovs <- cbind(obsCovs, obsNum = as.factor(rep(1:R, M)))
+    }
     ## Record future column names
-    colNames <- colnames(siteCovs)
-    colnames(obsCovs) <- colNames
+    colNames <- c(colnames(obsCovs), colnames(siteCovs))
 
-    ## add observation number
-    obsCovs <- cbind(obsCovs, obsNum = as.factor(rep(1:R, M)))
+    ## add site Covariates at observation-level
+    obsCovs <- cbind(obsCovs, siteCovs[rep(1:M, each = R),])
+    colnames(obsCovs) <- colNames
 
     ## Compute design matrices
     X.mf <- model.frame(stateformula, siteCovs, na.action = NULL)
@@ -92,9 +97,6 @@ getDesign.eFrameREST<- function(emf, lamformula, na.rm=TRUE) {
     X.offset[is.na(X.offset)] <- 0
   }
 
-  ## Record future column names for obsCovs
-  colNames <- colnames(siteCovs)
-
   if (na.rm) {
     out <- handleNA(emf, X, X.offset)
     y <- out$y
@@ -150,15 +152,18 @@ getDesign.eFrameGR<- function(emf, lamformula, phiformula, detformula, na.rm = T
     Xlam.offset <- as.vector(model.offset(Xlam.mf))
     if(!is.null(Xlam.offset)) Xlam.offset[is.na(Xlam.offset)] <- 0
 
-    # add observation level vars
-    obsCovs <- data.frame(placeHolder = rep(1, M*R))
-      # add site and yearlysite covariates, which contain siteCovs
+    ## Compute detection design matrix
+    if(is.null(obsCovs(emf))) {
+      obsCovs <- data.frame(obsNum = as.factor(rep(1:R, M)))
+    } else {
+      obsCovs <- obsCovs(emf)
+      obsCovs <- cbind(obsCovs, obsNum = as.factor(rep(1:R, M)))
+    }
+
+    # add site and yearlysite covariates, which contain siteCovs
     cnames <- c(colnames(obsCovs), colnames(primaryCovs))
     obsCovs <- cbind(obsCovs, primaryCovs[rep(1:(M*T), each = R/T),])
     colnames(obsCovs) <- cnames
-     # add observation number if not present
-    if(!("obsNum" %in% names(obsCovs)))
-      obsCovs <- cbind(obsCovs, obsNum = as.factor(rep(1:R, M)))
 
     Xdet.mf <- model.frame(detformula, obsCovs, na.action = NULL)
     Xdet <- model.matrix(detformula, Xdet.mf)
@@ -215,15 +220,18 @@ getDesign.eFrameGRM<- function(emf, lamformula, phiformula, detformula, mdetform
   Xlam.offset <- as.vector(model.offset(Xlam.mf))
   if(!is.null(Xlam.offset)) Xlam.offset[is.na(Xlam.offset)] <- 0
 
-  # add observation level vars
-  obsCovs <- data.frame(placeHolder = rep(1, M*R))
-  # add site and primarycovs covariates, which contain siteCovs
+  ## Compute detection design matrix
+  if(is.null(obsCovs(emf))) {
+    obsCovs <- data.frame(obsNum = as.factor(rep(1:R, M)))
+  } else {
+    obsCovs <- obsCovs(emf)
+    obsCovs <- cbind(obsCovs, obsNum = as.factor(rep(1:R, M)))
+  }
+
+  # add site and yearlysite covariates, which contain siteCovs
   cnames <- c(colnames(obsCovs), colnames(primaryCovs))
   obsCovs <- cbind(obsCovs, primaryCovs[rep(1:(M*T), each = R/T),])
   colnames(obsCovs) <- cnames
-  # add observation number if not present
-  if(!("obsNum" %in% names(obsCovs)))
-    obsCovs <- cbind(obsCovs, obsNum = as.factor(rep(1:R, M)))
 
   Xdet.mf <- model.frame(detformula, obsCovs, na.action = NULL)
   Xdet <- model.matrix(detformula, Xdet.mf)
@@ -282,18 +290,18 @@ getDesign.eFrameMS<- function(emf, psiformula, gamformula, epsformula, detformul
       stop("offsets not currently allowed in occuMS", call.=FALSE)
     W <- model.matrix(psiformula, W.mf)
 
-
     ## Compute detection design matrix
-    obsCovs <- data.frame(placeHolder = rep(1, M*R))
+    if(is.null(obsCovs(emf))) {
+      obsCovs <- data.frame(obsNum = as.factor(rep(1:R, M)))
+    } else {
+      obsCovs <- obsCovs(emf)
+      obsCovs <- cbind(obsCovs, obsNum = as.factor(rep(1:R, M)))
+    }
 
     ## add site and season covariates, which contain siteCovs
     cnames <- c(colnames(obsCovs), colnames(seasCovs))
     obsCovs <- cbind(obsCovs, seasCovs[rep(1:(M*nY), each = J),])
     colnames(obsCovs) <- cnames
-
-    ## add observation number if not present
-    if(!("obsNum" %in% names(obsCovs)))
-      obsCovs <- cbind(obsCovs, obsNum = as.factor(rep(1:R, M)))
 
     V.mf <- model.frame(detformula, obsCovs, na.action = NULL)
     if(!is.null(model.offset(V.mf)))
@@ -356,14 +364,16 @@ getDesign.eFrameMNO <- function(umf, lamformula, gamformula, omformula, detformu
     Xlam.offset[is.na(Xlam.offset)] <- 0
 
   # add observation level vars
-  obsCovs <- data.frame(placeHolder = rep(1, M*J*T))
+  if(is.null(obsCovs(emf)))
+    obsCovs <- data.frame(obsNum = as.factor(rep(1:(J*T), M)))
+  else{
+    obsCovs <- obsCovs(emf)
+    obsCovs <- data.frame(obsNum = as.factor(rep(1:(J*T), M)))
+  }
   # add site and primarycovs covariates, which contain siteCovs
   cnames <- c(colnames(obsCovs), colnames(primaryCovs))
   obsCovs <- cbind(obsCovs, primaryCovs[rep(1:(M*T), each = J),])
   colnames(obsCovs) <- cnames
-  # add observation number if not present
-  if(!("obsNum" %in% names(obsCovs)))
-    obsCovs <- cbind(obsCovs, obsNum = as.factor(rep(1:J, M)))
 
   # Ignore last year of data
   transCovs <- primaryCovs[-seq(T, M*T, by=T),,drop=FALSE]
