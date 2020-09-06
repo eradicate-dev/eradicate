@@ -799,3 +799,90 @@ summary.eFrameREST<- function(object,...) {
   cat("\nStaying time summary:\n")
     print(summary(object$stay))
 }
+
+#-----------------------------------------
+#' print.eFrameMNO
+#'
+#' \code{print} method for eFrameMNO objects. Basically the same as \code{summary.eFrame}
+#'
+#' @param object An \code{eFrameMNO} object.
+#'
+#' @return a \code{list} containing various summaries of the data
+#'
+#' @examples
+#'  ## uses san_nic_rem
+#'  emf <- eFrameMNO(y=rem, numPrimary=1)
+#'  summary(emf)
+#'
+#' @export
+#'
+print.eFrameMNO<- function(object,...) {
+  #S3 method for eFrame
+  cat("eFrameMNO Object\n\n")
+  cat(nrow(object$y), " removal sites\n")
+  cat("Number of primary periods:",object$numPrimary,"\n\n")
+  cat("Maximum number of secondary periods:",numY(object)/object$numPrimary,"\n\n")
+  cat("Number of removals per period:","\n")
+  print(data.frame(Period=1:numY(object),Removed=colSums(object$y, na.rm=TRUE)))
+  cat("\n")
+  cat("Total removed:",sum(object$y, na.rm=TRUE),"\n\n")
+  cat("Sites with at least one detection:",
+      sum(apply(getY(object), 1, function(x) any(x > 0, na.rm=TRUE))),
+      "\n\n")
+  cat("Tabulation of y observations:")
+  print(table(object$y, exclude=NULL))
+  cat("\n")
+  cat(nrow(object$ym), "Additional monitoring sites\n")
+  cat("Tabulation of additional monitoring observations:")
+  print(table(object$ym, exclude=NULL))
+  if(!is.null(object$siteCovs)) {
+    cat("\nSite-level covariates:\n")
+    print(summary(object$siteCovs))
+  }
+  if(!is.null(object$obsCovs)) {
+    cat("\nObservation-level covariates:\n")
+    print(summary(object$obsCovs))
+  }
+}
+#' summary.eFrameGRM
+#'
+#' \code{summary} method for eFrameMNO objects.
+#'
+#' @param object An \code{eFrameMNO} object.
+#'
+#' @return a \code{list} containing various summaries of the data
+#'
+#' @examples
+#'  ## uses san_nic_rem
+#'  emf <- eFrameMNO(y=rem, numPrimary=1)
+#'  summary(emf)
+#'
+#' @export
+#'
+summary.eFrameMNO<- function(object,...) {
+  #S3 method for eFrame
+  cat("eFrameMNO Object\n\n")
+  cat("Number of primary periods:",object$numPrimary,"\n\n")
+  cat("Maximum number of secondary periods:",numY(object)/object$numPrimary,"\n\n")
+  cat("Number of removals per period:","\n")
+  print(data.frame(Period=1:numY(object),Removed=colSums(object$y,na.rm=TRUE)))
+  cat("\n")
+  cat("Total removed:",sum(object$y,na.rm=TRUE),"\n\n")
+  cat("Sites with at least one detection:",
+      sum(apply(getY(object), 1, function(x) any(x > 0, na.rm=TRUE))),
+      "\n\n")
+  cat("Tabulation of y observations:")
+  print(table(object$y, exclude=NULL))
+  cat("\n")
+  cat(nrow(object$y1), "monitoring sites\n")
+  cat("Tabulation of monitoring observations:")
+  print(table(object$y1, exclude=NULL))
+  if(!is.null(object$siteCovs)) {
+    cat("\nSite-level covariates:\n")
+    print(summary(object$siteCovs))
+  }
+  if(!is.null(object$obsCovs)) {
+    cat("\nObservation-level covariates:\n")
+    print(summary(object$obsCovs))
+  }
+}

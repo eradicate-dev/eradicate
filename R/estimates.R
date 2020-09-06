@@ -542,7 +542,7 @@ fitted.efitMNO <- function(obj, K, na.rm=FALSE) {
   if(is.null(Xom.offset)) Xom.offset <- rep(0, M*(T-1))
   if(is.null(Xiota.offset)) Xiota.offset <- rep(0, M*(T-1))
 
-  lambda <- exp(Xlam %*% coef(obj, 'lambda') + Xlam.offset)
+  lambda <- exp(Xlam %*% coef(obj, 'state') + Xlam.offset)
   if(identical(mixture, "ZIP")) {
     psi <- plogis(coef(obj, type="psi"))
     lambda <- (1-psi)*lambda

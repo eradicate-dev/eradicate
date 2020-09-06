@@ -241,7 +241,7 @@ remMNO <- function(lamformula, gamformula, omformula, detformula,
   lamEstimates <- list(name = "Abundance", short.name = "lam",
                     estimates = ests[1:nAP], covMat = as.matrix(covMat[1:nAP,1:nAP]),
                     invlink = "exp", invlinkGrad = "exp")
-  estimates <- list(lambda=lamEstimates)
+  estimates <- list(state=lamEstimates)
 
   gamName <- switch(dynamics, constant = "gamConst", autoreg = "gamAR",
                               notrend = "", trend = "gamTrend",
