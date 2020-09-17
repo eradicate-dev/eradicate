@@ -4,7 +4,14 @@
 \alias{eFrameGRM}
 \title{eFrameGRM}
 \usage{
-eFrameGRM(y, ym, numPrimary, siteCovs = NULL, primaryCovs = NULL, type)
+eFrameGRM(
+  y,
+  ym,
+  numPrimary,
+  siteCovs = NULL,
+  obsCovs = NULL,
+  primaryCovs = NULL
+)
 }
 \arguments{
 \item{y}{An MxJ matrix of the observed removal data, where M is the
@@ -16,6 +23,9 @@ periods but this is not used here.}
 
 \item{numPrimary}{the number of primary periods. For each primary period, the
 population is assumed to be closed.}
+
+\item{obsCovs}{A list of matrices or data.frames of variables varying within sites.
+Each matrix or data.frame must be of dimension MxJ.}
 
 \item{primaryCovs}{A \code{data.frame} of covariates that vary at the
 site x primary period level.}

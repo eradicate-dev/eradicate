@@ -4,7 +4,9 @@ Title: Functions to support the "eradication tools" shiny app
 Version: 0.1.0
 Author: Dave Ramsey
 Maintainer: Dave Ramsey <david.ramsey@delwp.vic.gov.au>
-Imports: Rcpp (>= 0.8.0)
+Imports: 
+    Rcpp (>= 0.8.0),
+    Distance
 Description: A package for the analysis of animal abundance using data from common surveys methods, in the style  of the package 'unmarked'.
 License: What license is it under?
 Encoding: UTF-8

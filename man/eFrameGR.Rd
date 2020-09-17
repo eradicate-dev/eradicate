@@ -4,7 +4,7 @@
 \alias{eFrameGR}
 \title{eFrameGR}
 \usage{
-eFrameGR(y, numPrimary, siteCovs = NULL, primaryCovs = NULL, type)
+eFrameGR(y, numPrimary, siteCovs = NULL, obsCovs = NULL, primaryCovs = NULL)
 }
 \arguments{
 \item{y}{An NxJ matrix of the additional monitoring data, where N is the
@@ -16,6 +16,9 @@ population is assumed to be closed.}
 
 \item{siteCovs}{A \code{data.frame} of covariates that vary at the
 site level. This should have M rows and one column per covariate.}
+
+\item{obsCovs}{A list of matrices or data.frames of variables varying within sites.
+Each matrix or data.frame must be of dimension MxJ.}
 
 \item{primaryCovs}{A \code{data.frame} of covariates that vary at the
 site x primary period level.}

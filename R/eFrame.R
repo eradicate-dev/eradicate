@@ -364,6 +364,48 @@ eFrameMNO<- function(y, numPrimary, siteCovs = NULL, obsCovs = NULL, primaryCovs
   emf
 }
 
+#' eFrameDS
+#'
+#' \code{eFrameDS} creates an eFrame data object for data collected by
+#' distance sampling, specifically from remote cameras.  Distance sampling
+#' is used to estimate the area of a camera viewshed by fitting a detection
+#' function and estimating the effective sampled area.
+#'
+#' @param distance A vector of distances (or distance bin number) for each
+#' detected individual. Actual distances are the distance (m) to the midpoint
+#' of each distance bin.
+#' @param size the number of individuals recorded for each distance measurement
+#' (i.e. groupsize).
+#' @param siteID A vector indicating the camera ID for each distance measurement.
+#' @param cutpoints vector of bin cutpoints indicating the distance to the end of
+#' each bin. cutpoints should begin at zero and end with w.
+#' @param w Truncation distance or maximum distance from camera that will be considered
+#' in the analysis. All distances or bins further than this will be discarded.
+#' @param bin_nums A logical indicating whether \code{distance} records
+#' distances or bin numbers.  Bin numbers are assumed to be numbered from 1.
+#' @return a \code{eFrameDS} holding data containing the data suitable for estimating a
+#' camera detection function
+#'
+#' @examples
+#'  counts<- san_nic_pre$counts
+#'  emf <- eFrame(y=counts)
+#'  summary(emf)
+#'
+#' @export
+#'
+eFrameDS <- function(distance, size, siteID, cutpoints, w, bin_nums=FALSE) {
+  M<- length(distance)
+  if(any(is.na(distance))) stop("distance vector should not have missing values")
+  if(bin_nums) distance<- convert_bin_to_dist(distance, cutpoints)
+  if((cutpoints[1] != 0) & (cutpoints[M] != w))
+      stop("cutpoints should start at 0 and end at w")
+  if(length(size) != M) stop("size vector should be same length as distance")
+  if(length(siteID) != M) stop("siteID vector should be same length as distance")
+  ddata <- data.frame(distance=distance,size=size,siteID=siteID)
+  emf<- list(ddata=ddata, cutpoints=cutpoints, w=w)
+  class(emf) <- c('eFrameDS', 'list')
+  return(emf)
+}
 
 ############################ EXTRACTORS ##################################
 

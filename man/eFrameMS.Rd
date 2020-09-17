@@ -4,7 +4,7 @@
 \alias{eFrameMS}
 \title{eFrameMS}
 \usage{
-eFrameMS(y, obsPerSeason, siteCovs = NULL)
+eFrameMS(y, obsPerSeason, siteCovs = NULL, obsCovs = NULL)
 }
 \arguments{
 \item{y}{An MxSJ matrix of the observed detection/non-detection data
@@ -16,6 +16,9 @@ per season.}
 
 \item{siteCovs}{A \code{data.frame} of covariates that vary at the
 site level. This should have M rows and one column per covariate}
+
+\item{obsCovs}{A list of matrices or data.frames of variables varying within sites.
+Each matrix or data.frame must be of dimension MxJ.}
 }
 \value{
 a \code{eFrameMS} holding data containing the response and

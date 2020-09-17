@@ -8,6 +8,7 @@ eFrameMNO(
   y,
   numPrimary,
   siteCovs = NULL,
+  obsCovs = NULL,
   primaryCovs = NULL,
   primaryPeriod = NULL
 )
@@ -19,6 +20,9 @@ per site and T is the number of primary periods.}
 
 \item{numPrimary}{the number of primary periods. For each primary period, the
 population is assumed to be closed.}
+
+\item{obsCovs}{A list of matrices or data.frames of variables varying within sites.
+Each matrix or data.frame must be of dimension MxJ.}
 
 \item{primaryCovs}{A \code{data.frame} of covariates that vary at the
 site x primary period (M x T) level.}

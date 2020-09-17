@@ -7,7 +7,8 @@
 remGP(data, starts, K, method = "BFGS", se=TRUE, ...)
 }
 \arguments{
-\item{data}{\code{eFrameGP} object containing the number removal/index data.}
+\item{data}{\code{eFrameGP} object containing the catch (removal), effort and
+optionally, the index data.  See \code{eFrameGP} for more details.}
 
 \item{starts}{Initial values for parameters}
 

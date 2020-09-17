@@ -4,14 +4,17 @@
 \alias{eFrame}
 \title{eFrame}
 \usage{
-eFrame(y, siteCovs = NULL)
+eFrame(y, siteCovs = NULL, obsCovs = NULL)
 }
 \arguments{
 \item{y}{An MxJ matrix of the observed measured data, where M is the
 number of sites and J is the maximum number of observations per site.}
 
-\item{SiteCovs}{A \code{data.frame} of covariates that vary at the
+\item{siteCovs}{A \code{data.frame} of covariates that vary at the
 site level. This should have M rows and one column per covariate}
+
+\item{obsCovs}{A list of matrices or data.frames of variables varying within sites.
+Each matrix or data.frame must be of dimension MxJ.}
 }
 \value{
 a \code{eFrame} holding data containing the response and

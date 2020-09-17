@@ -4,13 +4,16 @@
 \alias{eFrameR}
 \title{eFrameR}
 \usage{
-eFrameR(y, type, siteCovs = NULL)
+eFrameR(y, siteCovs = NULL, obsCovs = NULL)
 }
 \arguments{
 \item{y}{An MxJ matrix of the observed removal data, where M is the
 number of sites and J is the maximum number of removal (primary)
 periods per site. Each primary period can consist of k secondary
 periods but this is not used here.}
+
+\item{obsCovs}{A list of matrices or data.frames of variables varying within sites.
+Each matrix or data.frame must be of dimension MxJ.}
 
 \item{type}{sampling method. Currently supports "removal" for removal
 sampling and "double" for double observer sampling}

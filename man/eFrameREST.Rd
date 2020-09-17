@@ -25,6 +25,9 @@ This area is assumed to have a detection probability of 1.0 (effective sampling 
 
 \item{active_hours}{A scalar indicating the number of hours in each 24 hour
 period that the species is active}
+
+\item{siteCovs}{A \code{data.frame} of covariates that vary at the
+site level. This should have M rows and one column per covariate}
 }
 \value{
 a \code{eFrameREST} holding data containing the response and

@@ -367,6 +367,18 @@ formatDelta <- function(d, yna)
   return(dout)
 }
 
+is.wholenumber<- function(x, tol = .Machine$double.eps^0.5) {abs(x - round(x)) < tol}
+
+convert_bin_to_dist<- function(bin_num, cutpoints) {
+  if(!all(is.wholenumber(bin_num))) stop("non integer bin numbers")
+  if(min(bin_num) < 1) stop("bin numbers should start from 1")
+  bin_width<- diff(cutpoints)
+  nbins<- length(bin_width)
+  if(max(bin_num) > nbins) stop("some bin numbers exceed number of bins")
+  distances<- cutpoints[bin_num] + bin_width[bin_num]/2
+  distances
+}
+
 #---
 sd.trim <- function(x, trim=0, na.rm=FALSE, ...)
 {
