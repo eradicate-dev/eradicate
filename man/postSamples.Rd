@@ -17,5 +17,5 @@ a \code{matrix} giving the posterior samples of N
 }
 \description{
 \code{postSamples} performs estimation of the posterior distribution of N using
-empirical Bayes methods.
+empirical Bayes methods. A port of the similar function in \code{unmarked}.
 }

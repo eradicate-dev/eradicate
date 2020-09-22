@@ -13,5 +13,5 @@ occTraject(obj, ...)
 \item{obj}{A fitted model object.}
 }
 \description{
-extracts occupancy trajectories from occuMS objects.
+extracts occupancy trajectories from \code{occuMS} objects.
 }

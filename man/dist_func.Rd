@@ -4,7 +4,7 @@
 \alias{dist_func}
 \title{dist_func}
 \usage{
-dist_func(data, theta, keyfun = c("hn","hr") ...)
+dist_func(data, theta, keyfun = c("hn","hr"), ...)
 }
 \arguments{
 \item{data}{\code{eFrameDS} object containing the distance data and bin information.}
@@ -17,7 +17,10 @@ dist_func(data, theta, keyfun = c("hn","hr") ...)
 hazard rate ("hr")). No adjustments are currently permitted.}
 }
 \value{
-a \code{efitDS} model object.
+a \code{efitDS} list model object giving the parameter estimates for each distance
+function fitted and a table providing the effective sampled area (\code{esw}) of the camera
+viewshed along with an estimate of the average detection probability (\code{Pa}), AIC and
+the p-value from a Chi-sq GOF test (\code{p}).
 }
 \description{
 \code{dist_func} estimates a distance function from distance data collected from
@@ -28,9 +31,15 @@ of the camera viewshed by integration. Data are assumed to be in bins specified 
  distance sampling. Currently no adjustments are included in the fitting.
 }
 \examples{
- ddata<- HogDeer$ddata
+ encounters<- HogDeer$encounters
  cutpoints<- HogDeer$cutpoints
- emf<- eFrameDS(ddata$distance, ddata$size, ddata$camID, cutpoints, w=12.5, bin_num=TRUE)
- mods <- dist_func(emf, theta=HogDeer$theta)
+ w<- cutpoints[length(cutpoints)] # truncation distance
+
+ emf<- with(encounters, {
+    eFrameDS(distance = dist_bin, size = count, siteID = cam, cutpoints = cutpoints,
+             w=w, bin_nums=TRUE)
+ })
+
+ dist_func(emf, theta=40)
 
 }

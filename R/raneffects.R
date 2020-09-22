@@ -2,7 +2,7 @@
 #'
 #' @description
 #' \code{raneffects} performs estimation of the marginal likelihood of N using
-#' empirical Bayes methods.
+#' empirical Bayes methods. A port of \code{ranef} in package \code{unmarked}.
 #'
 #' @param obj A fitted model object.
 #' @param K maximum value of \code{N} to integrate over. The default rarely makes sense
@@ -19,8 +19,9 @@ raneffects <- function(obj, ...){
 #' bup
 #'
 #' @description
-#' \code{bup} estimates the best unbiased predictor of the latent abundanac
-#' or occupancy state using empirical Bayes methods.
+#' \code{bup} estimates the best unbiased predictor of the latent abundance
+#' or occupancy state using empirical Bayes methods. A port of the similar function
+#' in \code{unmarked}.
 #'
 #' @param obj A \code{raneffects} object.
 #' #'
@@ -37,7 +38,7 @@ bup <- function(obj, ...){
 #'
 #' @description
 #' \code{postSamples} performs estimation of the posterior distribution of N using
-#' empirical Bayes methods.
+#' empirical Bayes methods. A port of the similar function in \code{unmarked}.
 #'
 #' @param obj An object of class 'raneffects'.
 #'

@@ -4,7 +4,7 @@
 \alias{remMN}
 \title{remMN}
 \usage{
-remPois(lamformula, detformula, data, starts, method="BFGS", se=TRUE, ...)
+remMN(lamformula, detformula, data, starts, method="BFGS", se=TRUE, ...)
 }
 \arguments{
 \item{lamformula}{formula for the latent abundance component.}

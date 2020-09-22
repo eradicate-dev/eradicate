@@ -47,9 +47,14 @@ m3<- nmix(~pgrass, ~1, K=50, data=emf)
 summary(m3)
 
 ## -----------------------------------------------------------------------------
-calcN(m1)
-calcN(m2)
-calcN(m3)
+nhat1<- calcN(m1)
+nhat2<- calcN(m2)
+nhat3<- calcN(m3)
+
+nhat1$Occ
+nhat2$Nhat
+nhat3$Nhat
+
 
 ## -----------------------------------------------------------------------------
 counts<- san_nic_rest$y
@@ -63,7 +68,7 @@ emf<- eFrameREST(counts, stay, cens, A, active, siteCovs = site.data)
 m4<- REST(~pgrass, data=emf)
 summary(m4)
 
-calcN(m4)
+calcN(m4)$Nhat
 
 
 ## -----------------------------------------------------------------------------
@@ -77,21 +82,29 @@ pgrass<- sapply(habvals, function(x) mean(x, na.rm=T))
 site.data<- cbind(traps, pgrass)
 
 # Poisson abundance 
-emf<- eFrameR(rem, type="removal", siteCovs = site.data)
-r1<- remPois(~pgrass, ~1, data=emf)
+emf<- eFrameR(rem, siteCovs = site.data)
+r1<- remMN(~pgrass, ~1, data=emf)
 summary(r1)
-calcN(r1)
+nr1<- calcN(r1)
+nr1$Nhat
+nr1$Nresid
 
 # Generalized Poisson
-emf<- eFrameGR(rem, numPrimary=1, type="removal", siteCovs = site.data)
+emf<- eFrameGR(rem, numPrimary=1, siteCovs = site.data)
 r2<- remGR(~pgrass, ~1, ~1, data=emf)
 summary(r2)
-calcN(r2)
+nr2<- calcN(r2)
+nr2$Nhat
+nr2$Nresid
 
-emf<- eFrameGRM(rem, ym, numPrimary=1, type="removal", siteCovs = site.data)
+# Including additional camera monitoring data in ym 
+emf<- eFrameGRM(rem, ym, numPrimary=1, siteCovs = site.data)
 r3<- remGRM(~pgrass, ~1, ~1, ~1, data=emf)
 summary(r3)
-calcN(r3)
+nr3<- calcN(r3)
+nr3$Nhat
+nr3$Nresid
+
 
 ## -----------------------------------------------------------------------------
 catch<- apply(rem,2,sum)
@@ -103,6 +116,8 @@ ieffort<- rep(nrow(ym), length(index))
 emf<- eFrameGP(catch, effort, index, ieffort)
 mod<- remGP(emf)
 summary(mod)
-calcN(mod)
+nce<- calcN(mod)
+nce$Nhat
+nce$Nresid
 
 

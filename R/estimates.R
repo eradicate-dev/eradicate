@@ -128,7 +128,7 @@ residuals.efitR<- function(obj) {
 
 #' occTraject
 #'
-#' @description extracts occupancy trajectories from occuMS objects.
+#' @description extracts occupancy trajectories from \code{occuMS} objects.
 #'
 #' @param obj A fitted model object.
 #'
@@ -224,6 +224,7 @@ calcN.efit<- function(obj, newdata, off.set=NULL, CI.level=0.95, ...) {
   upr<- Nhat/z
 
   bigN<- data.frame(N=round(Nhat,1),se=round(seN,1), lcl=round(lwr,1), ucl=round(upr,1))
+  row.names(bigN)<- "Total"
   list(cellpreds=cellpreds, Nhat=bigN)
 }
 
@@ -267,6 +268,7 @@ calcN.efitM<- function(obj, newdata, off.set=NULL, CI.level=0.95, ...) {
   lwr<- Pocc - seN*z
   upr<- Pocc + seN*z
   bigN<- data.frame(Pocc=round(Pocc,2),se=round(seN,3), lcl=round(lwr,2), ucl=round(upr,2))
+  row.names(bigN)<- "Total"
   list(cellpreds=cellpreds, Occ=bigN)
 }
 
@@ -334,6 +336,8 @@ calcN.efitR<- function(obj, newdata, off.set=NULL, CI.level=0.95, ...) {
 
   bigN<- data.frame(N=round(Nhat,1),se=round(seN,1), lcl=round(lwr,1), ucl=round(upr,1))
   littleN<- data.frame(N = round(Nresid,1),se=round(seN,1), lcl=round(lwr1,1), ucl=round(upr1,1))
+  row.names(bigN)<- "Total"
+  row.names(littleN)<- "Residual"
   list(cellpreds=cellpreds, Nhat=bigN, Nresid=littleN)
 }
 
@@ -400,6 +404,8 @@ calcN.efitGP<- function(obj, CI.level=0.95, CI.calc = c("norm","lnorm","boot"), 
 
   bigN<- data.frame(N=round(N), se=round(se.N,1), lcl=round(lcl.N,1), ucl=round(ucl.N,1))
   littleN<- data.frame(N = round(Nr), se=round(se.N,1),lcl=round(lcl.Nr,1), ucl=round(ucl.Nr,1))
+  row.names(bigN)<- "Total"
+  row.names(littleN)<- "Residual"
   list(Nhat=bigN, Nresid=littleN)
 }
 
@@ -629,46 +635,3 @@ fitted.efitMNO <- function(obj, K, na.rm=FALSE) {
   N
 }
 
-#---------------------------
-#' profileCI
-#'
-#' @description extracts profile likelihood confidence intervals for parameters
-#' on the link scale.
-#' @param obj A fitted model object.
-#' @param type parameter type (i.e. "state","det")
-#' @param level confidence level
-#'
-#' @export
-#'
-profileCI<- function(object, type, level = 0.95) {
-  parm <- 1:length(object$estimates[[type]]$estimates)
-  nllFun <- nllFun(object)
-  ests <- mle(object)
-  nP <- length(parm)
-  ci <- matrix(NA, nP, 2)
-  types <- object$types
-  numbertable <- list()
-  for(i in 1:length(types)) {
-    length.est <- length(object$estimates[[types[i]]]$estimates)
-    numbertable[[i]] <- data.frame(type = rep(types[i], length.est), num = seq(length.est))
-  }
-  numbertable<- do.call('rbind', numbertable)
-  allparms<- which(numbertable$type == type & numbertable$num %in% parm)
-  multiple<- c(2,4,8,12)
-  for(i in 1:nP) {
-    cat("Profiling parameter",i,"of",nP,"...")
-    se <- SE(object, type)
-    whichPar<- allparms[i]
-    for(mult in multiple) {
-      ci[i,] <- calc.profileCI(nllFun, whichPar=whichPar, MLE=ests,
-                               interval=ests[whichPar] + mult*se[i]*c(-1,1), level=level)
-      if(all(is.finite(ci[i,]))) break
-    }
-    cat(" done.\n")
-  }
-  colnames(ci) <- c((1-level)/2, 1- (1-level)/2)
-  if(any(!is.finite(ci)))
-    warning("At least one endpoint of profile confidence interval is on the boundary.",
-            call. = FALSE)
-  return(ci)
-}

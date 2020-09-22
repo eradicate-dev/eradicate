@@ -14,6 +14,22 @@
 
 <title>Eradication tools examples</title>
 
+<script>// Hide empty <a> tag within highlighted CodeBlock for screen reader accessibility (see https://github.com/jgm/pandoc/issues/6352#issuecomment-626106786) -->
+// v0.0.1
+// Written by JooYoung Seo (jooyoung@psu.edu) and Atsushi Yasumoto on June 1st, 2020.
+
+document.addEventListener('DOMContentLoaded', function() {
+  const codeList = document.getElementsByClassName("sourceCode");
+  for (var i = 0; i < codeList.length; i++) {
+    var linkList = codeList[i].getElementsByTagName('a');
+    for (var j = 0; j < linkList.length; j++) {
+      if (linkList[j].innerHTML === "") {
+        linkList[j].setAttribute('aria-hidden', 'true');
+      }
+    }
+  }
+});
+</script>
 
 
 <style type="text/css">code{white-space: pre;}</style>
@@ -305,8 +321,8 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 <div id="eradication-tools-user-guide" class="section level2">
 <h2>Eradication tools user guide</h2>
-<div id="dave-ramsey-532020" class="section level3">
-<h3>Dave Ramsey (5/3/2020)</h3>
+<div id="dave-ramsey-2292020" class="section level3">
+<h3>Dave Ramsey (22/9/2020)</h3>
 <p>The <code>eradicate</code> package contains some functions to undertake basic populaton estimation from data that would typically be collected as part of a pest eradication program. The package borrows heavily from ideas and code used in the <code>unmarked</code> package, and additionally includes some custom models not included in that package. It additionally uses the simpler S3 classes for object orientation and method dispatch, which are less formal that the S4 classes used in <code>unmarked</code>.</p>
 <p>Here we illustrate the basic use of the models in the <code>eradicate</code> package by running through a theoretical program to eradicate feral cats on San Nicolas Island, off the coast of California. We start by undertaking a preliminary assessment of the population (assessment phase) using camera trap sampling before attempting to eradicate the population using removal trapping with leg-hold traps (removal phase). During the removal phase we will undertake periodic assessments of the population to track our progress towards eradication.</p>
 <p>Since this is a simulated dataset, we know exactly what the population size was before the eradication program began (86 cats). Before we start we load various the packages necessary for our analysis …</p>
@@ -405,51 +421,22 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <span id="cb5-63"><a href="#cb5-63"></a><span class="co">#&gt; </span></span></code></pre></div>
 <p>These three models have a common modelling interface. The first argument specifies the model for the abundance or occupancy component, while the second argment specifies the model for the detection component. Unlike <code>unmarked</code>, which can include covariates at the observation level, <code>eradicate</code> currently only uses site-level covariates to model the detection process. For <code>occuRN()</code> and <code>nmix()</code> we also need to specify the parameter <code>K</code>, which is an integer specifying the possible upper value for abundance at each site. Note that all three models give similar parameter estimates.</p>
 <p>In order to get estimates of either the proportion of sites occupied or total abundance, we can use the function <code>calcN()</code>, which has an additional argument <code>newdata</code> where the user can supply covariate values for prediction sites. Since we wish to predict only for the sampled sites, we can simply use <code>calcN()</code> without any <code>newdata</code> argument.</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a><span class="kw">calcN</span>(m1)</span>
-<span id="cb6-2"><a href="#cb6-2"></a><span class="co">#&gt; $cellpreds</span></span>
-<span id="cb6-3"><a href="#cb6-3"></a><span class="co">#&gt;  [1] 0.5400066 0.6609657 0.6637325 0.6097237 0.5400066 0.5720622 0.6981997</span></span>
-<span id="cb6-4"><a href="#cb6-4"></a><span class="co">#&gt;  [8] 0.6637325 0.5784101 0.6500711 0.5952063 0.5910265 0.6957611 0.6447054</span></span>
-<span id="cb6-5"><a href="#cb6-5"></a><span class="co">#&gt; [15] 0.7012323 0.5669059 0.5614305 0.6520385 0.6199771 0.5528839 0.6939248</span></span>
-<span id="cb6-6"><a href="#cb6-6"></a><span class="co">#&gt; [22] 0.6220153 0.5805204 0.6321407 0.6785962 0.6500711 0.6675872 0.6158880</span></span>
-<span id="cb6-7"><a href="#cb6-7"></a><span class="co">#&gt; [29] 0.6361590 0.6579095 0.6500711 0.6975911 0.6637325 0.5826278 0.5400066</span></span>
-<span id="cb6-8"><a href="#cb6-8"></a><span class="co">#&gt; [36] 0.6111327 0.6637325 0.6920824 0.6055944 0.6637325 0.7012323 0.6656626</span></span>
-<span id="cb6-9"><a href="#cb6-9"></a><span class="co">#&gt; [43] 0.5400066 0.5400066 0.5541152 0.6261308 0.6695061 0.6920824 0.6939248</span></span>
-<span id="cb6-10"><a href="#cb6-10"></a><span class="co">#&gt; [50] 0.5464530 0.6733272 0.5805204 0.6483380 0.6447054 0.5433791</span></span>
-<span id="cb6-11"><a href="#cb6-11"></a><span class="co">#&gt; </span></span>
-<span id="cb6-12"><a href="#cb6-12"></a><span class="co">#&gt; $Occ</span></span>
-<span id="cb6-13"><a href="#cb6-13"></a><span class="co">#&gt;   Pocc    se  lcl  ucl</span></span>
-<span id="cb6-14"><a href="#cb6-14"></a><span class="co">#&gt; 1 0.63 0.073 0.48 0.77</span></span>
-<span id="cb6-15"><a href="#cb6-15"></a><span class="kw">calcN</span>(m2)</span>
-<span id="cb6-16"><a href="#cb6-16"></a><span class="co">#&gt; $cellpreds</span></span>
-<span id="cb6-17"><a href="#cb6-17"></a><span class="co">#&gt;  [1] 0.8777850 1.2689008 1.2803570 1.0803308 0.8777850 0.9646591 1.4368941</span></span>
-<span id="cb6-18"><a href="#cb6-18"></a><span class="co">#&gt;  [8] 1.2803570 0.9830396 1.2251927 1.0337847 1.0208580 1.4248908 1.2044477</span></span>
-<span id="cb6-19"><a href="#cb6-19"></a><span class="co">#&gt; [15] 1.4520405 0.9500317 0.9347855 1.2329254 1.1148557 0.9115541 1.4159542</span></span>
-<span id="cb6-20"><a href="#cb6-20"></a><span class="co">#&gt; [22] 1.1218920 0.9892440 1.1577452 1.3445686 1.2251927 1.2965697 1.1009153</span></span>
-<span id="cb6-21"><a href="#cb6-21"></a><span class="co">#&gt; [29] 1.1724052 1.2564174 1.2251927 1.4338839 1.2803570 0.9954875 0.8777850</span></span>
-<span id="cb6-22"><a href="#cb6-22"></a><span class="co">#&gt; [36] 1.0849914 1.2803570 1.4070736 1.0668221 1.2803570 1.4520405 1.2884378</span></span>
-<span id="cb6-23"><a href="#cb6-23"></a><span class="co">#&gt; [43] 0.8777850 0.8777850 0.9148597 1.1362814 1.3047528 1.4070736 1.4159542</span></span>
-<span id="cb6-24"><a href="#cb6-24"></a><span class="co">#&gt; [50] 0.8945102 1.3212743 0.9892440 1.2184374 1.2044477 0.8864908</span></span>
-<span id="cb6-25"><a href="#cb6-25"></a><span class="co">#&gt; </span></span>
-<span id="cb6-26"><a href="#cb6-26"></a><span class="co">#&gt; $Nhat</span></span>
-<span id="cb6-27"><a href="#cb6-27"></a><span class="co">#&gt;      N   se lcl   ucl</span></span>
-<span id="cb6-28"><a href="#cb6-28"></a><span class="co">#&gt; 1 63.8 15.4  40 101.7</span></span>
-<span id="cb6-29"><a href="#cb6-29"></a><span class="kw">calcN</span>(m3)</span>
-<span id="cb6-30"><a href="#cb6-30"></a><span class="co">#&gt; $cellpreds</span></span>
-<span id="cb6-31"><a href="#cb6-31"></a><span class="co">#&gt;  [1] 0.9268849 1.3436055 1.3558280 1.1425472 0.9268849 1.0193434 1.5229159</span></span>
-<span id="cb6-32"><a href="#cb6-32"></a><span class="co">#&gt;  [8] 1.3558280 1.0389136 1.2969814 1.0929575 1.0791886 1.5100985 1.2748567</span></span>
-<span id="cb6-33"><a href="#cb6-33"></a><span class="co">#&gt; [15] 1.5390907 1.0037711 0.9875421 1.3052291 1.1793401 0.9628169 1.5005563</span></span>
-<span id="cb6-34"><a href="#cb6-34"></a><span class="co">#&gt; [22] 1.1868396 1.0455202 1.2250588 1.4243499 1.2969814 1.3731266 1.1644828</span></span>
-<span id="cb6-35"><a href="#cb6-35"></a><span class="co">#&gt; [29] 1.2406889 1.3302880 1.2969814 1.5197014 1.3558280 1.0521688 0.9268849</span></span>
-<span id="cb6-36"><a href="#cb6-36"></a><span class="co">#&gt; [36] 1.1475134 1.3558280 1.4910744 1.1281535 1.3558280 1.5390907 1.3644499</span></span>
-<span id="cb6-37"><a href="#cb6-37"></a><span class="co">#&gt; [43] 0.9268849 0.9268849 0.9663347 1.2021775 1.3818584 1.4910744 1.5005563</span></span>
-<span id="cb6-38"><a href="#cb6-38"></a><span class="co">#&gt; [50] 0.9446801 1.3994891 1.0455202 1.2897765 1.2748567 0.9361473</span></span>
-<span id="cb6-39"><a href="#cb6-39"></a><span class="co">#&gt; </span></span>
-<span id="cb6-40"><a href="#cb6-40"></a><span class="co">#&gt; $Nhat</span></span>
-<span id="cb6-41"><a href="#cb6-41"></a><span class="co">#&gt;      N se  lcl   ucl</span></span>
-<span id="cb6-42"><a href="#cb6-42"></a><span class="co">#&gt; 1 67.5 16 42.6 106.8</span></span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a>nhat1&lt;-<span class="st"> </span><span class="kw">calcN</span>(m1)</span>
+<span id="cb6-2"><a href="#cb6-2"></a>nhat2&lt;-<span class="st"> </span><span class="kw">calcN</span>(m2)</span>
+<span id="cb6-3"><a href="#cb6-3"></a>nhat3&lt;-<span class="st"> </span><span class="kw">calcN</span>(m3)</span>
+<span id="cb6-4"><a href="#cb6-4"></a></span>
+<span id="cb6-5"><a href="#cb6-5"></a>nhat1<span class="op">$</span>Occ</span>
+<span id="cb6-6"><a href="#cb6-6"></a><span class="co">#&gt;       Pocc    se  lcl  ucl</span></span>
+<span id="cb6-7"><a href="#cb6-7"></a><span class="co">#&gt; Total 0.63 0.073 0.48 0.77</span></span>
+<span id="cb6-8"><a href="#cb6-8"></a>nhat2<span class="op">$</span>Nhat</span>
+<span id="cb6-9"><a href="#cb6-9"></a><span class="co">#&gt;          N   se lcl   ucl</span></span>
+<span id="cb6-10"><a href="#cb6-10"></a><span class="co">#&gt; Total 63.8 15.4  40 101.7</span></span>
+<span id="cb6-11"><a href="#cb6-11"></a>nhat3<span class="op">$</span>Nhat</span>
+<span id="cb6-12"><a href="#cb6-12"></a><span class="co">#&gt;          N se  lcl   ucl</span></span>
+<span id="cb6-13"><a href="#cb6-13"></a><span class="co">#&gt; Total 67.5 16 42.6 106.8</span></span></code></pre></div>
 <p>The return values for <code>calcN</code> contain the predicted occupancy or abundance for each site as well as for the total population over all sites. Confidence intervals for abundance are calculated using a log-normal transformation, which are guaranteed not to include negative values in the interval.</p>
 <p>In addition to these three models, <code>eradicate</code> additionally includes another model that is exclusively applied to camera data. Introduced by Nakashima et al. (2018), the REST model (short for Random Encounter and Staying Time model) uses data on the number of encounters per camera as well as additional information on the time taken for each detected individual to cross the cameras field of view (the staying time). Under the assumption that detection in the field of view (or some known proportion of it) is perfect, the REST model can estimate animal density. Further information on this model is available in Nakashima et al (2018) and in the help file.</p>
-<p>We fit the REST model to the example data found in the <code>san_nic_rest</code> dataset.</p>
+<p>We fit the REST model to the example data found in the <code>san_nic_rest</code> dataset. A more involved example that uses additional distance sampling data from camera traps to estimate the effective sampling area is provided in the vignette <code>REST_example</code>.</p>
 <div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a>counts&lt;-<span class="st"> </span>san_nic_rest<span class="op">$</span>y</span>
 <span id="cb7-2"><a href="#cb7-2"></a>stay&lt;-<span class="st"> </span>san_nic_rest<span class="op">$</span>stay</span>
 <span id="cb7-3"><a href="#cb7-3"></a>cens&lt;-<span class="st"> </span>san_nic_rest<span class="op">$</span>cens</span>
@@ -470,20 +457,9 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <span id="cb7-18"><a href="#cb7-18"></a><span class="co">#&gt; (Intercept)    -1.73 0.105 -16.4 2.43e-60</span></span>
 <span id="cb7-19"><a href="#cb7-19"></a><span class="co">#&gt; </span></span>
 <span id="cb7-20"><a href="#cb7-20"></a></span>
-<span id="cb7-21"><a href="#cb7-21"></a><span class="kw">calcN</span>(m4)</span>
-<span id="cb7-22"><a href="#cb7-22"></a><span class="co">#&gt; $cellpreds</span></span>
-<span id="cb7-23"><a href="#cb7-23"></a><span class="co">#&gt;  [1] 0.3479952 2.0378286 2.1275975 0.9419919 0.3479952 0.5472078 3.6995828</span></span>
-<span id="cb7-24"><a href="#cb7-24"></a><span class="co">#&gt;  [8] 2.1275975 0.5990570 1.7224736 0.7626237 0.7179592 3.5536860 1.5870153</span></span>
-<span id="cb7-25"><a href="#cb7-25"></a><span class="co">#&gt; [15] 3.8904055 0.5085401 0.4705719 1.7752431 1.0954020 0.4170661 3.4480518</span></span>
-<span id="cb7-26"><a href="#cb7-26"></a><span class="co">#&gt; [22] 1.1289606 0.6174096 1.3128199 2.6904154 1.7224736 2.2599561 1.0312477</span></span>
-<span id="cb7-27"><a href="#cb7-27"></a><span class="co">#&gt; [29] 1.3944909 1.9434513 1.7224736 3.6625564 2.1275975 0.6363245 0.3479952</span></span>
-<span id="cb7-28"><a href="#cb7-28"></a><span class="co">#&gt; [36] 0.9616431 2.1275975 3.3455576 0.8868223 2.1275975 3.8904055 2.1927783</span></span>
-<span id="cb7-29"><a href="#cb7-29"></a><span class="co">#&gt; [43] 0.3479952 0.3479952 0.4243702 1.2001219 2.3291919 3.3455576 3.4480518</span></span>
-<span id="cb7-30"><a href="#cb7-30"></a><span class="co">#&gt; [50] 0.3809685 2.4740918 0.6174096 1.6773968 1.5870153 0.3648636</span></span>
-<span id="cb7-31"><a href="#cb7-31"></a><span class="co">#&gt; </span></span>
-<span id="cb7-32"><a href="#cb7-32"></a><span class="co">#&gt; $Nhat</span></span>
-<span id="cb7-33"><a href="#cb7-33"></a><span class="co">#&gt;      N   se  lcl ucl</span></span>
-<span id="cb7-34"><a href="#cb7-34"></a><span class="co">#&gt; 1 89.4 12.7 67.8 118</span></span></code></pre></div>
+<span id="cb7-21"><a href="#cb7-21"></a><span class="kw">calcN</span>(m4)<span class="op">$</span>Nhat</span>
+<span id="cb7-22"><a href="#cb7-22"></a><span class="co">#&gt;          N   se  lcl ucl</span></span>
+<span id="cb7-23"><a href="#cb7-23"></a><span class="co">#&gt; Total 89.4 12.7 67.8 118</span></span></code></pre></div>
 </div>
 <div id="eradication-phase" class="section level2">
 <h2>Eradication phase</h2>
@@ -500,8 +476,8 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <span id="cb8-8"><a href="#cb8-8"></a>site.data&lt;-<span class="st"> </span><span class="kw">cbind</span>(traps, pgrass)</span>
 <span id="cb8-9"><a href="#cb8-9"></a></span>
 <span id="cb8-10"><a href="#cb8-10"></a><span class="co"># Poisson abundance </span></span>
-<span id="cb8-11"><a href="#cb8-11"></a>emf&lt;-<span class="st"> </span><span class="kw">eFrameR</span>(rem, <span class="dt">type=</span><span class="st">&quot;removal&quot;</span>, <span class="dt">siteCovs =</span> site.data)</span>
-<span id="cb8-12"><a href="#cb8-12"></a>r1&lt;-<span class="st"> </span><span class="kw">remPois</span>(<span class="op">~</span>pgrass, <span class="op">~</span><span class="dv">1</span>, <span class="dt">data=</span>emf)</span>
+<span id="cb8-11"><a href="#cb8-11"></a>emf&lt;-<span class="st"> </span><span class="kw">eFrameR</span>(rem, <span class="dt">siteCovs =</span> site.data)</span>
+<span id="cb8-12"><a href="#cb8-12"></a>r1&lt;-<span class="st"> </span><span class="kw">remMN</span>(<span class="op">~</span>pgrass, <span class="op">~</span><span class="dv">1</span>, <span class="dt">data=</span>emf)</span>
 <span id="cb8-13"><a href="#cb8-13"></a><span class="kw">summary</span>(r1)</span>
 <span id="cb8-14"><a href="#cb8-14"></a><span class="co">#&gt; Abundance (log-scale):</span></span>
 <span id="cb8-15"><a href="#cb8-15"></a><span class="co">#&gt;             Estimate    SE     z P(&gt;|z|)</span></span>
@@ -512,109 +488,56 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <span id="cb8-20"><a href="#cb8-20"></a><span class="co">#&gt;             Estimate    SE     z P(&gt;|z|)</span></span>
 <span id="cb8-21"><a href="#cb8-21"></a><span class="co">#&gt; (Intercept)   -0.268 0.161 -1.66  0.0961</span></span>
 <span id="cb8-22"><a href="#cb8-22"></a><span class="co">#&gt; </span></span>
-<span id="cb8-23"><a href="#cb8-23"></a><span class="kw">calcN</span>(r1)</span>
-<span id="cb8-24"><a href="#cb8-24"></a><span class="co">#&gt; $cellpreds</span></span>
-<span id="cb8-25"><a href="#cb8-25"></a><span class="co">#&gt;   [1] 0.6994361 0.6906260 0.6240250 0.6693064 0.9084291 0.6707493 0.7786948</span></span>
-<span id="cb8-26"><a href="#cb8-26"></a><span class="co">#&gt;   [8] 0.8090767 0.7226101 0.7140644 0.8084383 0.6904044 0.7674009 0.6240250</span></span>
-<span id="cb8-27"><a href="#cb8-27"></a><span class="co">#&gt;  [15] 0.6790516 0.7675305 0.8499418 0.9127576 0.9127576 0.7583961 0.8532725</span></span>
-<span id="cb8-28"><a href="#cb8-28"></a><span class="co">#&gt;  [22] 0.7862278 0.8943509 0.8910513 0.6298398 0.8588769 0.7489894 0.8249999</span></span>
-<span id="cb8-29"><a href="#cb8-29"></a><span class="co">#&gt;  [29] 0.8289276 0.6961192 0.7675305 0.7876957 0.8525356 0.8745320 0.7475666</span></span>
-<span id="cb8-30"><a href="#cb8-30"></a><span class="co">#&gt;  [36] 0.9127576 0.7217867 0.7790073 0.8370002 0.7695700 0.6928180 0.8567022</span></span>
-<span id="cb8-31"><a href="#cb8-31"></a><span class="co">#&gt;  [43] 0.7244510 0.9127576 0.6240250 0.6240250 0.8698612 0.6980734 0.8278491</span></span>
-<span id="cb8-32"><a href="#cb8-32"></a><span class="co">#&gt;  [50] 0.6675283 0.7106354 0.8676309 0.6240250 0.6523875 0.7900216 0.6240250</span></span>
-<span id="cb8-33"><a href="#cb8-33"></a><span class="co">#&gt;  [57] 0.6904044 0.6837895 0.7404932 0.9127576 0.7385353 0.9127576 0.9127576</span></span>
-<span id="cb8-34"><a href="#cb8-34"></a><span class="co">#&gt;  [64] 0.8187829 0.6695546 0.6240250 0.6240250 0.8996712 0.6240250 0.9127576</span></span>
-<span id="cb8-35"><a href="#cb8-35"></a><span class="co">#&gt;  [71] 0.9127576 0.8231879 0.7303674 0.7369816 0.8131717 0.6516538 0.6579578</span></span>
-<span id="cb8-36"><a href="#cb8-36"></a><span class="co">#&gt;  [78] 0.6240250 0.9127576 0.9043308 0.7209722 0.8740585 0.7717802 0.7547076</span></span>
-<span id="cb8-37"><a href="#cb8-37"></a><span class="co">#&gt;  [85] 0.9127576 0.8824196 0.7601767 0.8352561 0.8949794 0.8020534 0.7334866</span></span>
-<span id="cb8-38"><a href="#cb8-38"></a><span class="co">#&gt;  [92] 0.6583043 0.6240250 0.9127576 0.6331019 0.8730755 0.8573898 0.8063082</span></span>
-<span id="cb8-39"><a href="#cb8-39"></a><span class="co">#&gt;  [99] 0.9127576 0.6240250</span></span>
-<span id="cb8-40"><a href="#cb8-40"></a><span class="co">#&gt; </span></span>
-<span id="cb8-41"><a href="#cb8-41"></a><span class="co">#&gt; $Nhat</span></span>
-<span id="cb8-42"><a href="#cb8-42"></a><span class="co">#&gt;      N  se  lcl  ucl</span></span>
-<span id="cb8-43"><a href="#cb8-43"></a><span class="co">#&gt; 1 77.3 8.8 61.8 96.5</span></span>
-<span id="cb8-44"><a href="#cb8-44"></a><span class="co">#&gt; </span></span>
-<span id="cb8-45"><a href="#cb8-45"></a><span class="co">#&gt; $Nresid</span></span>
-<span id="cb8-46"><a href="#cb8-46"></a><span class="co">#&gt;     N se lcl ucl</span></span>
-<span id="cb8-47"><a href="#cb8-47"></a><span class="co">#&gt; 1 0.3  0 0.2 0.3</span></span>
-<span id="cb8-48"><a href="#cb8-48"></a></span>
-<span id="cb8-49"><a href="#cb8-49"></a><span class="co"># Generalized Poisson</span></span>
-<span id="cb8-50"><a href="#cb8-50"></a>emf&lt;-<span class="st"> </span><span class="kw">eFrameGR</span>(rem, <span class="dt">numPrimary=</span><span class="dv">1</span>, <span class="dt">type=</span><span class="st">&quot;removal&quot;</span>, <span class="dt">siteCovs =</span> site.data)</span>
-<span id="cb8-51"><a href="#cb8-51"></a>r2&lt;-<span class="st"> </span><span class="kw">remGR</span>(<span class="op">~</span>pgrass, <span class="op">~</span><span class="dv">1</span>, <span class="op">~</span><span class="dv">1</span>, <span class="dt">data=</span>emf)</span>
-<span id="cb8-52"><a href="#cb8-52"></a><span class="kw">summary</span>(r2)</span>
-<span id="cb8-53"><a href="#cb8-53"></a><span class="co">#&gt; Abundance (log-scale):</span></span>
-<span id="cb8-54"><a href="#cb8-54"></a><span class="co">#&gt;             Estimate    SE     z P(&gt;|z|)</span></span>
-<span id="cb8-55"><a href="#cb8-55"></a><span class="co">#&gt; (Intercept)   -0.472 0.229 -2.06  0.0397</span></span>
-<span id="cb8-56"><a href="#cb8-56"></a><span class="co">#&gt; pgrass         0.380 0.341  1.12  0.2647</span></span>
-<span id="cb8-57"><a href="#cb8-57"></a><span class="co">#&gt;   </span></span>
-<span id="cb8-58"><a href="#cb8-58"></a><span class="co">#&gt; Detection (logit-scale):</span></span>
-<span id="cb8-59"><a href="#cb8-59"></a><span class="co">#&gt;             Estimate    SE     z P(&gt;|z|)</span></span>
-<span id="cb8-60"><a href="#cb8-60"></a><span class="co">#&gt; (Intercept)   -0.268 0.161 -1.66  0.0961</span></span>
-<span id="cb8-61"><a href="#cb8-61"></a><span class="co">#&gt; </span></span>
-<span id="cb8-62"><a href="#cb8-62"></a><span class="kw">calcN</span>(r2)</span>
-<span id="cb8-63"><a href="#cb8-63"></a><span class="co">#&gt; $cellpreds</span></span>
-<span id="cb8-64"><a href="#cb8-64"></a><span class="co">#&gt;   [1] 0.6994361 0.6906260 0.6240250 0.6693064 0.9084291 0.6707493 0.7786948</span></span>
-<span id="cb8-65"><a href="#cb8-65"></a><span class="co">#&gt;   [8] 0.8090767 0.7226101 0.7140644 0.8084383 0.6904044 0.7674009 0.6240250</span></span>
-<span id="cb8-66"><a href="#cb8-66"></a><span class="co">#&gt;  [15] 0.6790516 0.7675305 0.8499418 0.9127576 0.9127576 0.7583961 0.8532725</span></span>
-<span id="cb8-67"><a href="#cb8-67"></a><span class="co">#&gt;  [22] 0.7862278 0.8943509 0.8910513 0.6298398 0.8588769 0.7489894 0.8249999</span></span>
-<span id="cb8-68"><a href="#cb8-68"></a><span class="co">#&gt;  [29] 0.8289276 0.6961192 0.7675305 0.7876957 0.8525356 0.8745320 0.7475666</span></span>
-<span id="cb8-69"><a href="#cb8-69"></a><span class="co">#&gt;  [36] 0.9127576 0.7217867 0.7790073 0.8370002 0.7695700 0.6928180 0.8567022</span></span>
-<span id="cb8-70"><a href="#cb8-70"></a><span class="co">#&gt;  [43] 0.7244510 0.9127576 0.6240250 0.6240250 0.8698612 0.6980734 0.8278491</span></span>
-<span id="cb8-71"><a href="#cb8-71"></a><span class="co">#&gt;  [50] 0.6675283 0.7106354 0.8676309 0.6240250 0.6523875 0.7900216 0.6240250</span></span>
-<span id="cb8-72"><a href="#cb8-72"></a><span class="co">#&gt;  [57] 0.6904044 0.6837895 0.7404932 0.9127576 0.7385353 0.9127576 0.9127576</span></span>
-<span id="cb8-73"><a href="#cb8-73"></a><span class="co">#&gt;  [64] 0.8187829 0.6695546 0.6240250 0.6240250 0.8996712 0.6240250 0.9127576</span></span>
-<span id="cb8-74"><a href="#cb8-74"></a><span class="co">#&gt;  [71] 0.9127576 0.8231879 0.7303674 0.7369816 0.8131717 0.6516538 0.6579578</span></span>
-<span id="cb8-75"><a href="#cb8-75"></a><span class="co">#&gt;  [78] 0.6240250 0.9127576 0.9043308 0.7209722 0.8740585 0.7717802 0.7547076</span></span>
-<span id="cb8-76"><a href="#cb8-76"></a><span class="co">#&gt;  [85] 0.9127576 0.8824196 0.7601767 0.8352561 0.8949794 0.8020534 0.7334866</span></span>
-<span id="cb8-77"><a href="#cb8-77"></a><span class="co">#&gt;  [92] 0.6583043 0.6240250 0.9127576 0.6331019 0.8730755 0.8573898 0.8063082</span></span>
-<span id="cb8-78"><a href="#cb8-78"></a><span class="co">#&gt;  [99] 0.9127576 0.6240250</span></span>
-<span id="cb8-79"><a href="#cb8-79"></a><span class="co">#&gt; </span></span>
-<span id="cb8-80"><a href="#cb8-80"></a><span class="co">#&gt; $Nhat</span></span>
-<span id="cb8-81"><a href="#cb8-81"></a><span class="co">#&gt;      N  se  lcl  ucl</span></span>
-<span id="cb8-82"><a href="#cb8-82"></a><span class="co">#&gt; 1 77.3 8.8 61.8 96.5</span></span>
-<span id="cb8-83"><a href="#cb8-83"></a><span class="co">#&gt; </span></span>
-<span id="cb8-84"><a href="#cb8-84"></a><span class="co">#&gt; $Nresid</span></span>
-<span id="cb8-85"><a href="#cb8-85"></a><span class="co">#&gt;     N se lcl ucl</span></span>
-<span id="cb8-86"><a href="#cb8-86"></a><span class="co">#&gt; 1 0.3  0 0.2 0.3</span></span>
-<span id="cb8-87"><a href="#cb8-87"></a></span>
-<span id="cb8-88"><a href="#cb8-88"></a>emf&lt;-<span class="st"> </span><span class="kw">eFrameGRM</span>(rem, ym, <span class="dt">numPrimary=</span><span class="dv">1</span>, <span class="dt">type=</span><span class="st">&quot;removal&quot;</span>, <span class="dt">siteCovs =</span> site.data)</span>
-<span id="cb8-89"><a href="#cb8-89"></a>r3&lt;-<span class="st"> </span><span class="kw">remGRM</span>(<span class="op">~</span>pgrass, <span class="op">~</span><span class="dv">1</span>, <span class="op">~</span><span class="dv">1</span>, <span class="op">~</span><span class="dv">1</span>, <span class="dt">data=</span>emf)</span>
-<span id="cb8-90"><a href="#cb8-90"></a><span class="kw">summary</span>(r3)</span>
-<span id="cb8-91"><a href="#cb8-91"></a><span class="co">#&gt; Abundance (log-scale):</span></span>
-<span id="cb8-92"><a href="#cb8-92"></a><span class="co">#&gt;             Estimate    SE     z P(&gt;|z|)</span></span>
-<span id="cb8-93"><a href="#cb8-93"></a><span class="co">#&gt; (Intercept)   -0.265 0.148 -1.79  0.0729</span></span>
-<span id="cb8-94"><a href="#cb8-94"></a><span class="co">#&gt; pgrass         0.387 0.220  1.76  0.0786</span></span>
-<span id="cb8-95"><a href="#cb8-95"></a><span class="co">#&gt;   </span></span>
-<span id="cb8-96"><a href="#cb8-96"></a><span class="co">#&gt; Detection (cloglog-scale):</span></span>
-<span id="cb8-97"><a href="#cb8-97"></a><span class="co">#&gt;              Estimate    SE     z  P(&gt;|z|)</span></span>
-<span id="cb8-98"><a href="#cb8-98"></a><span class="co">#&gt; (Intercept)    -0.571 0.125 -4.57 4.77e-06</span></span>
-<span id="cb8-99"><a href="#cb8-99"></a><span class="co">#&gt; (mIntercept)   -0.604 0.121 -4.97 6.61e-07</span></span>
-<span id="cb8-100"><a href="#cb8-100"></a><span class="co">#&gt; </span></span>
-<span id="cb8-101"><a href="#cb8-101"></a><span class="kw">calcN</span>(r3)</span>
-<span id="cb8-102"><a href="#cb8-102"></a><span class="co">#&gt; $cellpreds</span></span>
-<span id="cb8-103"><a href="#cb8-103"></a><span class="co">#&gt;   [1] 0.8615167 0.8504787 0.7671167 0.8237780 1.1240065 0.8255846 0.9609230</span></span>
-<span id="cb8-104"><a href="#cb8-104"></a><span class="co">#&gt;   [8] 0.9990754 0.8905624 0.8798495 0.9982735 0.8502011 0.9467470 0.7671167</span></span>
-<span id="cb8-105"><a href="#cb8-105"></a><span class="co">#&gt;  [15] 0.8359811 0.9469097 1.0504310 1.1294550 1.1294550 0.9354469 1.0546187</span></span>
-<span id="cb8-106"><a href="#cb8-106"></a><span class="co">#&gt;  [22] 0.9703802 1.1062888 1.1021369 0.7743890 1.0616656 0.9236449 1.0190810</span></span>
-<span id="cb8-107"><a href="#cb8-107"></a><span class="co">#&gt;  [29] 1.0240167 0.8573608 0.9469097 0.9722233 1.0536921 1.0813545 0.9218601</span></span>
-<span id="cb8-108"><a href="#cb8-108"></a><span class="co">#&gt;  [36] 1.1294550 0.8895300 0.9613152 1.0341624 0.9494694 0.8532249 1.0589311</span></span>
-<span id="cb8-109"><a href="#cb8-109"></a><span class="co">#&gt;  [43] 0.8928704 1.1294550 0.7671167 0.7671167 1.0754796 0.8598093 1.0226614</span></span>
-<span id="cb8-110"><a href="#cb8-110"></a><span class="co">#&gt;  [50] 0.8215518 0.8755516 1.0726744 0.7671167 0.8025991 0.9751437 0.7671167</span></span>
-<span id="cb8-111"><a href="#cb8-111"></a><span class="co">#&gt;  [57] 0.8502011 0.8419151 0.9129875 1.1294550 0.9105319 1.1294550 1.1294550</span></span>
-<span id="cb8-112"><a href="#cb8-112"></a><span class="co">#&gt;  [64] 1.0112692 0.8240887 0.7671167 0.7671167 1.1129839 0.7671167 1.1294550</span></span>
-<span id="cb8-113"><a href="#cb8-113"></a><span class="co">#&gt;  [71] 1.1294550 1.0168041 0.9002887 0.9085832 1.0042196 0.8016809 0.8095709</span></span>
-<span id="cb8-114"><a href="#cb8-114"></a><span class="co">#&gt;  [78] 0.7671167 1.1294550 1.1188483 0.8885089 1.0807589 0.9522434 0.9308189</span></span>
-<span id="cb8-115"><a href="#cb8-115"></a><span class="co">#&gt;  [85] 1.1294550 1.0912768 0.9376812 1.0319703 1.1070797 0.9902535 0.9042003</span></span>
-<span id="cb8-116"><a href="#cb8-116"></a><span class="co">#&gt;  [92] 0.8100046 0.7671167 1.1294550 0.7784693 1.0795225 1.0597956 0.9955977</span></span>
-<span id="cb8-117"><a href="#cb8-117"></a><span class="co">#&gt;  [99] 1.1294550 0.7671167</span></span>
-<span id="cb8-118"><a href="#cb8-118"></a><span class="co">#&gt; </span></span>
-<span id="cb8-119"><a href="#cb8-119"></a><span class="co">#&gt; $Nhat</span></span>
-<span id="cb8-120"><a href="#cb8-120"></a><span class="co">#&gt;      N  se  lcl   ucl</span></span>
-<span id="cb8-121"><a href="#cb8-121"></a><span class="co">#&gt; 1 95.3 7.1 82.4 110.4</span></span>
-<span id="cb8-122"><a href="#cb8-122"></a><span class="co">#&gt; </span></span>
-<span id="cb8-123"><a href="#cb8-123"></a><span class="co">#&gt; $Nresid</span></span>
-<span id="cb8-124"><a href="#cb8-124"></a><span class="co">#&gt;      N  se  lcl  ucl</span></span>
-<span id="cb8-125"><a href="#cb8-125"></a><span class="co">#&gt; 1 18.3 1.4 15.8 21.2</span></span></code></pre></div>
+<span id="cb8-23"><a href="#cb8-23"></a>nr1&lt;-<span class="st"> </span><span class="kw">calcN</span>(r1)</span>
+<span id="cb8-24"><a href="#cb8-24"></a>nr1<span class="op">$</span>Nhat</span>
+<span id="cb8-25"><a href="#cb8-25"></a><span class="co">#&gt;          N  se  lcl  ucl</span></span>
+<span id="cb8-26"><a href="#cb8-26"></a><span class="co">#&gt; Total 77.3 8.8 61.8 96.5</span></span>
+<span id="cb8-27"><a href="#cb8-27"></a>nr1<span class="op">$</span>Nresid</span>
+<span id="cb8-28"><a href="#cb8-28"></a><span class="co">#&gt;            N  se lcl ucl</span></span>
+<span id="cb8-29"><a href="#cb8-29"></a><span class="co">#&gt; Residual 0.3 8.8 0.2 0.3</span></span>
+<span id="cb8-30"><a href="#cb8-30"></a></span>
+<span id="cb8-31"><a href="#cb8-31"></a><span class="co"># Generalized Poisson</span></span>
+<span id="cb8-32"><a href="#cb8-32"></a>emf&lt;-<span class="st"> </span><span class="kw">eFrameGR</span>(rem, <span class="dt">numPrimary=</span><span class="dv">1</span>, <span class="dt">siteCovs =</span> site.data)</span>
+<span id="cb8-33"><a href="#cb8-33"></a>r2&lt;-<span class="st"> </span><span class="kw">remGR</span>(<span class="op">~</span>pgrass, <span class="op">~</span><span class="dv">1</span>, <span class="op">~</span><span class="dv">1</span>, <span class="dt">data=</span>emf)</span>
+<span id="cb8-34"><a href="#cb8-34"></a><span class="kw">summary</span>(r2)</span>
+<span id="cb8-35"><a href="#cb8-35"></a><span class="co">#&gt; Abundance (log-scale):</span></span>
+<span id="cb8-36"><a href="#cb8-36"></a><span class="co">#&gt;             Estimate    SE     z P(&gt;|z|)</span></span>
+<span id="cb8-37"><a href="#cb8-37"></a><span class="co">#&gt; (Intercept)   -0.472 0.229 -2.06  0.0397</span></span>
+<span id="cb8-38"><a href="#cb8-38"></a><span class="co">#&gt; pgrass         0.380 0.341  1.12  0.2647</span></span>
+<span id="cb8-39"><a href="#cb8-39"></a><span class="co">#&gt;   </span></span>
+<span id="cb8-40"><a href="#cb8-40"></a><span class="co">#&gt; Detection (logit-scale):</span></span>
+<span id="cb8-41"><a href="#cb8-41"></a><span class="co">#&gt;             Estimate    SE     z P(&gt;|z|)</span></span>
+<span id="cb8-42"><a href="#cb8-42"></a><span class="co">#&gt; (Intercept)   -0.268 0.161 -1.66  0.0961</span></span>
+<span id="cb8-43"><a href="#cb8-43"></a><span class="co">#&gt; </span></span>
+<span id="cb8-44"><a href="#cb8-44"></a>nr2&lt;-<span class="st"> </span><span class="kw">calcN</span>(r2)</span>
+<span id="cb8-45"><a href="#cb8-45"></a>nr2<span class="op">$</span>Nhat</span>
+<span id="cb8-46"><a href="#cb8-46"></a><span class="co">#&gt;          N  se  lcl  ucl</span></span>
+<span id="cb8-47"><a href="#cb8-47"></a><span class="co">#&gt; Total 77.3 8.8 61.8 96.5</span></span>
+<span id="cb8-48"><a href="#cb8-48"></a>nr2<span class="op">$</span>Nresid</span>
+<span id="cb8-49"><a href="#cb8-49"></a><span class="co">#&gt;            N  se lcl ucl</span></span>
+<span id="cb8-50"><a href="#cb8-50"></a><span class="co">#&gt; Residual 0.3 8.8 0.2 0.3</span></span>
+<span id="cb8-51"><a href="#cb8-51"></a></span>
+<span id="cb8-52"><a href="#cb8-52"></a><span class="co"># Including additional camera monitoring data in ym </span></span>
+<span id="cb8-53"><a href="#cb8-53"></a>emf&lt;-<span class="st"> </span><span class="kw">eFrameGRM</span>(rem, ym, <span class="dt">numPrimary=</span><span class="dv">1</span>, <span class="dt">siteCovs =</span> site.data)</span>
+<span id="cb8-54"><a href="#cb8-54"></a>r3&lt;-<span class="st"> </span><span class="kw">remGRM</span>(<span class="op">~</span>pgrass, <span class="op">~</span><span class="dv">1</span>, <span class="op">~</span><span class="dv">1</span>, <span class="op">~</span><span class="dv">1</span>, <span class="dt">data=</span>emf)</span>
+<span id="cb8-55"><a href="#cb8-55"></a><span class="kw">summary</span>(r3)</span>
+<span id="cb8-56"><a href="#cb8-56"></a><span class="co">#&gt; Abundance (log-scale):</span></span>
+<span id="cb8-57"><a href="#cb8-57"></a><span class="co">#&gt;             Estimate    SE     z P(&gt;|z|)</span></span>
+<span id="cb8-58"><a href="#cb8-58"></a><span class="co">#&gt; (Intercept)   -0.265 0.148 -1.79  0.0729</span></span>
+<span id="cb8-59"><a href="#cb8-59"></a><span class="co">#&gt; pgrass         0.387 0.220  1.76  0.0787</span></span>
+<span id="cb8-60"><a href="#cb8-60"></a><span class="co">#&gt;   </span></span>
+<span id="cb8-61"><a href="#cb8-61"></a><span class="co">#&gt; Detection (logit-scale):</span></span>
+<span id="cb8-62"><a href="#cb8-62"></a><span class="co">#&gt;              Estimate     SE     z  P(&gt;|z|)</span></span>
+<span id="cb8-63"><a href="#cb8-63"></a><span class="co">#&gt; (Intercept)    -0.275 0.1633 -1.68 9.25e-02</span></span>
+<span id="cb8-64"><a href="#cb8-64"></a><span class="co">#&gt; (mIntercept)   -0.865 0.0913 -9.48 2.65e-21</span></span>
+<span id="cb8-65"><a href="#cb8-65"></a><span class="co">#&gt; </span></span>
+<span id="cb8-66"><a href="#cb8-66"></a>nr3&lt;-<span class="st"> </span><span class="kw">calcN</span>(r3)</span>
+<span id="cb8-67"><a href="#cb8-67"></a>nr3<span class="op">$</span>Nhat</span>
+<span id="cb8-68"><a href="#cb8-68"></a><span class="co">#&gt;          N  se  lcl   ucl</span></span>
+<span id="cb8-69"><a href="#cb8-69"></a><span class="co">#&gt; Total 95.3 7.1 82.4 110.4</span></span>
+<span id="cb8-70"><a href="#cb8-70"></a>nr3<span class="op">$</span>Nresid</span>
+<span id="cb8-71"><a href="#cb8-71"></a><span class="co">#&gt;             N  se  lcl  ucl</span></span>
+<span id="cb8-72"><a href="#cb8-72"></a><span class="co">#&gt; Residual 18.3 7.1 15.8 21.2</span></span></code></pre></div>
 <p>Using data on extra detections has resulted in a higher estimate of the initial population size compared with the model without extra detections. This is due to the fact that cats were detected in a camera in the periods following the last capture of a cat in the leg-hold traps. The <code>calcN()</code> function also produces an estimate of the residual population remaining, which is simply the difference between the estimated initial population and the number removed. This indicates 18 cats are likely still extant using inference from the removal + extra detections model compared with nominal eradication using the removal only model. The estimate of 18 is somewhat higher than the true number of cats remaining (9), but this is better than the inference of complete eradication using the removal only models. Again, this highlights the advantages of using extra monitoring data for inference.</p>
 <p>Finally, <code>eradicate</code> also contains a function for estimating the pre-removal and residual population size for data collected from a single site. This might be applicable when the region of interest has no obvious spatial heterogeneity that can be modeled with covariate information using the other functions (i.e. toad eradication from a small lake or pond). This model <code>remGP()</code>, employs the catch-effort maximum likelihood model of Gould &amp; Pollock (1997). It can also make use of additional monitoring data for joint inference. We can run the <code>remGP()</code> model with the current data by pooling the captures and trapnight data from all traps.</p>
 <div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1"></a>catch&lt;-<span class="st"> </span><span class="kw">apply</span>(rem,<span class="dv">2</span>,sum)</span>
@@ -625,25 +548,27 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <span id="cb9-6"><a href="#cb9-6"></a></span>
 <span id="cb9-7"><a href="#cb9-7"></a>emf&lt;-<span class="st"> </span><span class="kw">eFrameGP</span>(catch, effort, index, ieffort)</span>
 <span id="cb9-8"><a href="#cb9-8"></a>mod&lt;-<span class="st"> </span><span class="kw">remGP</span>(emf)</span>
-<span id="cb9-9"><a href="#cb9-9"></a><span class="co">#&gt; Index data detected - adding index-removal estimation</span></span>
-<span id="cb9-10"><a href="#cb9-10"></a><span class="kw">summary</span>(mod)</span>
-<span id="cb9-11"><a href="#cb9-11"></a><span class="co">#&gt; Abundance (log-scale):</span></span>
-<span id="cb9-12"><a href="#cb9-12"></a><span class="co">#&gt;   Estimate      SE   z P(&gt;|z|)</span></span>
-<span id="cb9-13"><a href="#cb9-13"></a><span class="co">#&gt; 1     4.35 0.00798 545       0</span></span>
-<span id="cb9-14"><a href="#cb9-14"></a><span class="co">#&gt;   </span></span>
-<span id="cb9-15"><a href="#cb9-15"></a><span class="co">#&gt; catchability (cloglog-scale):</span></span>
-<span id="cb9-16"><a href="#cb9-16"></a><span class="co">#&gt;   Estimate    SE     z P(&gt;|z|)</span></span>
-<span id="cb9-17"><a href="#cb9-17"></a><span class="co">#&gt; 1    -5.17 0.123 -42.1       0</span></span>
-<span id="cb9-18"><a href="#cb9-18"></a><span class="co">#&gt;   </span></span>
-<span id="cb9-19"><a href="#cb9-19"></a><span class="co">#&gt; detection (cloglog-scale):</span></span>
-<span id="cb9-20"><a href="#cb9-20"></a><span class="co">#&gt;   Estimate  SE        z P(&gt;|z|)</span></span>
-<span id="cb9-21"><a href="#cb9-21"></a><span class="co">#&gt; 1    -1.56 252 -0.00619   0.995</span></span>
-<span id="cb9-22"><a href="#cb9-22"></a><span class="co">#&gt; </span></span>
-<span id="cb9-23"><a href="#cb9-23"></a><span class="kw">calcN</span>(mod)</span>
-<span id="cb9-24"><a href="#cb9-24"></a><span class="co">#&gt;          Estimate        SE          CV        LCL       UCL</span></span>
-<span id="cb9-25"><a href="#cb9-25"></a><span class="co">#&gt; N      77.8532019 0.6215464 0.007983569 77.1895004 80.841434</span></span>
-<span id="cb9-26"><a href="#cb9-26"></a><span class="co">#&gt; Nresid  0.8532019 0.6215464 0.728486912  0.1895004  3.841434</span></span></code></pre></div>
-<p>This model indicates that there might be one cat remaining following the eradication program.</p>
+<span id="cb9-9"><a href="#cb9-9"></a><span class="kw">summary</span>(mod)</span>
+<span id="cb9-10"><a href="#cb9-10"></a><span class="co">#&gt; Abundance (log-scale):</span></span>
+<span id="cb9-11"><a href="#cb9-11"></a><span class="co">#&gt;   Estimate     SE    z P(&gt;|z|)</span></span>
+<span id="cb9-12"><a href="#cb9-12"></a><span class="co">#&gt; 1      4.4 0.0926 47.5       0</span></span>
+<span id="cb9-13"><a href="#cb9-13"></a><span class="co">#&gt;   </span></span>
+<span id="cb9-14"><a href="#cb9-14"></a><span class="co">#&gt; catchability (logit-scale):</span></span>
+<span id="cb9-15"><a href="#cb9-15"></a><span class="co">#&gt;   Estimate    SE     z P(&gt;|z|)</span></span>
+<span id="cb9-16"><a href="#cb9-16"></a><span class="co">#&gt; 1    -5.17 0.123 -41.9       0</span></span>
+<span id="cb9-17"><a href="#cb9-17"></a><span class="co">#&gt;   </span></span>
+<span id="cb9-18"><a href="#cb9-18"></a><span class="co">#&gt; detection (log-scale):</span></span>
+<span id="cb9-19"><a href="#cb9-19"></a><span class="co">#&gt;   Estimate   SE     z  P(&gt;|z|)</span></span>
+<span id="cb9-20"><a href="#cb9-20"></a><span class="co">#&gt; 1     -5.6 1.07 -5.26 1.47e-07</span></span>
+<span id="cb9-21"><a href="#cb9-21"></a><span class="co">#&gt; </span></span>
+<span id="cb9-22"><a href="#cb9-22"></a>nce&lt;-<span class="st"> </span><span class="kw">calcN</span>(mod)</span>
+<span id="cb9-23"><a href="#cb9-23"></a>nce<span class="op">$</span>Nhat</span>
+<span id="cb9-24"><a href="#cb9-24"></a><span class="co">#&gt;        N  se lcl  ucl</span></span>
+<span id="cb9-25"><a href="#cb9-25"></a><span class="co">#&gt; Total 81 7.5  77 98.5</span></span>
+<span id="cb9-26"><a href="#cb9-26"></a>nce<span class="op">$</span>Nresid</span>
+<span id="cb9-27"><a href="#cb9-27"></a><span class="co">#&gt;          N  se lcl  ucl</span></span>
+<span id="cb9-28"><a href="#cb9-28"></a><span class="co">#&gt; Residual 4 7.5   0 21.5</span></span></code></pre></div>
+<p>This model indicates that there might be four cats remaining following the eradication program.</p>
 </div>
 
 

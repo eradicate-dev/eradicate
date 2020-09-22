@@ -387,9 +387,9 @@ eFrameMNO<- function(y, numPrimary, siteCovs = NULL, obsCovs = NULL, primaryCovs
 #' camera detection function
 #'
 #' @examples
-#'  counts<- san_nic_pre$counts
-#'  emf <- eFrame(y=counts)
-#'  summary(emf)
+#'  ddata<- HogDeer$ddata
+#'  cutpoints<- HogDeer$cutpoints
+#'  emf<- eFrameDS(ddata$distance, ddata$size, ddata$camID, cutpoints, w=12.5, bin_num=TRUE)
 #'
 #' @export
 #'

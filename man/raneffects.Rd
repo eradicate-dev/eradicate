@@ -25,5 +25,5 @@ a \code{matrix} giving the marginal likelihood of N for each observation
 }
 \description{
 \code{raneffects} performs estimation of the marginal likelihood of N using
-empirical Bayes methods.
+empirical Bayes methods. A port of \code{ranef} in package \code{unmarked}.
 }

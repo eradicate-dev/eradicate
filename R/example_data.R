@@ -76,6 +76,37 @@
 #'
 "san_nic_rest"
 
+#' HogDeer
+#'
+#' Example camera trapping data set containing camera encounters of hog deer
+#' (Axis porcinus).
+#'
+#' The dataset consists of distance sampling data from camera traps as well as data
+#' on residence times in front of the camera (staying time) for each encounter.
+#' Distance sampling data is used for estimating the effective sampling area of the
+#' camera viewshed using \code{dist_func}. The effective camera viewshed area and staying
+#' time data are required for use in the \code{REST} model. Distance bin numbers for
+#' images of hog deer were derived from markers placed in the camera viewshed at
+#' 2.5, 5.0, 7.5 and 10 m from the camera. The right truncation distance was set at 12.5 m.
+#'
+#'
+#' @format A list consisting of 3 elements
+#'  \describe{
+#'  \item{sites}{A \code{data.frame} containing information for each camera, including
+#'  the first day (\code{sday}) and last day (\code{eday}) of operation for each camera}
+#'  \item{encounters}{A \code{data.frame} containing columns \code{day} giving the day
+#'  of encounter, \code{distance}, giving the distance  bin numbers. Distance bins are
+#' numbered with 1 indicating an image in the 1st bin (i.e. 0 - 2.5 m) and 5
+#' indicating an image in the 5th bin (i.e. 10 - 12.5m). These are converted to distances
+#' (i.e. distance to the midpoint of each bin in meters) automatically by \code{eFrameDS}.
+#'   Group size of the encounter is given in \code{count} and \code{cam} gives the camera ID.
+#'  \code{stay} gives the estimate of residence time (staying time in seconds) and
+#'   \code{censor} is an variable indicating a fully observed (\code{censor} = 1) or right
+#'   censored (\code{censor} = 0) staying time.}
+#'  \item{cutpoints}{A vector of the distance categories (bins) used.}
+#'  }
+#'
+"HogDeer"
 
 #' @name san_nic_habitat.tif
 #' @title Simulated habitat (relative risk) on San Nicolas Island.

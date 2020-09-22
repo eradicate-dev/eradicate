@@ -17,6 +17,7 @@ bup(obj, ...)
 a \code{matrix} giving the marginal likelihood of N for each observation
 }
 \description{
-\code{bup} estimates the best unbiased predictor of the latent abundanac
-or occupancy state using empirical Bayes methods.
+\code{bup} estimates the best unbiased predictor of the latent abundance
+or occupancy state using empirical Bayes methods. A port of the similar function
+in \code{unmarked}.
 }

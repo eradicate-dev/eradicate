@@ -9,7 +9,7 @@
 #' Currently supported models include the Poisson, Negative binomial and
 #' zero-inflated Poisson (ZIP).
 #'
-#' @usage remPois(lamformula, detformula, data, starts, method="BFGS", se=TRUE, ...)
+#' @usage remMN(lamformula, detformula, data, starts, method="BFGS", se=TRUE, ...)
 #'
 #' @param lamformula formula for the latent abundance component.
 #' @param detformula formula for the removal detection component.  Only

@@ -26,55 +26,6 @@ removalPiFun <- function(p){
   return(pi)
 }
 
-# removalPiFun <- function(p){
-#   if(is.matrix(p)) {
-#     M <- nrow(p)
-#     J <- ncol(p)
-#     pi <- matrix(NA, M, J)
-#     pi[, 1] <- p[, 1]
-#     for (i in seq(from = 2, length = J - 1)) {
-#       pi[, i] <- pi[, i - 1]/p[, i - 1] * (1 - p[, i - 1]) * p[, i]
-#     }
-#   }
-#   else {
-#     J<- length(p)
-#     pi<- rep(NA, J)
-#     pi[1]<- p[1]
-#     for (i in 2:J)
-#       pi[i] <- p[i] * prod(1-p[1:(i-1)])
-#   }
-#   return(pi)
-# }
-
-genFixedNLL <- function(nll, whichFixed, fixedValues)
-{
-    function(params) {
-        params[whichFixed] <- fixedValues
-        do.call(nll, list(params))
-        }
-}
-
-# nll the original negative log likelihood function
-# MLE the full vector of MLE values
-calc.profileCI <- function(nll, whichPar, MLE, interval, level)
-{
-    stopifnot(length(whichPar) == 1)
-    MLEnll <- nll(MLE)
-    nPar <- length(MLE)
-	chsq <- qchisq(level, 1)/2
-    f <- function(value) {
-        fixedNLL <- genFixedNLL(nll, whichPar, value)
-            mleRestricted <- optim(MLE, fixedNLL)$value
-        mleRestricted - MLEnll - chsq
-        }
-    lower <- tryCatch(uniroot(f, c(interval[1],MLE[whichPar]))$root,
-        error = function(e) -Inf)
-    upper <- tryCatch(upper <- uniroot(f, c(MLE[whichPar], interval[2]))$root,
-        error = function(e) Inf)
-
-    return(c(lower,upper))
-}
-
 ## link functions and their gradients
 logistic <- function(x) {
   1/(1 + exp(-x))
@@ -117,8 +68,7 @@ cloglog.grad <- function(x){
 
 ## use logarithms to vectorize row-wise products
 ## this speeds things up a LOT (vs. apply(x,1,prod))
-rowProds <- function(x, na.rm = FALSE)
-{
+rowProds <- function(x, na.rm = FALSE) {
   exp(rowSums(log(x), na.rm = na.rm))
 }
 
@@ -155,16 +105,13 @@ parmNames <- function(list.df) {
 # get estimated psi from rn fit
 
 getPsi <-
-function(lam)
-{
+function(lam) {
   1-exp(-lam)
 }
 
 # get estimatd p from rn fit (only for a null type model so far)
 
-getP.bar <-
-function(lam, r)
-{
+getP.bar <- function(lam, r) {
     K = 30
     psi <- getPsi(lam)
     pN.k <- dpois(0:K,lam)
@@ -217,7 +164,7 @@ mle<- function(object) object$opt$par
 #---------------------------------
 formatMult <- function(df.in) {
 # This convenience function converts multi-year data in long format to
-# eFrameRGP Object.
+# eFrameR Object.
 
   years <- sort(unique(df.in[[1]]))
   nY <- length(years)
@@ -367,6 +314,8 @@ formatDelta <- function(d, yna)
   return(dout)
 }
 
+# The following relate to conversion from distance bins to distances in eFrameDS
+
 is.wholenumber<- function(x, tol = .Machine$double.eps^0.5) {abs(x - round(x)) < tol}
 
 convert_bin_to_dist<- function(bin_num, cutpoints) {
@@ -379,23 +328,52 @@ convert_bin_to_dist<- function(bin_num, cutpoints) {
   distances
 }
 
-#---
-sd.trim <- function(x, trim=0, na.rm=FALSE, ...)
-{
-  if(!is.numeric(x) && !is.complex(x) && !is.logical(x)) {
-    warning("argument is not numeric or logical: returning NA")
-    return(NA_real_)
+
+#' make_encounters
+#'
+#' \code{make_encounters} is a convenience function to make an encounter matrix y suitable for
+#' use in \code{eFrameREST}. It converts long data to the wide format with one row per site.
+#'
+#' @param sites A \code{data.frame} of sites (camera locations). The first three columns MUST
+#' be in the following order. 1. Site (or camera) ID; 2. first day of operation for each camera
+#' (either day of year or date); 3. Last day of operation for each camera.
+#' @param events A \code{data.frame} of encounters for each camera, The columns MUST be in
+#' the following order. 1. Site (or camera) ID; 2. Day of year (or date) of each encounter;
+#' 3. the number of individuals encountered (i.e. group size).
+#'
+#' @return a \code{matrix} with the number of encounters for each camera with dimensions
+#' M x J where M is the number of sites and J is the maximum number of days operation.  Cameras
+#' operating for less than J days are assigned NA for those days.
+#'
+#' @examples
+#' sites<- HogDeer$sites
+#' encounters<- HogDeer$encounters
+#' y<- make_encounters(sites, encounters)
+#'
+#' @export
+#'
+make_encounters<- function(sites, events){
+  # The following required to coerce from tibble()
+  if("data.frame" %in% class(sites)) sites<- as.data.frame(sites)
+    else stop("sites must be a data.frame")
+  if("data.frame" %in% class(events)) events<- as.data.frame(events)
+    else stop("events must be a data.frame")
+  ID<- sites[,1]
+  if(any(table(ID)) > 1) stop("duplicate site/camera names")
+  nID<- length(ID)
+  days<- seq(min(sites[,2]),max(sites[,3]),1)
+  ymat<- matrix(0, length(ID), length(days))
+  for(i in 1:nID){
+    active_days<- seq(sites[i,2],sites[i,3],1)
+    not_active<- which(is.na(match(days,active_days)))
+    ymat[i,not_active]<- NA
+    tmp<- events[events[,1]==ID[i],]
+    if(nrow(tmp) > 0) {
+      tmp<- aggregate(tmp[,3],tmp[,1:2],sum)
+      inds<- match(tmp[,2], days)
+      ymat[i,inds]<- tmp[,3]
+    }
   }
-  if(na.rm) x <- x[!is.na(x)]
-  if(!is.numeric(trim) || length(trim) != 1)
-    stop("'trim' must be numeric of length one")
-  n <- length(x)
-  if(trim > 0 && n > 0) {
-    if(is.complex(x)) stop("trimmed sd are not defined for complex data")
-    if(trim >= 0.5) return(0)
-    lo <- floor(n * trim) + 1
-    hi <- n + 1 - lo
-    x <- sort.int(x, partial = unique(c(lo, hi)))[lo:hi]
-  }
-  sd(x)
+  ymat
 }
+

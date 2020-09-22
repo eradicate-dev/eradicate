@@ -2,7 +2,7 @@
 title: "Eradication tools examples"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{erad_examples}
+  %\VignetteIndexEntry{Eradication tools examples}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -14,7 +14,7 @@ knitr::opts_chunk$set(
 )
 ```
 ## Eradication tools user guide
-### Dave Ramsey (5/3/2020)
+### Dave Ramsey (22/9/2020)
 
 The `eradicate` package contains some functions to undertake basic populaton estimation from data that would typically be collected as part of a pest eradication program. The package borrows heavily from ideas and code used in the `unmarked` package, and additionally includes some custom models not included in that package.  It additionally uses the simpler S3 classes for object orientation and method dispatch, which are less formal that the S4 classes used in `unmarked`.  
 
@@ -85,16 +85,21 @@ These three models have a common modelling interface.  The first argument specif
 
 In order to get estimates of either the proportion of sites occupied or total abundance, we can use the function `calcN()`, which has an additional argument `newdata` where the user can supply covariate values for prediction sites.  Since we wish to predict only for the sampled sites, we can simply use `calcN()` without any `newdata` argument.
 ```{r}
-calcN(m1)
-calcN(m2)
-calcN(m3)
+nhat1<- calcN(m1)
+nhat2<- calcN(m2)
+nhat3<- calcN(m3)
+
+nhat1$Occ
+nhat2$Nhat
+nhat3$Nhat
+
 ```
 
 The return values for `calcN` contain the predicted occupancy or abundance for each site as well as for the  total population over all sites. Confidence intervals for abundance are calculated using a log-normal transformation, which are guaranteed not to include negative values in the interval.
 
 In addition to these three models, `eradicate` additionally includes another model that is exclusively applied to camera data.  Introduced by Nakashima et al. (2018), the REST model (short for Random Encounter and Staying Time model) uses data on the number of encounters per camera as well as additional information on the time taken for each detected individual to cross the cameras field of view (the staying time).  Under the assumption that detection in the field of view (or some known proportion of it) is perfect, the REST model can estimate animal density.  Further information on this model is available in Nakashima et al (2018) and in the help file. 
 
-We fit the REST model to the example data found in the `san_nic_rest` dataset.
+We fit the REST model to the example data found in the `san_nic_rest` dataset. A more involved example that uses additional distance sampling data from camera traps to estimate the effective sampling area is provided in the vignette `REST_example`.
 ```{r}
 counts<- san_nic_rest$y
 stay<- san_nic_rest$stay
@@ -107,7 +112,7 @@ emf<- eFrameREST(counts, stay, cens, A, active, siteCovs = site.data)
 m4<- REST(~pgrass, data=emf)
 summary(m4)
 
-calcN(m4)
+calcN(m4)$Nhat
 
 ```
 
@@ -130,21 +135,29 @@ pgrass<- sapply(habvals, function(x) mean(x, na.rm=T))
 site.data<- cbind(traps, pgrass)
 
 # Poisson abundance 
-emf<- eFrameR(rem, type="removal", siteCovs = site.data)
-r1<- remPois(~pgrass, ~1, data=emf)
+emf<- eFrameR(rem, siteCovs = site.data)
+r1<- remMN(~pgrass, ~1, data=emf)
 summary(r1)
-calcN(r1)
+nr1<- calcN(r1)
+nr1$Nhat
+nr1$Nresid
 
 # Generalized Poisson
-emf<- eFrameGR(rem, numPrimary=1, type="removal", siteCovs = site.data)
+emf<- eFrameGR(rem, numPrimary=1, siteCovs = site.data)
 r2<- remGR(~pgrass, ~1, ~1, data=emf)
 summary(r2)
-calcN(r2)
+nr2<- calcN(r2)
+nr2$Nhat
+nr2$Nresid
 
-emf<- eFrameGRM(rem, ym, numPrimary=1, type="removal", siteCovs = site.data)
+# Including additional camera monitoring data in ym 
+emf<- eFrameGRM(rem, ym, numPrimary=1, siteCovs = site.data)
 r3<- remGRM(~pgrass, ~1, ~1, ~1, data=emf)
 summary(r3)
-calcN(r3)
+nr3<- calcN(r3)
+nr3$Nhat
+nr3$Nresid
+
 ```
 
 Using data on extra detections has resulted in a higher estimate of the initial population size compared with the model without extra detections.  This is due to the fact that cats were detected in a camera in the periods following the last capture of a cat in the leg-hold traps. The `calcN()` function also produces an estimate of the residual population remaining, which is simply the difference between the estimated initial population and the number removed. This indicates 18 cats are likely still extant using inference from the removal + extra detections model compared with nominal eradication using the removal only model. The estimate of 18 is somewhat higher than the true number of cats remaining (9), but this is better than the inference of complete eradication using the removal only models. Again, this highlights the advantages of using extra monitoring data for inference.
@@ -161,9 +174,11 @@ ieffort<- rep(nrow(ym), length(index))
 emf<- eFrameGP(catch, effort, index, ieffort)
 mod<- remGP(emf)
 summary(mod)
-calcN(mod)
+nce<- calcN(mod)
+nce$Nhat
+nce$Nresid
 
 ```
 
-This model indicates that there might be one cat remaining following the eradication program. 
+This model indicates that there might be four cats remaining following the eradication program. 
  

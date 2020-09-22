@@ -10,7 +10,7 @@
 #'  estimated using the function \code{ds()} from package \code{Distance} using point
 #'  distance sampling. Currently no adjustments are included in the fitting.
 #'
-#' @usage dist_func(data, theta, keyfun = c("hn","hr") ...)
+#' @usage dist_func(data, theta, keyfun = c("hn","hr"), ...)
 #'
 #' @param data \code{eFrameDS} object containing the distance data and bin information.
 #' @param formula formula for the scale parameter. Default is ~1.
@@ -18,14 +18,22 @@
 #' @param keyfun detection functions to fit (currently only half-normal ("hn") or
 #' hazard rate ("hr")). No adjustments are currently permitted.
 #'
-#' @return a \code{efitDS} model object.
+#' @return a \code{efitDS} list model object giving the parameter estimates for each distance
+#' function fitted and a table providing the effective sampled area (\code{esw}) of the camera
+#' viewshed along with an estimate of the average detection probability (\code{Pa}), AIC and
+#' the p-value from a Chi-sq GOF test (\code{p}).
 #'
 #' @examples
-#'  ddata<- HogDeer$ddata
+#'  encounters<- HogDeer$encounters
 #'  cutpoints<- HogDeer$cutpoints
-#'  emf<- eFrameDS(ddata$distance, ddata$size, ddata$camID, cutpoints, w=12.5, bin_num=TRUE)
-
-#'  mods <- dist_func(emf, theta=HogDeer$theta)
+#'  w<- cutpoints[length(cutpoints)] # truncation distance
+#'
+#'  emf<- with(encounters, {
+#'     eFrameDS(distance = dist_bin, size = count, siteID = cam, cutpoints = cutpoints,
+#'              w=w, bin_nums=TRUE)
+#'  })
+#'
+#'  dist_func(emf, theta=40)
 #'
 #' @export
 #'
@@ -43,7 +51,9 @@ dist_func<- function (data, formula = ~1, theta, keyfun = c("hn","hr"), ...){
       fm<- suppressMessages(Distance::ds(ddata, formula = formula, key=kf, transect="point",
                       truncation=w, adjustment=NULL, cutpoints=cutpoints))
       summ<- summary(fm)
-      fits[[kf]]<- list(pars=summ$ds$coeff)
+      fm$ddf$Nhat<- NULL
+      #fits[[kf]]<- list(pars=summ$ds$coeff)
+      fits[[kf]]<- fm
       aic<- AIC(fm)$AIC
       Pa<- summ$ds$average.p
       Pa.se<- summ$ds$average.p.se

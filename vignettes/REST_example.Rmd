@@ -1,0 +1,154 @@
+---
+title: "Random Encounter and Staying Time (REST) model"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Random Encounter and Staying Time (REST) model}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+## Example of the REST model applied to camera trapping data for hog deer (*Axis porcinus*)
+### Dave Ramsey (21/9/2020)
+
+This example applies the Random Encounter and Staying Time (REST) model of (Nakashima et al. 2018) to camera trap data from hog deer collected during December 2018 from southeastern Victoria, Australia.  The original dataset used 99 cameras at 50 sites but here we take a subset of 21 cameras from around the Gippsland Lakes region.  This example showcases how to predict densities and abundance of animals  when no individuals can be identified from images (i.e. an unmarked population) utilising information just from camera traps. This method also relies on obtaining distance measurements to each detected individual using distance markers placed in the camera's field of view (e.g. Hofmeester et al. 2017). This allows estimation of the effective sampling area of cameras using distance sampling methods. 
+
+```{r setup, message=FALSE, warning=FALSE}
+library(eradicate)
+library(sf)
+library(raster)
+
+```
+
+... and then read in the shapefile of the region and a raster of habitat values. The raster has a resolution (cell size) of 100 m indicating the presence five different habitat types. The locations of the cameras are given in the example dataset `HogDeer`, which also contains the encounter data for hog deer from each camera.
+
+```{r, fig.height=6, fig.width=8}
+region<- read_sf(system.file("extdata", "shape/gipps_lakes.shp", package="eradicate"))
+habitat<- raster(system.file("extdata", "hog_habitat.tif", package="eradicate"))
+
+sites<- HogDeer$sites
+encounters<- HogDeer$encounters
+
+
+plot(habitat, axes=F)
+plot(st_geometry(region), add=TRUE)
+points(sites$Easting, sites$Northing, pch=16, col="red", cex=1.2)
+
+```
+
+## Encounter and distance data from cameras
+
+We take a first look at the data contained in the `sites` and `encounters` dataframes..
+
+```{r}
+
+head(sites)
+
+head(encounters)
+
+```
+
+The `sites` dataframe contains information for each camera, including the starting and end day of the year that each camera was set (`sday`, `eday`), the coordinates of each camera (`Easting`, `Northing`) and the habitat type at the camera location (`EVC`).  The `encounter` dataframe contains the data for each encounter including the day of encounter `day`, the number of encounters (`count`), which could be 1 or higher if a group of deer were encountered, the distance bin of the encounter (`dist_bin`) where 1 = the bin closest to the camera (i.e. 0 - 2.5 meters) and 5 is the bin furthest from the camera (i.e. 10 - 12.5 meters), the staying (or residence) time of each encounter in seconds (`stay`), where staying time is the exit time minus the entrance time, and finally `censor` indicates whether the staying time was fully observed (`censor` = 1) or only partially observed (`censor=0`). Partially observed staying times include observations where the exit time of the individual was not observed (i.e. if the camera stopped recording) and hence, the observation is right-censored.  The example dataset also contains a vector of binwidths `cutpoints` giving the widths for each of 5 distance bins.
+
+Before we can analyse the data using the REST model, we first need to estimate the effective detection area of the cameras.  This is where the distance sampling data is used. This is undertaken using the `dist_func` function in the `eradicate` package. First assemble the distance sampling data into an `eFrame` object using `eFrameDS`.
+
+```{r,  fig.height=5, fig.width=7}
+cutpoints<- HogDeer$cutpoints
+w<- cutpoints[length(cutpoints)] # truncation distance
+emf<- with(encounters, {
+  eFrameDS(distance = dist_bin, size = count, siteID = cam, cutpoints = cutpoints, w=w, bin_nums=TRUE)
+})
+
+hist(emf$ddata$distance, breaks=cutpoints, main="Distance categories of hog deer encounters",
+     xlab="Distance (m)")
+
+```
+
+The distance bin numbers in the `dist_bin` field are automatically converted to distance (i.e. distance to the midpoint of each bin) by `eFrameDS` when `bin_nums` is set to `TRUE`.  A histogram of the distances reveals the hump shape characteristic of point distance sampling data.  By fitting a distance function to the distance data, the effective sampling area of the camera field of view can be estimated by integrating the detection function out to the truncation distance. The `dist_func` function performs this by automatically fitting a half-normal and hazard rate detection functions to the distance data, using point distance sampling techniques.  However, since the camera field of view only samples a section of a full 360 degree circle, the angle of the detection zone for each camera also needs to be supplied (`theta`).  For the camera models used here, `theta` = 40 degrees. The `dist_func` function is actually a wrapper around the `ds()` function from package `Distance`, which does most of the heavy lifting.
+
+```{r}
+dfuncs<- dist_func(emf, theta = 40)
+dfuncs$fit.table
+
+esa<- dfuncs$fit.table$esa[1] # Select esa estimate for hn based on AIC
+```
+
+
+The effective sampling areas from integrating each detection function are returned (`esa`) along with the average (or marginal) detection probability (`Pa`) as well as their standard errors. For the distance data analysed here, the effective sampled area under the half-normal detection function (keyfun = `hn`) was 5.6 m^2^ and under the hazard rate function (keyfun = `hr`) the area was 7.8 m^2^.  The respective AIC values suggest that the half-normal fit was slight superior and the goodness-of-fit was adequate (`p=0.92`).  The fitted detection function looks adequate
+
+```{r, fig.height=5, fig.width=7}
+plot(dfuncs$fits$hn, main="Fitted Detection function", xlab="Distance (m)",
+     showpoints=TRUE, lwd=2, xlim=c(0, w))
+
+```
+
+## The REST model
+
+Now that we have an estimate of the effective sampling area of the camera viewshed, we are now ready to go ahead and estimate the density of hog deer from the encounter data.  The REST model expresses the expected animal density (individuals/unit area) as a function of the expected number of encounters, the expected residence time by an individual in front of the camera (i.e. staying time) divided by the product of the total time the camera was active and the effective sampling area of the camera.
+
+\begin{equation}
+\tag{1}
+E(\hat{D}) = \frac{E(Y) \cdot E(S)}{T * esa}
+\end{equation}
+
+
+Implementation of equation (1) is undertaken using the `REST` function.  This implements the maximum likelihood given in Nakashima et al (2018).  The MLE is a joint likelihood combining a model for the staying times with a model for the expected encounter rate.  The staying time model assumed by `REST` is currently an exponential model with an intercept only (i.e. expected staying time is same for all cameras).    Future versions will include alternative models for the staying time such as log-normal or Weibull.  The `REST` model also allows the parameter for animal density at a camera site to be a function of covariates.  We fit such a model here where the density of hog deer at a camera site is a function of the habitat (`EVC`) at the site.
+
+```{r}
+# First construct the matrix of encounters having dimensions M x J where M is the number of sites
+# and J is the maximum days operation 
+y<- make_encounters(sites, encounters)
+stay<- encounters$stay
+censor<- encounters$censor
+active_hours<- 24  # Assume hog deer active at any time of day
+site.data<- subset(sites, select=EVC)
+area<- esa/10^6  # Effective sampling area in km^2
+
+
+emf<- eFrameREST(y=y, stay=stay, cens=censor, area=area, active_hours = 24, siteCovs = site.data)
+
+mod<- REST(~EVC, data=emf)
+summary(mod)
+```
+
+The staying time estimated from the model `r round(1/exp(coef(mod, "stay")),1)` compares well with average staying time from the data `r round(mean(stay),1)`.  The parameters for density suggest that hog deer density was highest in the `forest_woodlands` EVC and lowest in the `coastal_scrub` EVC.  We can calculate the density expected in each EVC predicted by the model as follows
+
+```{r}
+newdat<- data.frame(EVC = factor(1:5, labels = c("coastal_scrub","heathlands",
+                                                 "forest_woodlands","herb_woodlands","wetlands")))
+
+calcN(mod, newdata=newdat)$cellpreds
+
+```
+
+## Estimate of total population abundance
+
+Finally, we can use the model to predict the density and total abundance of hog deer within the sampled area of the Gippsland Lakes region.  First we need to extract a data.frame of EVC values for each cell in the habitat raster.  We then convert these to a factor and use `calcN` to estimate the density for each cell.  One issue we need to consider is that each of the habitat cells in the raster layer are 100 x 100 meters (1 ha) while the model fitted by `REST` assumed that the camera sampling area was in km^2^. This can be accounted for by supplying a value for the `off.set` parameter in `calcN`.  Since 1 ha equals 0.01 km^2^ we set `off.set` to 0.01.
+
+```{r, fig.height=6, fig.width=8}
+#extract habitat EVC values from raster layer
+
+newdat<- as.data.frame(habitat)
+names(newdat)<- "EVC"
+newdat$EVC<- factor(newdat$EVC) # convert to factor
+inds<- which(!is.na(newdat$EVC)) # indicator for all cells in habitat containg EVC values
+
+preds<- calcN(mod, newdata=newdat, off.set = 0.01)
+preds$Nhat  # Total abundance
+
+# make copy of habitat layer
+habs<- habitat
+habs[inds]<- preds$cellpreds$N
+
+plot(habs, col=rev(heat.colors(10)),legend.args = list(text = 'Density/ha',cex=0.8))
+plot(st_geometry(region), add=TRUE)
+```
+
+Thus, the model predicts that there is around 1676 hog deer in the Gipplands Lake region with a coefficient of variation (CV) of 31%.  While this is not spectacular precision, the estimate could be improved with more cameras compared with this example which only used data from 27 encounters from 21 cameras.
+
+
