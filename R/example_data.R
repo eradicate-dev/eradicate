@@ -108,7 +108,7 @@
 #'
 "HogDeer"
 
-#' @name san_nic_habitat.tif
+#' @name san_nic_habitat
 #' @title Simulated habitat (relative risk) on San Nicolas Island.
 #' @description A raster file at 100 meter resolution with simulated habitat values (either
 #' \code{0} or \code{1}). Can be resampled for use with any of the models.
@@ -118,8 +118,7 @@
 #'
 NULL
 
-#' @name shape
-#'
+#' @name san_nic_region
 #' @title San Nicholas island.
 #' @description ESRI shapefile of San Nicolas Island.
 #' @examples
