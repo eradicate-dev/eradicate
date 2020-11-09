@@ -56,7 +56,7 @@ vcov.efit<- function(obj, type, ...){
   obj$estimates[[type]]$covMat
 }
 
-#' SE
+#' se
 #'
 #' @description extracts standard errors for efit model objects.
 #'
@@ -64,9 +64,9 @@ vcov.efit<- function(obj, type, ...){
 #'
 #' @export
 #'
-SE <- function(obj, ...){
+se <- function(obj, ...){
   # method generic
-  UseMethod("SE", obj)
+  UseMethod("se", obj)
 }
 
 #' calcP
@@ -163,7 +163,7 @@ summary.efit<- function(object, ...)
   out.list<- list()
   for(i in 1:length(type)) {
     ests <- object$estimates[[type[i]]]$estimates
-    SEs <- SE(object, type[i])
+    SEs <- se(object, type[i])
     Z <- ests/SEs
     p <- 2*pnorm(abs(Z), lower.tail = FALSE)
     invlink <- object$estimates[[type[i]]]$invlink
@@ -409,9 +409,9 @@ calcN.efitGP<- function(obj, CI.level=0.95, CI.calc = c("norm","lnorm","boot"), 
   list(Nhat=bigN, Nresid=littleN)
 }
 
-#' @rdname SE
+#' @rdname se
 #' @export
-SE.efit<- function(obj, type, ...){
+se.efit<- function(obj, type, ...){
   if(is.null(type)) stop("estimate type required")
   v<- obj$estimates[[type]]$covMat
   sqrt(diag(v))
@@ -524,7 +524,7 @@ occTraject.efitMS<- function(obj, type = c("projected","smoothed"), mean=TRUE, .
 #'
 #' @export
 #'
-fitted.efitMNO <- function(obj, K, na.rm=FALSE) {
+fitted.efitMNO <- function(obj, na.rm=FALSE) {
   dynamics <- obj$dynamics
   mixture <- obj$mixture
   fix <- obj$fix

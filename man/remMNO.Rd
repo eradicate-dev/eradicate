@@ -12,9 +12,9 @@ remMNO(lamformula, gamformula, omformula, detformula, data, mixture = c("P", "NB
 \arguments{
 \item{lamformula}{formula for the latent abundance component.}
 
-\item{gamformula}{formula for availability}
+\item{gamformula}{formula for the latent recruitment process for parameter `gamma`.}
 
-\item{omformula}{formula for availability}
+\item{omformula}{formula for the latent survival process for parameter `omega`.}
 
 \item{detformula}{formula for the removal detection component.  Only
 site-level covariates are allowed for the removal detection component.
@@ -29,18 +29,12 @@ poisson 'ZIP'.}
 
 \item{K}{upper bound for superpopulation abundance}
 
-\item{dynamics}{Character string describing the type of population dynamics. "constant" indicates that there
-is no relationship between omega and gamma. "autoreg" is an auto-regressive model in which recruitment is
-modeled as gamma*N[i,t-1]. "notrend" models gamma as lambda*(1-omega) such that there is no temporal trend.
-"trend" is a model for exponential growth, N[i,t] = N[i,t-1]*gamma, where gamma in this case is finite rate of
-increase (normally referred to as lambda). "ricker" and "gompertz" are models for density-dependent population
-growth. "ricker" is the Ricker-logistic model, N[i,t] = N[i,t-1]*exp(gamma*(1-N[i,t-1]/omega)), where gamma is
-the maximum instantaneous population growth rate (normally referred to as r) and omega is the equilibrium
-abundance (normally referred to as K). "gompertz" is a modified version of the Gompertz-logistic model, N[i,t]
-= N[i,t-1]*exp(gamma*(1-log(N[i,t-1]+1)/log(omega+1))), where the interpretations of gamma and omega are
-similar to in the Ricker model.}
+\item{dynamics}{Character string describing the type of population dynamics. `constant` indicates
+that there is no relationship between omega and gamma. `autoreg` is an auto-regressive model in
+which recruitment is modeled as `gamma*N[i,t-1]`, and `trend` is a model for exponential growth,
+`N[i,t] = N[i,t-1]*gamma`, where `gamma` in this case represents the finite rate of increase.}
 
-\item{fix}{If "omega", omega is fixed at 1. If "gamma", gamma is fixed at 0.}
+\item{fix}{If "`omega`", `omega` is fixed at 1. If "`gamma`", `gamma` is fixed at 0.}
 
 \item{immigration}{Logical specifying whether immigration is included in the model}
 

@@ -16,10 +16,10 @@ raneffects <- function(obj, ...){
   UseMethod("raneffects", obj)
 }
 
-#' bup
+#' blup
 #'
 #' @description
-#' \code{bup} estimates the best unbiased predictor of the latent abundance
+#' \code{blup} estimates the best linear unbiased predictor of the latent abundance
 #' or occupancy state using empirical Bayes methods. A port of the similar function
 #' in \code{unmarked}.
 #'
@@ -29,9 +29,9 @@ raneffects <- function(obj, ...){
 #'
 #' @export
 #'
-bup <- function(obj, ...){
+blup <- function(obj, ...){
   # method generic
-  UseMethod("bup", obj)
+  UseMethod("blup", obj)
 }
 
 #' postSamples
@@ -200,12 +200,10 @@ raneffects.efitMNO <- function(obj, ...){
   K <- obj$K
   N <- 0:K
 
-  lam <- exp(Xlam %*% coef(obj, 'lambda') + Xlam.offset)
+  lam <- exp(Xlam %*% coef(obj, 'state') + Xlam.offset)
+  gam <- exp(Xgam %*% coef(obj, 'gamma') + Xgam.offset)
+  gam <- matrix(gam, M, T-1, byrow=TRUE)
 
-  if(dyn != "notrend") {
-    gam <- exp(Xgam %*% coef(obj, 'gamma') + Xgam.offset)
-    gam <- matrix(gam, M, T-1, byrow=TRUE)
-  }
   if(!identical(dyn, "trend")) {
     invlink<- obj$estimates$omega$invlink
     eta <- Xom %*% coef(obj, 'omega') + Xom.offset
@@ -229,10 +227,7 @@ raneffects.efitMNO <- function(obj, ...){
   post <- array(NA_real_, c(M, length(N), T))
   colnames(post) <- N
 
-  if(dyn=="notrend")
-    gam <- lam*(1-om)
-
-  if(dyn %in% c("constant", "notrend")) {
+  if(dyn %in% c("constant")) {
     tp <- function(N0, N1, gam, om, iota) {
       c <- 0:min(N0, N1)
       sum(dbinom(c, N0, om) * dpois(N1-c, gam))
@@ -246,15 +241,8 @@ raneffects.efitMNO <- function(obj, ...){
     tp <- function(N0, N1, gam, om, iota) {
       dpois(N1, gam*N0 + iota)
     }
-  } else if(dyn=="ricker") {
-    tp <- function(N0, N1, gam, om, iota) {
-      dpois(N1, N0*exp(gam*(1-N0/om)) + iota)
-    }
-  } else if(dyn=="gompertz") {
-    tp <- function(N0, N1, gam, om, iota) {
-      dpois(N1, N0*exp(gam*(1-log(N0 + 1)/log(om + 1))) + iota)
-    }
   }
+
   for(i in 1:M) {
     P <- matrix(1, K+1, K+1)
     switch(mixture,
@@ -347,9 +335,9 @@ postSamples.raneffects<- function(obj, nsims=100, ...) {
   out
 }
 
-#' @rdname bup
+#' @rdname blup
 #' @export
-bup.raneffects<- function(obj, ...) {
+blup.raneffects<- function(obj, ...) {
   re <- as.integer(colnames(obj))
   out <- apply(obj, c(1,3), function(x) sum(re*x))
   out <- drop(out)

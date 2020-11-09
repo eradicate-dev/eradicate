@@ -1,13 +1,13 @@
 
-#' occuMS
+#' occMS
 #'
-#' @name occuMS
+#' @name occMS
 #'
 #' @description
-#' \code{occuMS} fits the dynamic multi-season occupancy model of MacKenzie et al. (2003).
+#' \code{occMS} fits the dynamic multi-season occupancy model of MacKenzie et al. (2003).
 #' This is a port of the \code{colext} function in \code{unmarked}.
 #'
-#' @usage occuMS(psiformula, gamformula, epsformula, detformula,
+#' @usage occMS(psiformula, gamformula, epsformula, detformula,
 #' data, starts, method="BFGS", se=TRUE, ...)
 #'
 #' @param psiformula formula for the latent occupancy component.
@@ -20,7 +20,7 @@
 #'  the detection component. This differs from the similar model in \code{unmarked}.
 #' @param data A \code{eFrameMS} object containing the detection/non-detection
 #' data (0/1) and site-level covariates. see \code{\link{eFrameMS}} for how to format
-#'  the required data. count data will get trunctated to (0/1) by \code{occuMS()}.
+#'  the required data. count data will get trunctated to (0/1) by \code{occMS()}.
 #' @param starts Initial values for parameters
 #' @param method Optimisation method
 #' @param se flag to return the standard error (hessian).
@@ -30,24 +30,24 @@
 #' @examples
 #'  counts<- san_nic_pre$counts
 #'  emf <- eFrame(y=counts)
-#'  mod <- occuMS(~1, ~1, ~1, ~1, data=emf)
+#'  mod <- occMS(~1, ~1, ~1, ~1, data=emf)
 #'  Nhat<- calcN(mod)
 #'
 #' @useDynLib eradicate, .registration=TRUE
 #' @export
 #'
-#'
-occuMS <- function(psiformula = ~ 1, gamformula = ~ 1, epsformula = ~ 1, detformula = ~ 1,
+occMS <- function(psiformula = ~ 1, gamformula = ~ 1, epsformula = ~ 1, detformula = ~ 1,
                    data, starts, method = "BFGS", se = TRUE, ...)
 {
 
     if(!is(data, "eFrameMS"))
         stop("Data is not a eFrameMS.")
 
-    K <- 1
+    #K <- 1
     ## truncate at K
-    data$y[data$y > K] <- K
+    #data$y[data$y > K] <- K
     y <- getY(data)
+    y <- truncateToBinary(y)
     J <- data$obsPerSeason
 
     M <- nrow(y)
@@ -128,7 +128,7 @@ occuMS <- function(psiformula = ~ 1, gamformula = ~ 1, epsformula = ~ 1, detform
 
     estimates <- list(psi = psi, col = col, ext = ext, det=det)
 
-    efit <- list(fitType = "occuMS",
+    efit <- list(fitType = "occMS",
                  call = match.call(),
                  psiformula = psiformula,
                  gamformula = gamformula,

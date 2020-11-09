@@ -4,7 +4,7 @@
 \alias{fitted.efitMNO}
 \title{fitted.efitMNO}
 \usage{
-\method{fitted}{efitMNO}(obj, K, na.rm = FALSE)
+\method{fitted}{efitMNO}(obj, na.rm = FALSE)
 }
 \arguments{
 \item{obj}{A fitted model object.}

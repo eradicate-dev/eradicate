@@ -260,7 +260,7 @@ eFrameGP<- function(catch, effort, index=NULL, ieffort=NULL) {
 #' eFrameMS
 #'
 #' \code{eFrameMS} creates an eFrameMS data object for use with multi-season
-#' occupancy models \code{occuMS} where sampling occurs over a number of
+#' occupancy models \code{occMS} where sampling occurs over a number of
 #' primary and secondary periods.
 #'
 #' @param y An MxSJ matrix of the observed detection/non-detection data

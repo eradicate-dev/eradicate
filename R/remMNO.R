@@ -13,8 +13,8 @@
 #'                starts, method="BFGS", se=TRUE, ...)
 #'
 #' @param lamformula formula for the latent abundance component.
-#' @param gamformula formula for availability
-#' @param omformula formula for availability
+#' @param gamformula formula for the latent recruitment process for parameter `gamma`.
+#' @param omformula formula for the latent survival process for parameter `omega`.
 #' @param detformula formula for the removal detection component.  Only
 #'  site-level covariates are allowed for the removal detection component.
 #'  This differs from the similar model in \code{unmarked}.
@@ -24,17 +24,11 @@
 #' @param mixture for abundance, either Poisson 'P', negative binomial 'NB' or zero-inflated
 #' poisson 'ZIP'.
 #' @param K upper bound for superpopulation abundance
-#' @param dynamics Character string describing the type of population dynamics. "constant" indicates that there
-#' is no relationship between omega and gamma. "autoreg" is an auto-regressive model in which recruitment is
-#' modeled as gamma*N[i,t-1]. "notrend" models gamma as lambda*(1-omega) such that there is no temporal trend.
-#' "trend" is a model for exponential growth, N[i,t] = N[i,t-1]*gamma, where gamma in this case is finite rate of
-#' increase (normally referred to as lambda). "ricker" and "gompertz" are models for density-dependent population
-#' growth. "ricker" is the Ricker-logistic model, N[i,t] = N[i,t-1]*exp(gamma*(1-N[i,t-1]/omega)), where gamma is
-#' the maximum instantaneous population growth rate (normally referred to as r) and omega is the equilibrium
-#' abundance (normally referred to as K). "gompertz" is a modified version of the Gompertz-logistic model, N[i,t]
-#' = N[i,t-1]*exp(gamma*(1-log(N[i,t-1]+1)/log(omega+1))), where the interpretations of gamma and omega are
-#' similar to in the Ricker model.
-#' @param fix If "omega", omega is fixed at 1. If "gamma", gamma is fixed at 0.
+#' @param dynamics Character string describing the type of population dynamics. `constant` indicates
+#' that there is no relationship between omega and gamma. `autoreg` is an auto-regressive model in
+#' which recruitment is modeled as `gamma*N[i,t-1]`, and `trend` is a model for exponential growth,
+#' `N[i,t] = N[i,t-1]*gamma`, where `gamma` in this case represents the finite rate of increase.
+#' @param fix If "`omega`", `omega` is fixed at 1. If "`gamma`", `gamma` is fixed at 0.
 #' @param immigration Logical specifying whether immigration is included in the model
 #' @param iotaformula formula for the number of immigrants per site, per time step.
 #' @param starts Initial values for parameters
@@ -49,12 +43,12 @@
 #'  mod <- remMNO(~1, ~1, ~1, ~1, data=emf)
 #'  Nhat<- calcN(mod)
 #'
+#' @useDynLib unmarked
 #' @export
 #'
-
 remMNO <- function(lamformula, gamformula, omformula, detformula,
     data, mixture=c("P", "NB", "ZIP"), K,
-    dynamics=c("constant", "autoreg", "notrend", "trend", "ricker", "gompertz"),
+    dynamics=c("constant", "autoreg", "trend"),
     fix=c("none", "gamma", "omega"), immigration=FALSE, iotaformula = ~1,
     starts, method="BFGS", se=TRUE, ...) {
 
@@ -66,12 +60,8 @@ remMNO <- function(lamformula, gamformula, omformula, detformula,
   mixture <- match.arg(mixture)
   dynamics <- match.arg(dynamics)
 
-  if((identical(dynamics, "constant") || identical(dynamics, "notrend")) & immigration)
-    stop("You can not include immigration in the constant or notrend models")
-
-  if(identical(dynamics, "notrend") &
-   !identical(lamformula, omformula))
-    stop("lamformula and omformula must be identical for notrend model")
+  if((identical(dynamics, "constant") & immigration))
+    stop("You cannot include immigration in the constant model")
 
   fix <- match.arg(fix)
 
@@ -152,13 +142,6 @@ remMNO <- function(lamformula, gamformula, omformula, detformula,
     if(nGP > 1){
         stop("gamma covariates not allowed when fix==gamma")
     }else {
-        nGP <- 0
-        gamParms <- character(0)
-    }
-  } else if(identical(dynamics, "notrend")) {
-    if(nGP > 1){
-        stop("gamma covariates not allowed when dyamics==notrend")
-    } else {
         nGP <- 0
         gamParms <- character(0)
     }
@@ -243,10 +226,9 @@ remMNO <- function(lamformula, gamformula, omformula, detformula,
                     invlink = "exp", invlinkGrad = "exp")
   estimates <- list(state=lamEstimates)
 
-  gamName <- switch(dynamics, constant = "gamConst", autoreg = "gamAR",
-                              notrend = "", trend = "gamTrend",
-                              ricker="gamRicker", gompertz = "gamGomp")
-  if(!(identical(fix, "gamma") | identical(dynamics, "notrend"))){
+  gamName <- switch(dynamics, constant = "gamConst", autoreg = "gamAR", trend = "gamTrend")
+
+  if(!(identical(fix, "gamma"))){
     estimates$gamma <- list(name =
         ifelse(identical(dynamics, "constant") | identical(dynamics, "autoreg"),
         "Recruitment", "Growth Rate"), short.name = gamName,
@@ -256,26 +238,11 @@ remMNO <- function(lamformula, gamformula, omformula, detformula,
   }
 
   if(!(identical(fix, "omega") | identical(dynamics, "trend"))) {
-    if(identical(dynamics, "constant") | identical(dynamics, "autoreg") |
-       identical(dynamics, "notrend")){
         estimates$omega <- list(name="Apparent Survival",
-          short.name = "omega", estimates = ests[(nAP+nGP+1) :(nAP+nGP+nOP)],
-          covMat = as.matrix(covMat[(nAP+nGP+1) : (nAP+nGP+nOP),
-                                    (nAP+nGP+1) : (nAP+nGP+nOP)]),
-          invlink = "logistic", invlinkGrad = "logistic.grad")
-    } else if(identical(dynamics, "ricker")){
-        estimates$omega <- list(name="Carrying Capacity",
-          short.name = "omCarCap", estimates = ests[(nAP+nGP+1) :(nAP+nGP+nOP)],
-          covMat = as.matrix(covMat[(nAP+nGP+1) : (nAP+nGP+nOP),
-                            (nAP+nGP+1) : (nAP+nGP+nOP)]),
-          invlink = "exp", invlinkGrad = "exp")
-    } else{
-      estimates$omega <- list(name="Carrying Capacity",
-        short.name = "omCarCap", estimates = ests[(nAP+nGP+1) :(nAP+nGP+nOP)],
+        short.name = "omega", estimates = ests[(nAP+nGP+1) :(nAP+nGP+nOP)],
         covMat = as.matrix(covMat[(nAP+nGP+1) : (nAP+nGP+nOP),
-                                  (nAP+nGP+1) : (nAP+nGP+nOP)]),
-        invlink = "exp", invlinkGrad = "exp")
-    }
+                                    (nAP+nGP+1) : (nAP+nGP+nOP)]),
+        invlink = "logistic", invlinkGrad = "logistic.grad")
   }
 
   estimates$det <- list(name = "Detection", short.name = "p",

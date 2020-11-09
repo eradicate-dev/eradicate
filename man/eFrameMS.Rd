@@ -26,7 +26,7 @@ a \code{eFrameMS} holding data containing the response and
 }
 \description{
 \code{eFrameMS} creates an eFrameMS data object for use with multi-season
-occupancy models \code{occuMS} where sampling occurs over a number of
+occupancy models \code{occMS} where sampling occurs over a number of
 primary and secondary periods.
 }
 \examples{
