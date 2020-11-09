@@ -43,7 +43,6 @@
 #'  mod <- remMNO(~1, ~1, ~1, ~1, data=emf)
 #'  Nhat<- calcN(mod)
 #'
-#' @useDynLib unmarked
 #' @export
 #'
 remMNO <- function(lamformula, gamformula, omformula, detformula,

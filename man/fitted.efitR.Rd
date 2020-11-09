@@ -4,7 +4,7 @@
 \alias{fitted.efitR}
 \title{fitted}
 \usage{
-\method{fitted}{efitR}(obj, na.rm = TRUE)
+fitted.efitR(obj, na.rm = TRUE)
 }
 \arguments{
 \item{obj}{A fitted model object.}
