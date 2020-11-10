@@ -33,7 +33,6 @@
 #'  mod <- occMS(~1, ~1, ~1, ~1, data=emf)
 #'  Nhat<- calcN(mod)
 #'
-#' @useDynLib eradicate, .registration=TRUE
 #' @export
 #'
 occMS <- function(psiformula = ~ 1, gamformula = ~ 1, epsformula = ~ 1, detformula = ~ 1,
@@ -207,7 +206,7 @@ occuMS.fit <- function(psiformula, gamformula, epsformula, detformula, data, J,
             detVecs <- .Call("getDetVecs", y.arr, mp,
                              J.it[seq(from = t, to = length(J.it)-nY+t,
                                       by=nY)], t, K,
-                             PACKAGE = "eradicate")
+                             PACKAGE = "unmarked")
             psiSite <- psiSite * detVecs
             if(storeAlpha) alpha[,t,] <<- psiSite[,]
             if(t < nY) {
@@ -235,7 +234,7 @@ occuMS.fit <- function(psiformula, gamformula, epsformula, detformula, data, J,
                         mp <- V.arr[,,i,t,j] %*% detParams
                         detVecObs <- .Call("getSingleDetVec",
                                            y.arr[i,t,j], mp, K,
-                                           PACKAGE = "eradicate")
+                                           PACKAGE = "unmarked")
                         detVec <- detVec * detVecObs
                     }
                 }
