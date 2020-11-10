@@ -4,7 +4,7 @@
 \alias{vcov.efit}
 \title{vcov}
 \usage{
-vcov.efit(obj, type, ...)
+\method{vcov}{efit}(obj, type, ...)
 }
 \arguments{
 \item{obj}{A fitted model object.}

@@ -33,7 +33,6 @@
 #'  mod <- occMS(~1, ~1, ~1, ~1, data=emf)
 #'  Nhat<- calcN(mod)
 #'
-#' @useDynLib eradicate, .registration=TRUE
 #' @export
 #'
 occMS <- function(psiformula = ~ 1, gamformula = ~ 1, epsformula = ~ 1, detformula = ~ 1,
