@@ -413,8 +413,8 @@ gDetVecs<- function(y, mp, Ji, tin) {
 
     for(j in 0:(Ji[i+1]-1)) {
       yind<- i+t*M + j*M*nY + 1
-      mpind<- j**nDMP + t*nDMP*J + i*nDMP*J*nY + 1
-      if(!is.na(y[yind])) {
+      mpind<- j*nDMP + t*nDMP*J + i*nDMP*J*nY + 1
+      if((j >= 0) && !is.na(y[yind])) {
         detVec[dind:(dind+1)]<- gDetVec2(y[yind], detVec[dind:(dind+1)], mp[mpind])
       }
     }

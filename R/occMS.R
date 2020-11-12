@@ -178,10 +178,6 @@ occuMS.fit <- function(psiformula, gamformula, epsformula, detformula, data, J,
 
     y.itj <- as.numeric(t(y))
 
-    ## replace NA's with 99 before passing to C++
-    ## TODO: need better missing data passing mechanism (maybe NaN of Inf?)
-    #y.itj[is.na(y.itj)] <- 99
-    #V.itjk[is.na(V.itjk)] <- 9999
     # get ragged array indices
     y.it <- matrix(t(y), nY*M, J, byrow = TRUE)
     J.it <- rowSums(!is.na(y.it))
@@ -191,22 +187,14 @@ occuMS.fit <- function(psiformula, gamformula, epsformula, detformula, data, J,
 
     y.arr <- array(y.itj, c(J, nY, M))
     y.arr <- aperm(y.arr, c(3:1))
-    storage.mode(J.it) <- storage.mode(y.arr) <- storage.mode(K) <- "integer"
 
     alpha <- array(NA, c(K + 1, nY, M))
 
     forward <- function(detParms, phis, psis, storeAlpha = FALSE) {
-
         negloglike <- 0
         psiSite <- matrix(c(1-psis,psis), K + 1, M, byrow = TRUE)
-
         mp <- array(V.itjk %*% detParms, c(nDMP, J, nY, M))
         for(t in 1:nY) {
-            storage.mode(t) <- "integer"
-            #detVecs <- .Call("getDetVecs", y.arr, mp,
-            #                 J.it[seq(from = t, to = length(J.it)-nY+t,
-            #                          by=nY)], t, K,
-            #                 PACKAGE = "eradicate")
             detVecs <- gDetVecs(y.arr, mp, J.it[seq(from = t, to = length(J.it)-nY+t,
                                           by=nY)], t)
             psiSite <- psiSite * detVecs
@@ -234,9 +222,6 @@ occuMS.fit <- function(psiformula, gamformula, epsformula, detformula, data, J,
                 for (j in 1:J) {
                     if(!is.na(y.arr[i,t,j])) {
                         mp <- V.arr[,,i,t,j] %*% detParams
-                        #detVecObs <- .Call("getSingleDetVec",
-                        #                   y.arr[i,t,j], mp, K,
-                        #                  PACKAGE = "eradicate")
                         detVecObs <- gSingleDetVec(y.arr[i,t,j], mp)
                         detVec <- detVec * detVecObs
                     }
