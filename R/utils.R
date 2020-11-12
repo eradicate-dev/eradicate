@@ -377,3 +377,48 @@ make_encounters<- function(sites, events){
   ymat
 }
 
+## Helper functions for occMS
+
+
+gDetVec2<- function(y, detVec, mp) {
+  if(y==0) {
+    detVec[2]<- detVec[2] * (1/(1 + exp(mp)))
+  } else {
+    detVec[1]<- 0
+    detVec[2]<- detVec[2] * (exp(mp)/(1 + exp(mp)))
+  }
+  return(detVec)
+}
+
+gSingleDetVec<- function(y, mp) {
+  K<- 2
+  detVec<- rep(1, K)
+  detVec<- gDetVec2(y, detVec, mp)
+  return(detVec)
+}
+
+
+gDetVecs<- function(y, mp, Ji, tin) {
+  ndim<- dim(mp)
+  nDMP<- ndim[1]
+  J<- ndim[2]
+  nY<- ndim[3]
+  M<- ndim[4]
+  K<- 2
+  t<- tin - 1
+  detVec<- rep(0, K*M)
+  dind<- 1
+  for(i in 0:(M-1)) {
+    detVec[dind:(dind+1)]<- 1
+
+    for(j in 0:(Ji[i+1]-1)) {
+      yind<- i+t*M + j*M*nY + 1
+      mpind<- j**nDMP + t*nDMP*J + i*nDMP*J*nY + 1
+      if(!is.na(y[yind])) {
+        detVec[dind:(dind+1)]<- gDetVec2(y[yind], detVec[dind:(dind+1)], mp[mpind])
+      }
+    }
+    dind<- dind + K
+  }
+  return(detVec)
+}

@@ -66,3 +66,14 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+
+static const R_CallMethodDef CallEntries[] = {
+    {"_eradicate_get_lik_trans", (DL_FUNC) &_eradicate_get_lik_trans, 2},
+    {"_eradicate_nll_multmixOpen", (DL_FUNC) &_eradicate_nll_multmixOpen, 38},
+    {NULL, NULL, 0}
+};
+
+RcppExport void R_init_eradicate(DllInfo *dll) {
+    R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
+    R_useDynamicSymbols(dll, FALSE);
+}
