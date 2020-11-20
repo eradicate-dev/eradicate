@@ -81,7 +81,7 @@ summary(fit)
 
 ```
 
-The model summary indicates that all parameters are highly significant.  The parameter for the effect of `pgrass` on abundance indicates that rabbit abundance is around 6 times higher on grassland than forest habitat. The estimate of recruitment was `r round(exp(coef.efit(fit, "gamma")),3)` rabbits per primary session and the estimate of apparent survival was `r round(plogis(coef.efit(fit,"omega")),3)`.  Detection probability was `r round(plogis(coef.efit(fit,"det")),3)` per sampling occasion.  Assuming that each trapping location is independent, we can get an estimate of the total initial population size using `calcN()`.
+The model summary indicates that all parameters are highly significant.  The parameter for the effect of `pgrass` on abundance indicates that rabbit abundance is around 6 times higher on grassland than forest habitat. The estimate of recruitment was `r round(exp(coef(fit, "gamma")),3)` rabbits per primary session and the estimate of apparent survival was `r round(plogis(coef(fit,"omega")),3)`.  Detection probability was `r round(plogis(coef(fit,"det")),3)` per sampling occasion.  Assuming that each trapping location is independent, we can get an estimate of the total initial population size using `calcN()`.
 
 ```{r}
 
@@ -101,4 +101,4 @@ apply(Nhat,2,sum)  # Total population size for each trapping session (= primary 
 
 ```
 
-which indicates there are around 12 rabbits remaining at the start of the last trapping session. 
+which indicates there are around 12 rabbits remaining at the start of the last trapping session. Since 7 rabbits were subsequently removed during the last session, the population of rabbits remaining was 5.

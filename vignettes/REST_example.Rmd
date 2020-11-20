@@ -116,7 +116,7 @@ mod<- REST(~EVC, data=emf)
 summary(mod)
 ```
 
-The staying time estimated from the model `r round(1/exp(coef.efit(mod, "stay")),1)` compares well with average staying time from the data `r round(mean(stay),1)`.  The parameters for density suggest that hog deer density was highest in the `forest_woodlands` EVC and lowest in the `coastal_scrub` EVC.  We can calculate the density expected in each EVC predicted by the model as follows
+The staying time estimated from the model `r round(1/exp(coef(mod, "stay")),1)` compares well with average staying time from the data `r round(mean(stay),1)`.  The parameters for density suggest that hog deer density was highest in the `forest_woodlands` EVC and lowest in the `heathlands` EVC.  We can calculate the density expected in each EVC predicted by the model as follows
 
 ```{r}
 newdat<- data.frame(EVC = factor(1:5, labels = c("coastal_scrub","heathlands",
