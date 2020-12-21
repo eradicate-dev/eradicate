@@ -6,6 +6,7 @@
 \alias{calcN.efitM}
 \alias{calcN.efitR}
 \alias{calcN.efitGP}
+\alias{calcN.efitMNO}
 \title{calcN}
 \usage{
 calcN(obj, ...)
@@ -23,6 +24,8 @@ calcN(obj, ...)
   nboot = 500,
   ...
 )
+
+\method{calcN}{efitMNO}(obj, newdata, off.set = NULL, CI.level = 0.95, npost = 500, ...)
 }
 \arguments{
 \item{obj}{A fitted model object.}
