@@ -409,6 +409,82 @@ calcN.efitGP<- function(obj, CI.level=0.95, CI.calc = c("norm","lnorm","boot"), 
   list(Nhat=bigN, Nresid=littleN)
 }
 
+#' @rdname calcN
+#' @export
+calcN.efitMNO<- function(obj, newdata, off.set=NULL, CI.level=0.95, npost=500, ...) {
+  if(missing(newdata) || is.null(newdata)) {
+    origdata <- obj$data
+    M <- numSites(origdata)
+    if(is.null(siteCovs(origdata))) {
+      newdata <- data.frame(Intercept = rep(1, M))
+    } else {
+      newdata <- siteCovs(origdata)
+    }
+  }
+  tot.rem<- sum(obj$data$y, na.rm=TRUE)
+  numPrimary<- fit$data$numPrimary
+  design <- getDesign(obj, newdata)
+  X<- design$X
+  M<- nrow(X)
+  sites<- design$retained.sites
+  mixture<- obj$mixture
+  invlink = obj$estimates$state$invlink
+  invlinkGrad = obj$estimates$state$invlinkGrad
+  estimates<- coef(obj, "state")
+  covMat<- vcov(obj, "state")
+  if(mixture == "ZIP") {
+    logit.psi<- coef(obj, "zeroinfl")
+    logit.psi.var<- vcov(obj, "zeroinfl")
+    psi<- do.call(obj$estimates$zeroinfl$invlink, list(logit.psi))
+    psi.grad<- 1/(exp(-logit.psi) + 1) # derivative of log(psi)
+    psi.var<- psi.grad^2 * logit.psi.var
+  }
+  if(ncol(X) != length(estimates)) stop("error - wrong number of covariates")
+  if (is.null(off.set)) off.set <- rep(1, M)
+  else if(length(off.set) == 1) off.set<- rep(off.set, M)
+  # cellwise estimates
+  if(mixture == "ZIP") {
+    eta <- as.vector(X %*% estimates) + log(1-psi)
+    vc <- rowSums((X %*% covMat) * X) + as.vector(rep(psi.var, M))
+    ests<- do.call(invlink,list(eta))
+    grad <- do.call(invlinkGrad,list(eta))
+    v<- (grad * off.set)^2 * vc
+    cellpreds<- data.frame(N = ests * off.set, se = sqrt(v), site = sites)
+  }
+  else{
+    eta <- as.vector(X %*% estimates)
+    vc <- rowSums((X %*% covMat) * X) # equivalent to diag(X %*% covMat %*% t(X))
+    ests<- do.call(invlink,list(eta))
+    grad <- do.call(invlinkGrad,list(eta))
+    v<- (grad * off.set)^2 * vc
+    cellpreds<- data.frame(N = ests * off.set, se = sqrt(v), site = sites)
+  }
+  # overall estimate
+  Nhat<- off.set %*% ests
+  gradN<- off.set %*% (grad * X)
+  varN<- gradN %*% covMat %*% t(gradN)
+  seN<- sqrt(varN)
+  cv<- sqrt(varN)/Nhat
+  z <- exp(qnorm((1-CI.level)/2) * sqrt(log(1+cv^2)))
+  lwr<- Nhat*z
+  upr<- Nhat/z
+  # Residual estimate (random effects)
+  re<- raneffects(obj)
+  pp<- postSamples(re, npost)
+  pp<- pp[,numPrimary,]
+  Nr<- apply(pp, 2, sum)
+  Nresid<- mean(Nr)
+  seR<- sd(Nr)
+  lwr1<- quantile(Nr, (1-CI.level)/2)
+  upr1<- quantile(Nr, 1-((1-CI.level)/2))
+  bigN<- data.frame(N=round(Nhat,1),se=round(seN,1), lcl=round(lwr,1), ucl=round(upr,1))
+  littleN<- data.frame(N = round(Nresid,1),se=round(seR,1), lcl=round(lwr1,1), ucl=round(upr1,1))
+  row.names(bigN)<- "Total"
+  row.names(littleN)<- "Residual"
+  list(cellpreds=cellpreds, Nhat=bigN, Nresid=littleN)
+}
+
+#-------------------------------------------
 #' @rdname se
 #' @export
 se.efit<- function(obj, type, ...){

@@ -5,7 +5,7 @@ Version: 0.2.0
 Author: Dave Ramsey
 Maintainer: Dave Ramsey <david.ramsey@delwp.vic.gov.au>
 Imports: 
-    Rcpp,
+    Rcpp (>= 0.8.0),
     Distance
 Description: A package for the analysis of animal abundance using data from common surveys methods. Most functions are a port of models in the 'unmarked' package with some new additions.
 License: GPL (>=3)

@@ -223,7 +223,8 @@ occuMS.fit <- function(psiformula, gamformula, epsformula, detformula, data, J,
                     if(!is.na(y.arr[i,t,j])) {
                         mp <- V.arr[,,i,t,j] %*% detParams
                         detVecObs <- gSingleDetVec(y.arr[i,t,j], mp)
-                        detVec <- detVec * detVecObs
+
+                                                detVec <- detVec * detVecObs
                     }
                 }
                 if (t > 1)

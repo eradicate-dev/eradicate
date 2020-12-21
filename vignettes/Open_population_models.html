@@ -14,16 +14,19 @@
 
 <title>Models for assessing eradication progress for open populations</title>
 
-<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
-// be compatible with the behavior of Pandoc < 2.8).
-document.addEventListener('DOMContentLoaded', function(e) {
-  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
-  var i, h, a;
-  for (i = 0; i < hs.length; i++) {
-    h = hs[i];
-    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
-    a = h.attributes;
-    while (a.length > 0) h.removeAttribute(a[0].name);
+<script>// Hide empty <a> tag within highlighted CodeBlock for screen reader accessibility (see https://github.com/jgm/pandoc/issues/6352#issuecomment-626106786) -->
+// v0.0.1
+// Written by JooYoung Seo (jooyoung@psu.edu) and Atsushi Yasumoto on June 1st, 2020.
+
+document.addEventListener('DOMContentLoaded', function() {
+  const codeList = document.getElementsByClassName("sourceCode");
+  for (var i = 0; i < codeList.length; i++) {
+    var linkList = codeList[i].getElementsByTagName('a');
+    for (var j = 0; j < linkList.length; j++) {
+      if (linkList[j].innerHTML === "") {
+        linkList[j].setAttribute('aria-hidden', 'true');
+      }
+    }
   }
 });
 </script>
@@ -79,18 +82,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <style type="text/css">code{white-space: pre;}</style>
 <style type="text/css" data-origin="pandoc">
-pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
-pre > code.sourceCode > span:empty { height: 1.2em; }
+code.sourceCode > span { display: inline-block; line-height: 1.25; }
 code.sourceCode > span { color: inherit; text-decoration: inherit; }
+code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode { white-space: pre; position: relative; }
 div.sourceCode { margin: 1em 0; }
 pre.sourceCode { margin: 0; }
 @media screen {
 div.sourceCode { overflow: auto; }
 }
 @media print {
-pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+code.sourceCode { white-space: pre-wrap; }
+code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
 }
 pre.numberSource code
   { counter-reset: source-line 0; }
@@ -110,7 +114,7 @@ pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-le
 div.sourceCode
   {   }
 @media screen {
-pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
 code span.al { color: #ff0000; font-weight: bold; } /* Alert */
 code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
@@ -369,134 +373,134 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <p>Here we illustrate the use of ‘open population models’ in the <code>eradicate</code> package that can be applied to removal data to assess eradication progress for populations that might also be subject to demographic changes during the eradication phase. Here we assume that eradication activities typically occur in bouts or ‘sessions’ of control separated by periods where no control occurs. The length of time between control sessions can vary but must be known. Control activities within a session must be intense enough to reduce population abundance during the session, as would typically be assumed for the equivalent closed population removal type models. However, in between control sessions, the population may increase or decrease through other demographic processes. Hence, open population models attempt to estimate the extent of these population changes between sessions. Typically, this is undertaken by fitting a simple model for the dynamics of the population to the removal data. These models typically have parameters for the rate of population change due to births/deaths/immigration/emmigration that could occur between each bout of control activities.</p>
 <p>We illustrate these models using an example of the eradication of a hypothetical population of rabbits from San Nicolas island, California. In this example, rabbits were removed over the course of two years (or two breeding seasons) using trapping. Hence, during the eradication program, the population was also changing due to natural demographic processes of births and natural mortality. There was also the possibility that rabbits could potentially move between trapping locations.</p>
 <p>Since this is a simulated dataset, we know exactly what the population size was before the eradication program began (86 cats). Before we start we load various the packages necessary for our analysis …</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(eradicate)</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(sf)</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(raster)</span></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="kw">library</span>(eradicate)</span>
+<span id="cb1-2"><a href="#cb1-2"></a><span class="kw">library</span>(sf)</span>
+<span id="cb1-3"><a href="#cb1-3"></a><span class="kw">library</span>(raster)</span></code></pre></div>
 <p>… and then read in the shapefile of the region and a raster of habitat values. The raster has a resolution (cell size) of 100 m indicating the presence of grassland or forest.</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>region<span class="ot">&lt;-</span> <span class="fu">read_sf</span>(<span class="fu">system.file</span>(<span class="st">&quot;extdata&quot;</span>, <span class="st">&quot;shape/san_nic_region.shp&quot;</span>, <span class="at">package=</span><span class="st">&quot;eradicate&quot;</span>))</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>habitat<span class="ot">&lt;-</span> <span class="fu">raster</span>(<span class="fu">system.file</span>(<span class="st">&quot;extdata&quot;</span>, <span class="st">&quot;san_nic_habitat.tif&quot;</span>, <span class="at">package=</span><span class="st">&quot;eradicate&quot;</span>))</span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a></span>
+<span id="cb2-2"><a href="#cb2-2"></a>region&lt;-<span class="st"> </span><span class="kw">read_sf</span>(<span class="kw">system.file</span>(<span class="st">&quot;extdata&quot;</span>, <span class="st">&quot;shape/san_nic_region.shp&quot;</span>, <span class="dt">package=</span><span class="st">&quot;eradicate&quot;</span>))</span>
+<span id="cb2-3"><a href="#cb2-3"></a>habitat&lt;-<span class="st"> </span><span class="kw">raster</span>(<span class="kw">system.file</span>(<span class="st">&quot;extdata&quot;</span>, <span class="st">&quot;san_nic_habitat.tif&quot;</span>, <span class="dt">package=</span><span class="st">&quot;eradicate&quot;</span>))</span></code></pre></div>
 </div>
 <div id="rabbit-eradication" class="section level2">
 <h2>Rabbit eradication</h2>
 <p>We undertake a simulated eradication of rabbits using a grid of 100 traps set across the island. Traps were set a minimum of 500m apart, which was thought to be similar to the home range diameter of rabbits on the island. Simulated trapping was undertaken every three months over three nights at each trapping location. A total of eight trapping sessions were undertaken over a two year period. Trap locations and associated removal data are located in the example dataset <code>san_nic_open</code>.</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>traps<span class="ot">&lt;-</span> san_nic_open<span class="sc">$</span>traps</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>y<span class="ot">&lt;-</span> san_nic_open<span class="sc">$</span>removals</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(y)</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   1.1 1.2 1.3 2.1 2.2 2.3 3.1 3.2 3.3 4.1 4.2 4.3 5.1 5.2 5.3 6.1 6.2 6.3 7.1</span></span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1   4   2   3   0   2   3   0   0   1   0   0   0   2   0   1   0   0   0   0</span></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2   5   0   2   2   0   0   1   0   0   0   0   0   0   0   1   0   1   0   1</span></span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3   4   1   1   1   1   1   0   0   0   0   0   0   1   0   0   2   0   1   0</span></span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4   1   1   0   0   1   1   1   1   0   1   1   1   0   0   0   0   0   0   0</span></span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 5   2   4   2   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0</span></span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 6   4   1   2   7   3   0   0   0   0   0   0   0   0   0   0   0   0   0   0</span></span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   7.2 7.3 8.1 8.2 8.3</span></span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1   0   0   0   0   0</span></span>
-<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2   1   0   0   0   1</span></span>
-<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3   0   0   0   0   0</span></span>
-<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4   0   0   0   0   0</span></span>
-<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 5   0   0   0   0   0</span></span>
-<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 6   0   0   0   0   0</span></span>
-<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(habitat, <span class="at">axes =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(<span class="fu">st_geometry</span>(region), <span class="at">add=</span><span class="cn">TRUE</span>)</span>
-<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a><span class="fu">points</span>(traps, <span class="at">pch=</span><span class="dv">16</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a>traps&lt;-<span class="st"> </span>san_nic_open<span class="op">$</span>traps</span>
+<span id="cb3-2"><a href="#cb3-2"></a>y&lt;-<span class="st"> </span>san_nic_open<span class="op">$</span>removals</span>
+<span id="cb3-3"><a href="#cb3-3"></a><span class="kw">head</span>(y)</span>
+<span id="cb3-4"><a href="#cb3-4"></a><span class="co">#&gt;   1.1 1.2 1.3 2.1 2.2 2.3 3.1 3.2 3.3 4.1 4.2 4.3 5.1 5.2 5.3 6.1 6.2 6.3 7.1</span></span>
+<span id="cb3-5"><a href="#cb3-5"></a><span class="co">#&gt; 1   4   2   3   0   2   3   0   0   1   0   0   0   2   0   1   0   0   0   0</span></span>
+<span id="cb3-6"><a href="#cb3-6"></a><span class="co">#&gt; 2   5   0   2   2   0   0   1   0   0   0   0   0   0   0   1   0   1   0   1</span></span>
+<span id="cb3-7"><a href="#cb3-7"></a><span class="co">#&gt; 3   4   1   1   1   1   1   0   0   0   0   0   0   1   0   0   2   0   1   0</span></span>
+<span id="cb3-8"><a href="#cb3-8"></a><span class="co">#&gt; 4   1   1   0   0   1   1   1   1   0   1   1   1   0   0   0   0   0   0   0</span></span>
+<span id="cb3-9"><a href="#cb3-9"></a><span class="co">#&gt; 5   2   4   2   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0   0</span></span>
+<span id="cb3-10"><a href="#cb3-10"></a><span class="co">#&gt; 6   4   1   2   7   3   0   0   0   0   0   0   0   0   0   0   0   0   0   0</span></span>
+<span id="cb3-11"><a href="#cb3-11"></a><span class="co">#&gt;   7.2 7.3 8.1 8.2 8.3</span></span>
+<span id="cb3-12"><a href="#cb3-12"></a><span class="co">#&gt; 1   0   0   0   0   0</span></span>
+<span id="cb3-13"><a href="#cb3-13"></a><span class="co">#&gt; 2   1   0   0   0   1</span></span>
+<span id="cb3-14"><a href="#cb3-14"></a><span class="co">#&gt; 3   0   0   0   0   0</span></span>
+<span id="cb3-15"><a href="#cb3-15"></a><span class="co">#&gt; 4   0   0   0   0   0</span></span>
+<span id="cb3-16"><a href="#cb3-16"></a><span class="co">#&gt; 5   0   0   0   0   0</span></span>
+<span id="cb3-17"><a href="#cb3-17"></a><span class="co">#&gt; 6   0   0   0   0   0</span></span>
+<span id="cb3-18"><a href="#cb3-18"></a></span>
+<span id="cb3-19"><a href="#cb3-19"></a><span class="kw">plot</span>(habitat, <span class="dt">axes =</span> <span class="ot">FALSE</span>)</span>
+<span id="cb3-20"><a href="#cb3-20"></a><span class="kw">plot</span>(<span class="kw">st_geometry</span>(region), <span class="dt">add=</span><span class="ot">TRUE</span>)</span>
+<span id="cb3-21"><a href="#cb3-21"></a><span class="kw">points</span>(traps, <span class="dt">pch=</span><span class="dv">16</span>)</span></code></pre></div>
 <p><img src="data:image/png;base64,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" /><!-- --></p>
 <p>The removal data <code>y</code> are organised in data frame with sites in rows and removals for each session in columns. Hence the first three columns contain the removal data for the first session, with removals for the second session contained in columns 4 - 6 and so on. Each session <em>must</em> have the same number of columns so the total number of columns should be <code>T</code> x <code>J</code> where <code>T</code> is the number of sessions and <code>J</code> is the maximum number of nights (or removal periods) that occurred in a session. Since our data consisted trapping from 8 sessions with a maximum of 3 nights per session the total number of columns is 24.</p>
 <p>Since rabbits prefer grassland over forest, we extract that information for each trap from <code>habitat</code> for use in further modelling. Cells in the habitat raster took values of either 1 (grassland) or 0 (forest). Rather than just extract the habitat value from the focal cell containing each trap location, we get the average of all cells within 500 m of the focal cell.</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>habvals<span class="ot">&lt;-</span> <span class="fu">extract</span>(habitat, traps, <span class="at">buffer=</span><span class="dv">500</span>)</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>pgrass<span class="ot">&lt;-</span> <span class="fu">sapply</span>(habvals, <span class="cf">function</span>(x) <span class="fu">mean</span>(x, <span class="at">na.rm=</span>T))</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>site.data<span class="ot">&lt;-</span> <span class="fu">cbind</span>(traps, pgrass)</span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a>habvals&lt;-<span class="st"> </span><span class="kw">extract</span>(habitat, traps, <span class="dt">buffer=</span><span class="dv">500</span>)</span>
+<span id="cb4-2"><a href="#cb4-2"></a>pgrass&lt;-<span class="st"> </span><span class="kw">sapply</span>(habvals, <span class="cf">function</span>(x) <span class="kw">mean</span>(x, <span class="dt">na.rm=</span>T))</span>
+<span id="cb4-3"><a href="#cb4-3"></a>site.data&lt;-<span class="st"> </span><span class="kw">cbind</span>(traps, pgrass)</span></code></pre></div>
 <p>We are now ready to fit some models! The first step in the analysis is to collate the removal data and the associated covariate information (i.e. habitat) into a custom data class using <code>eFrameMNO()</code>. As part of this we also need to specify the number of trapping sessions using the <code>numPrimary</code> argument. See <code>?eFrameMNO</code> for more info on organizing the data necessary to use the models in <code>eradicate</code>.</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>emf<span class="ot">&lt;-</span> <span class="fu">eFrameMNO</span>(<span class="at">y=</span>y, <span class="at">numPrimary =</span> <span class="dv">8</span>, <span class="at">siteCovs =</span> site.data)</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(emf)</span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; eFrameMNO Object</span></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Number of primary periods: 8 </span></span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Maximum number of secondary periods: 3 </span></span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Number of removals per period: </span></span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;     Period Removed</span></span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1.1      1     495</span></span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1.2      2     387</span></span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1.3      3     266</span></span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2.1      4     228</span></span>
-<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2.2      5     176</span></span>
-<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2.3      6     130</span></span>
-<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3.1      7     118</span></span>
-<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3.2      8      75</span></span>
-<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3.3      9      58</span></span>
-<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4.1     10      52</span></span>
-<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4.2     11      35</span></span>
-<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4.3     12      28</span></span>
-<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 5.1     13      27</span></span>
-<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 5.2     14      10</span></span>
-<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 5.3     15       9</span></span>
-<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 6.1     16      15</span></span>
-<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 6.2     17       9</span></span>
-<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 6.3     18       7</span></span>
-<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 7.1     19       4</span></span>
-<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 7.2     20       5</span></span>
-<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 7.3     21       7</span></span>
-<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 8.1     22       3</span></span>
-<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 8.2     23       1</span></span>
-<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 8.3     24       3</span></span>
-<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Total removed: 2148 </span></span>
-<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Sites with at least one detection: 100 </span></span>
-<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Tabulation of y observations:</span></span>
-<span id="cb5-41"><a href="#cb5-41" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    0    1    2    3    4    5    6    7    8    9   10   11   12   13   14   15 </span></span>
-<span id="cb5-42"><a href="#cb5-42" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1605  321  181   93   75   37   28   19   14   11    4    4    2    4    1    1 </span></span>
-<span id="cb5-43"><a href="#cb5-43" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb5-44"><a href="#cb5-44" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  monitoring sites</span></span>
-<span id="cb5-45"><a href="#cb5-45" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Tabulation of monitoring observations:&lt; table of extent 0 &gt;</span></span>
-<span id="cb5-46"><a href="#cb5-46" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb5-47"><a href="#cb5-47" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Site-level covariates:</span></span>
-<span id="cb5-48"><a href="#cb5-48" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;        x                 y              pgrass      </span></span>
-<span id="cb5-49"><a href="#cb5-49" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  Min.   :1853114   Min.   :469872   Min.   :0.0000  </span></span>
-<span id="cb5-50"><a href="#cb5-50" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  1st Qu.:1856651   1st Qu.:471971   1st Qu.:0.2644  </span></span>
-<span id="cb5-51"><a href="#cb5-51" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  Median :1859026   Median :473202   Median :0.6241  </span></span>
-<span id="cb5-52"><a href="#cb5-52" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  Mean   :1859236   Mean   :473313   Mean   :0.5377  </span></span>
-<span id="cb5-53"><a href="#cb5-53" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  3rd Qu.:1861813   3rd Qu.:474932   3rd Qu.:0.7957  </span></span>
-<span id="cb5-54"><a href="#cb5-54" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  Max.   :1866030   Max.   :476950   Max.   :1.0000</span></span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a>emf&lt;-<span class="st"> </span><span class="kw">eFrameMNO</span>(<span class="dt">y=</span>y, <span class="dt">numPrimary =</span> <span class="dv">8</span>, <span class="dt">siteCovs =</span> site.data)</span>
+<span id="cb5-2"><a href="#cb5-2"></a><span class="kw">summary</span>(emf)</span>
+<span id="cb5-3"><a href="#cb5-3"></a><span class="co">#&gt; eFrameMNO Object</span></span>
+<span id="cb5-4"><a href="#cb5-4"></a><span class="co">#&gt; </span></span>
+<span id="cb5-5"><a href="#cb5-5"></a><span class="co">#&gt; Number of primary periods: 8 </span></span>
+<span id="cb5-6"><a href="#cb5-6"></a><span class="co">#&gt; </span></span>
+<span id="cb5-7"><a href="#cb5-7"></a><span class="co">#&gt; Maximum number of secondary periods: 3 </span></span>
+<span id="cb5-8"><a href="#cb5-8"></a><span class="co">#&gt; </span></span>
+<span id="cb5-9"><a href="#cb5-9"></a><span class="co">#&gt; Number of removals per period: </span></span>
+<span id="cb5-10"><a href="#cb5-10"></a><span class="co">#&gt;     Period Removed</span></span>
+<span id="cb5-11"><a href="#cb5-11"></a><span class="co">#&gt; 1.1      1     495</span></span>
+<span id="cb5-12"><a href="#cb5-12"></a><span class="co">#&gt; 1.2      2     387</span></span>
+<span id="cb5-13"><a href="#cb5-13"></a><span class="co">#&gt; 1.3      3     266</span></span>
+<span id="cb5-14"><a href="#cb5-14"></a><span class="co">#&gt; 2.1      4     228</span></span>
+<span id="cb5-15"><a href="#cb5-15"></a><span class="co">#&gt; 2.2      5     176</span></span>
+<span id="cb5-16"><a href="#cb5-16"></a><span class="co">#&gt; 2.3      6     130</span></span>
+<span id="cb5-17"><a href="#cb5-17"></a><span class="co">#&gt; 3.1      7     118</span></span>
+<span id="cb5-18"><a href="#cb5-18"></a><span class="co">#&gt; 3.2      8      75</span></span>
+<span id="cb5-19"><a href="#cb5-19"></a><span class="co">#&gt; 3.3      9      58</span></span>
+<span id="cb5-20"><a href="#cb5-20"></a><span class="co">#&gt; 4.1     10      52</span></span>
+<span id="cb5-21"><a href="#cb5-21"></a><span class="co">#&gt; 4.2     11      35</span></span>
+<span id="cb5-22"><a href="#cb5-22"></a><span class="co">#&gt; 4.3     12      28</span></span>
+<span id="cb5-23"><a href="#cb5-23"></a><span class="co">#&gt; 5.1     13      27</span></span>
+<span id="cb5-24"><a href="#cb5-24"></a><span class="co">#&gt; 5.2     14      10</span></span>
+<span id="cb5-25"><a href="#cb5-25"></a><span class="co">#&gt; 5.3     15       9</span></span>
+<span id="cb5-26"><a href="#cb5-26"></a><span class="co">#&gt; 6.1     16      15</span></span>
+<span id="cb5-27"><a href="#cb5-27"></a><span class="co">#&gt; 6.2     17       9</span></span>
+<span id="cb5-28"><a href="#cb5-28"></a><span class="co">#&gt; 6.3     18       7</span></span>
+<span id="cb5-29"><a href="#cb5-29"></a><span class="co">#&gt; 7.1     19       4</span></span>
+<span id="cb5-30"><a href="#cb5-30"></a><span class="co">#&gt; 7.2     20       5</span></span>
+<span id="cb5-31"><a href="#cb5-31"></a><span class="co">#&gt; 7.3     21       7</span></span>
+<span id="cb5-32"><a href="#cb5-32"></a><span class="co">#&gt; 8.1     22       3</span></span>
+<span id="cb5-33"><a href="#cb5-33"></a><span class="co">#&gt; 8.2     23       1</span></span>
+<span id="cb5-34"><a href="#cb5-34"></a><span class="co">#&gt; 8.3     24       3</span></span>
+<span id="cb5-35"><a href="#cb5-35"></a><span class="co">#&gt; </span></span>
+<span id="cb5-36"><a href="#cb5-36"></a><span class="co">#&gt; Total removed: 2148 </span></span>
+<span id="cb5-37"><a href="#cb5-37"></a><span class="co">#&gt; </span></span>
+<span id="cb5-38"><a href="#cb5-38"></a><span class="co">#&gt; Sites with at least one detection: 100 </span></span>
+<span id="cb5-39"><a href="#cb5-39"></a><span class="co">#&gt; </span></span>
+<span id="cb5-40"><a href="#cb5-40"></a><span class="co">#&gt; Tabulation of y observations:</span></span>
+<span id="cb5-41"><a href="#cb5-41"></a><span class="co">#&gt;    0    1    2    3    4    5    6    7    8    9   10   11   12   13   14   15 </span></span>
+<span id="cb5-42"><a href="#cb5-42"></a><span class="co">#&gt; 1605  321  181   93   75   37   28   19   14   11    4    4    2    4    1    1 </span></span>
+<span id="cb5-43"><a href="#cb5-43"></a><span class="co">#&gt; </span></span>
+<span id="cb5-44"><a href="#cb5-44"></a><span class="co">#&gt;  monitoring sites</span></span>
+<span id="cb5-45"><a href="#cb5-45"></a><span class="co">#&gt; Tabulation of monitoring observations:&lt; table of extent 0 &gt;</span></span>
+<span id="cb5-46"><a href="#cb5-46"></a><span class="co">#&gt; </span></span>
+<span id="cb5-47"><a href="#cb5-47"></a><span class="co">#&gt; Site-level covariates:</span></span>
+<span id="cb5-48"><a href="#cb5-48"></a><span class="co">#&gt;        x                 y              pgrass      </span></span>
+<span id="cb5-49"><a href="#cb5-49"></a><span class="co">#&gt;  Min.   :1853114   Min.   :469872   Min.   :0.0000  </span></span>
+<span id="cb5-50"><a href="#cb5-50"></a><span class="co">#&gt;  1st Qu.:1856651   1st Qu.:471971   1st Qu.:0.2644  </span></span>
+<span id="cb5-51"><a href="#cb5-51"></a><span class="co">#&gt;  Median :1859026   Median :473202   Median :0.6241  </span></span>
+<span id="cb5-52"><a href="#cb5-52"></a><span class="co">#&gt;  Mean   :1859236   Mean   :473313   Mean   :0.5377  </span></span>
+<span id="cb5-53"><a href="#cb5-53"></a><span class="co">#&gt;  3rd Qu.:1861813   3rd Qu.:474932   3rd Qu.:0.7957  </span></span>
+<span id="cb5-54"><a href="#cb5-54"></a><span class="co">#&gt;  Max.   :1866030   Max.   :476950   Max.   :1.0000</span></span></code></pre></div>
 <p>The analysis of removal data from open populations is accomplished with the function <code>remMNO()</code> (short for removal MultiNomial Open). The first four arguments of this function are used to specify the model. The first argument <code>lamformula</code> is used for specifying the model for initial abundance <code>lambda</code>. The forth argument <code>detformula</code> is used for specifying the model for detection or capture. In addition to these parameters, this model also has two parameters, <code>gamma</code> and <code>omega</code> for specifying the dynamics of the population, with models for these parameters specified with <code>gamformula</code> and <code>omformula</code>, respectively. The parameter <code>gamma</code> governs the recruitment process (additions) while <code>omega</code> governs the survival process (losses). There are three possible models that use these parameters in different ways: <code>constant</code>, where recruitment and survival are constant (and independent) over time; <code>autoreg</code>, where recruitment at time <code>t</code> is dependent on the site abundance at time <code>t-1</code> and <code>trend</code>, which models the dynamics as an exponential trend model where <code>N[t] = gamma*N[t-1]</code>. We start with the default model <code>constant</code> with initial abundance dependent on the covariate <code>pgrass</code> for the proportion of grassland at the site.</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">remMNO</span>(<span class="sc">~</span>pgrass, <span class="sc">~</span><span class="dv">1</span>, <span class="sc">~</span><span class="dv">1</span>, <span class="sc">~</span><span class="dv">1</span>, <span class="at">K=</span><span class="dv">100</span>, <span class="at">data=</span>emf, <span class="at">dynamics=</span><span class="st">&quot;constant&quot;</span>)</span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(fit)</span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Abundance (log-scale):</span></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;             Estimate     SE    z  P(&gt;|z|)</span></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; (Intercept)     2.11 0.1012 20.8 2.91e-96</span></span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; pgrass          1.78 0.0999 17.8 4.74e-71</span></span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   </span></span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Recruitment (log-scale):</span></span>
-<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;             Estimate    SE     z  P(&gt;|z|)</span></span>
-<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; (Intercept)    -2.97 0.521 -5.71 1.16e-08</span></span>
-<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   </span></span>
-<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Apparent Survival (logit-scale):</span></span>
-<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;             Estimate     SE     z  P(&gt;|z|)</span></span>
-<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; (Intercept)   -0.182 0.0452 -4.02 5.79e-05</span></span>
-<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   </span></span>
-<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Detection (logit-scale):</span></span>
-<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;             Estimate    SE     z  P(&gt;|z|)</span></span>
-<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; (Intercept)    -1.44 0.114 -12.7 7.37e-37</span></span>
-<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a></span>
+<span id="cb6-2"><a href="#cb6-2"></a>fit &lt;-<span class="st"> </span><span class="kw">remMNO</span>(<span class="op">~</span>pgrass, <span class="op">~</span><span class="dv">1</span>, <span class="op">~</span><span class="dv">1</span>, <span class="op">~</span><span class="dv">1</span>, <span class="dt">K=</span><span class="dv">100</span>, <span class="dt">data=</span>emf, <span class="dt">dynamics=</span><span class="st">&quot;constant&quot;</span>)</span>
+<span id="cb6-3"><a href="#cb6-3"></a><span class="kw">summary</span>(fit)</span>
+<span id="cb6-4"><a href="#cb6-4"></a><span class="co">#&gt; Abundance (log-scale):</span></span>
+<span id="cb6-5"><a href="#cb6-5"></a><span class="co">#&gt;             Estimate     SE    z  P(&gt;|z|)</span></span>
+<span id="cb6-6"><a href="#cb6-6"></a><span class="co">#&gt; (Intercept)     2.11 0.1012 20.8 2.91e-96</span></span>
+<span id="cb6-7"><a href="#cb6-7"></a><span class="co">#&gt; pgrass          1.78 0.0999 17.8 4.74e-71</span></span>
+<span id="cb6-8"><a href="#cb6-8"></a><span class="co">#&gt;   </span></span>
+<span id="cb6-9"><a href="#cb6-9"></a><span class="co">#&gt; Recruitment (log-scale):</span></span>
+<span id="cb6-10"><a href="#cb6-10"></a><span class="co">#&gt;             Estimate    SE     z  P(&gt;|z|)</span></span>
+<span id="cb6-11"><a href="#cb6-11"></a><span class="co">#&gt; (Intercept)    -2.97 0.521 -5.71 1.16e-08</span></span>
+<span id="cb6-12"><a href="#cb6-12"></a><span class="co">#&gt;   </span></span>
+<span id="cb6-13"><a href="#cb6-13"></a><span class="co">#&gt; Apparent Survival (logit-scale):</span></span>
+<span id="cb6-14"><a href="#cb6-14"></a><span class="co">#&gt;             Estimate     SE     z  P(&gt;|z|)</span></span>
+<span id="cb6-15"><a href="#cb6-15"></a><span class="co">#&gt; (Intercept)   -0.182 0.0452 -4.02 5.79e-05</span></span>
+<span id="cb6-16"><a href="#cb6-16"></a><span class="co">#&gt;   </span></span>
+<span id="cb6-17"><a href="#cb6-17"></a><span class="co">#&gt; Detection (logit-scale):</span></span>
+<span id="cb6-18"><a href="#cb6-18"></a><span class="co">#&gt;             Estimate    SE     z  P(&gt;|z|)</span></span>
+<span id="cb6-19"><a href="#cb6-19"></a><span class="co">#&gt; (Intercept)    -1.44 0.114 -12.7 7.37e-37</span></span>
+<span id="cb6-20"><a href="#cb6-20"></a><span class="co">#&gt; </span></span></code></pre></div>
 <p>The model summary indicates that all parameters are highly significant. The parameter for the effect of <code>pgrass</code> on abundance indicates that rabbit abundance is around 6 times higher on grassland than forest habitat. The estimate of recruitment was 0.051 rabbits per primary session and the estimate of apparent survival was 0.455. Detection probability was 0.191 per sampling occasion. Assuming that each trapping location is independent, we can get an estimate of the total initial population size using <code>calcN()</code>.</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="fu">calcN</span>(fit)<span class="sc">$</span>Nhat</span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;            N    se  lcl    ucl</span></span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Total 2487.4 191.8 2139 2892.6</span></span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a></span>
+<span id="cb7-2"><a href="#cb7-2"></a><span class="kw">calcN</span>(fit)<span class="op">$</span>Nhat</span>
+<span id="cb7-3"><a href="#cb7-3"></a><span class="co">#&gt;            N    se  lcl    ucl</span></span>
+<span id="cb7-4"><a href="#cb7-4"></a><span class="co">#&gt; Total 2487.4 191.8 2139 2892.6</span></span></code></pre></div>
 <p>Which indicates that there were around 2500 rabbits on the island before the eradication program. To get an estimate of the residual population size following trapping, we can’t simply subtract the number of rabbits removed from the initial population estimate like we do with closed population removal methods. This is because the population is subject to recruitment and survival processes between trapping sessions in addition to the removals due to trapping. Hence we must recreate the population trajectory for each site from the estimates of initial population size, recruitment and survival and then subtract the removals from trapping. This is accomplished in <code>eradicate</code> using empirical Bayesian methods, to estimate the posterior predictive distributions of the parameters, which are then used to simulate population trajectories accounting for all sources of additions and losses to the population.</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1</span>)</span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>re<span class="ot">&lt;-</span> <span class="fu">raneffects</span>(fit)</span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>ppd<span class="ot">&lt;-</span> <span class="fu">postSamples</span>(re, <span class="dv">1000</span>)</span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>Nhat<span class="ot">&lt;-</span> <span class="fu">round</span>(<span class="fu">apply</span>(ppd, <span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>), mean))</span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="fu">apply</span>(Nhat,<span class="dv">2</span>,sum)  <span class="co"># Total population size for each trapping session (= primary period)</span></span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 2466 1131  529  235  106   49   24   12</span></span></code></pre></div>
-<p>which indicates there are around 12 rabbits remaining at the start of the last trapping session.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1"></a><span class="kw">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb8-2"><a href="#cb8-2"></a>re&lt;-<span class="st"> </span><span class="kw">raneffects</span>(fit)</span>
+<span id="cb8-3"><a href="#cb8-3"></a>ppd&lt;-<span class="st"> </span><span class="kw">postSamples</span>(re, <span class="dv">1000</span>)</span>
+<span id="cb8-4"><a href="#cb8-4"></a>Nhat&lt;-<span class="st"> </span><span class="kw">round</span>(<span class="kw">apply</span>(ppd, <span class="kw">c</span>(<span class="dv">1</span>,<span class="dv">2</span>), mean))</span>
+<span id="cb8-5"><a href="#cb8-5"></a></span>
+<span id="cb8-6"><a href="#cb8-6"></a><span class="kw">apply</span>(Nhat,<span class="dv">2</span>,sum)  <span class="co"># Total population size for each trapping session (= primary period)</span></span>
+<span id="cb8-7"><a href="#cb8-7"></a><span class="co">#&gt; [1] 2466 1131  529  235  106   49   24   12</span></span></code></pre></div>
+<p>which indicates there are around 12 rabbits remaining at the start of the last trapping session. Since 7 rabbits were subsequently removed during the last session, the population of rabbits remaining was 5.</p>
 </div>
 
 

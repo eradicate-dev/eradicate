@@ -209,7 +209,8 @@ remMNO <- function(lamformula, gamformula, omformula, detformula,
   }
 
   if(missing(starts)){
-    starts <- rep(0, nP)
+    si<- log(mean(y, na.rm=TRUE))
+    starts <- c(si,rep(0, nP-1))
   }
 
   fm <- optim(starts, nll, method=method, hessian=se, ...)
