@@ -270,7 +270,7 @@ remMNO <- function(lamformula, gamformula, omformula, detformula,
         invlinkGrad = "logistic.grad")
   }
 
-  efit <- list(fitType = "multmixOpen",
+  efit <- list(fitType = "multinomial removal open",
       call = match.call(), lamformula = lamformula, detformula=detformula,
       gamformula=gamformula, omformula=omformula, iotaformula=iotaformula,
       data = data, sitesRemoved=D$removed.sites, estimates = estimates, AIC = fmAIC,
