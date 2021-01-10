@@ -31,6 +31,57 @@ bootN <- function(obj, ...){
 
 #' @rdname bootN
 #' @export
+bootN.efitMS <- function(obj, B = 50, trim = 0.1, ...) {
+  if (B <= 0) {
+    return(obj)
+  }
+
+  data <- obj$data
+  lamformula <- obj$lamformula
+  detformula <- obj$detformula
+  gamformula <- obj$gamformula
+  epsformula <- obj$epsformula
+
+  D <- getDesign(data, lamformula, gamformula, epsformula, detformula)
+  removed.sites <- D$removed.sites
+  if(length(removed.sites)>0)
+    data <- data[-removed.sites]
+  M <- numSites(data)
+  T <- data$numPrimary
+  J <- ncol(data$y)/T
+
+  boot.iter <- function() {
+    sites <- sort(sample(1:M, M, replace = TRUE))
+    data.b <- data[sites]
+    mod <- update(obj, data = data.b, se = FALSE)
+    fvals<- traject(mod)
+    fvals
+  }
+
+  boot.samples <- replicate(B, boot.iter(), simplify = FALSE)
+  boot.vec<- sapply(boot.samples, as.vector)
+  cell.N <- apply(boot.vec,1,mean,trim=trim)
+  cell.se <- apply(boot.vec,1,sd_trim)
+  .site<- rep(1:M, T)
+  .season <- rep(1:T, each=M)
+  cellpreds <- data.frame(N = cell.N, se = cell.se, .site = .site, .season = .season)
+  fitted.vals<- traject(obj)
+  Nhat<- apply(fitted.vals, 2, mean)
+  boot.sum <- sapply(boot.samples, function(x) apply(x ,2, mean))
+  Nboot<- apply(boot.sum, 1, mean, trim = trim)
+  boot.sd<- apply(boot.sum, 1, sd_trim, trim=trim)
+  boot.lcl<- apply(boot.sum, 1, quantile, 0.025)
+  boot.ucl<- apply(boot.sum, 1, quantile,0.975)
+
+  df<- data.frame(Nhat=round(Nhat,2),Nboot=round(Nboot,2), .season = 1:T, se=round(boot.sd,3),
+                  lwr=round(boot.lcl,2),upr=round(boot.ucl,2))
+  list(cellpreds=cellpreds, Nhat=df)
+}
+
+#-----------
+
+#' @rdname bootN
+#' @export
 bootN.efitMNO <- function(obj, B = 50, trim = 0.1, ...) {
   if (B <= 0) {
     return(obj)
@@ -53,7 +104,7 @@ bootN.efitMNO <- function(obj, B = 50, trim = 0.1, ...) {
     sites <- sort(sample(1:M, M, replace = TRUE))
     data.b <- data[sites]
     mod <- update(obj, data = data.b, se = FALSE)
-    fvals<- fitted(mod)
+    fvals<- traject(mod)
     fvals
   }
 
@@ -64,9 +115,9 @@ bootN.efitMNO <- function(obj, B = 50, trim = 0.1, ...) {
   .site<- rep(1:M, T)
   .season <- rep(1:T, each=M)
   cellpreds <- data.frame(N = cell.N, se = cell.se, .site = .site, .season = .season)
-  fitted.vals<- fitted(obj)
-  Nhat<- apply(fitted.vals, 2, sum)
-  boot.sum <- sapply(boot.samples, function(x) apply(x ,2, sum))
+  fitted.vals<- traject(obj)
+  Nhat<- apply(fitted.vals, 2, mean)
+  boot.sum <- sapply(boot.samples, function(x) apply(x ,2, mean))
   Nboot<- apply(boot.sum, 1, mean, trim = trim)
   boot.sd<- apply(boot.sum, 1, sd_trim, trim=trim)
   boot.lcl<- apply(boot.sum, 1, quantile, 0.025)

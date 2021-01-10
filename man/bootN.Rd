@@ -2,10 +2,13 @@
 % Please edit documentation in R/bootstrap.R
 \name{bootN}
 \alias{bootN}
+\alias{bootN.efitMS}
 \alias{bootN.efitMNO}
 \title{bootN}
 \usage{
 bootN(obj, ...)
+
+\method{bootN}{efitMS}(obj, B = 50, trim = 0.1, ...)
 
 \method{bootN}{efitMNO}(obj, B = 50, trim = 0.1, ...)
 }

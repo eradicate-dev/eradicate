@@ -6,6 +6,7 @@
 \alias{calcN.efitM}
 \alias{calcN.efitR}
 \alias{calcN.efitGP}
+\alias{calcN.efitMS}
 \alias{calcN.efitMNO}
 \alias{calcN.efitMNS}
 \title{calcN}
@@ -25,6 +26,8 @@ calcN(obj, ...)
   nboot = 500,
   ...
 )
+
+\method{calcN}{efitMS}(obj, newdata, off.set = NULL, CI.level = 0.95, ...)
 
 \method{calcN}{efitMNO}(obj, newdata, off.set = NULL, CI.level = 0.95, npost = 500, ...)
 

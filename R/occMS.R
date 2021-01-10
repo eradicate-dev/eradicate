@@ -7,10 +7,10 @@
 #' \code{occMS} fits the dynamic multi-season occupancy model of MacKenzie et al. (2003).
 #' This is a port of the \code{colext} function in \code{unmarked}.
 #'
-#' @usage occMS(psiformula, gamformula, epsformula, detformula,
+#' @usage occMS(lamformula, gamformula, epsformula, detformula,
 #' data, starts, method="BFGS", se=TRUE, ...)
 #'
-#' @param psiformula formula for the latent occupancy component.
+#' @param lamformula formula for the latent occupancy component.
 #' @param gamformula formula for the latent colonisation component. If season
 #' specific colonisation/extinction parameters are desired, then use the
 #' reserved keyword \code{.season}, (i.e. \code{~.season}).
@@ -35,7 +35,7 @@
 #'
 #' @export
 #'
-occMS <- function(psiformula = ~ 1, gamformula = ~ 1, epsformula = ~ 1, detformula = ~ 1,
+occMS <- function(lamformula = ~ 1, gamformula = ~ 1, epsformula = ~ 1, detformula = ~ 1,
                    data, starts, method = "BFGS", se = TRUE, ...)
 {
 
@@ -46,16 +46,15 @@ occMS <- function(psiformula = ~ 1, gamformula = ~ 1, epsformula = ~ 1, detformu
     ## truncate at K
     #data$y[data$y > K] <- K
     y <- getY(data)
-    y <- truncateToBinary(y)
-    J <- data$obsPerSeason
+    nY <- data$numPrimary
 
     M <- nrow(y)
-    nY <- ncol(y)/J
+    J <- ncol(y)/nY
     n.det <- sum(apply(y > 0, 1, any, na.rm = TRUE))
 
     fc <- match.call()
     fc[[1]] <- as.name("occuMS.fit")
-    fc$psiformula = psiformula
+    fc$lamformula = lamformula
     fc$gamformula = gamformula
     fc$epsformula = epsformula
     fc$detformula = detformula
@@ -125,30 +124,28 @@ occMS <- function(psiformula = ~ 1, gamformula = ~ 1, epsformula = ~ 1, detformu
                             invlink = "logistic",
                             invlinkGrad = "logistic.grad")
 
-    estimates <- list(psi = psi, col = col, ext = ext, det=det)
+    estimates <- list(state = psi, col = col, ext = ext, det=det)
 
     efit <- list(fitType = "occMS",
                  call = match.call(),
-                 psiformula = psiformula,
+                 lamformula = lamformula,
                  gamformula = gamformula,
                  epsformula = epsformula,
                  detformula = detformula,
                  data = data, sitesRemoved = fm$designMats$removed.sites,
                  estimates = estimates,
                  AIC = fmAIC, opt = opt, negLogLike = opt$value,
-                 nllFun = fm$nll,
-                 projected = fm$projected,
-                 projected.mean = fm$projected.mean,
-                 smoothed = fm$smoothed, smoothed.mean = fm$smoothed.mean)
+                 nllFun = fm$nll)
+
     class(efit) <- c('efitMS','efit','list')
     return(efit)
 }
 
 
-occuMS.fit <- function(psiformula, gamformula, epsformula, detformula, data, J,
+occuMS.fit <- function(lamformula, gamformula, epsformula, detformula, data, J,
                        starts=NULL, method, getHessian = TRUE, wts, ...) {
     K <- 1
-    designMats <- getDesign(data, psiformula, gamformula, epsformula, detformula)
+    designMats <- getDesign(data, lamformula, gamformula, epsformula, detformula)
     V.itjk <- designMats$V
     X.it.gam <- designMats$X.gam
     X.it.eps <- designMats$X.eps
@@ -210,30 +207,6 @@ occuMS.fit <- function(psiformula, gamformula, epsformula, detformula, data, J,
         negloglike
     }
 
-    backward <- function(detParams, phis) {
-        beta <- array(NA, c(K + 1, nY, M))
-        for (i in 1:M) {
-            backP <- rep(1, K + 1)
-            for (t in nY:1) {
-
-                beta[, t, i] <- backP
-
-                detVec <- rep(1, K + 1)
-                for (j in 1:J) {
-                    if(!is.na(y.arr[i,t,j])) {
-                        mp <- V.arr[,,i,t,j] %*% detParams
-                        detVecObs <- gSingleDetVec(y.arr[i,t,j], mp)
-
-                                                detVec <- detVec * detVecObs
-                    }
-                }
-                if (t > 1)
-                    backP <- t(phis[,,t-1,i]) %*% (detVec * backP)
-            }
-        }
-        return(beta)
-    }
-
     X.gam <- X.it.gam %x% c(-1,1)
     X.eps <- X.it.eps %x% c(-1,1)
     phis <- array(NA,c(2,2,nY-1,M))
@@ -252,40 +225,6 @@ occuMS.fit <- function(psiformula, gamformula, epsformula, detformula, data, J,
     if(is.null(starts)) starts <- rep(0,nP)
     fm <- optim(starts, nll, method=method, hessian = getHessian, ...)
     mle <- fm$par
-
-    psis <- plogis(W.i %*% mle[1:nSP])
-    colParams <- mle[(nSP + 1) : (nSP + nGP)]
-    extParams <- mle[(nSP + nGP + 1) : (nSP + nGP + nEP)]
-    detParams <- mle[(nSP + nGP + nEP + 1) : nP]
-
-    ## computed projected estimates
-    phis[,1,,] <- plogis(X.gam %*% colParams)
-    phis[,2,,] <- plogis(X.eps %*% -extParams)
-
-    projected <- array(NA, c(2, nY, M))
-    projected[1,1,] <- 1 - psis
-    projected[2,1,] <- psis
-    for(i in 1:M) {
-        for(t in 2:nY) {
-            projected[,t,i] <- phis[,,t-1,i] %*% projected[,t-1,i]
-        }
-    }
-    projected.mean <- apply(projected, 1:2, mean)
-    rownames(projected.mean) <- c("unoccupied","occupied")
-    colnames(projected.mean) <- 1:nY
-
-    ## smoothing
-    forward(detParams, phis, psis, storeAlpha = TRUE)
-    beta <- backward(detParams, phis)
-    gamma <- array(NA, c(K + 1, nY, M))
-    for(i in 1:M) {
-    for(t in 1:nY) {
-        gamma[,t,i] <- alpha[,t,i]*beta[,t,i] / sum(alpha[,t,i]*beta[,t,i])
-    }}
-    smoothed.mean <- apply(gamma, 1:2, mean)
-    rownames(smoothed.mean) <- c("unoccupied","occupied")
-    colnames(smoothed.mean) <- 1:nY
-
     parm.names <- c(psiParms, gamParms, epsParms, detParms)
     mle.df <- data.frame(names = parm.names, value = mle)
     rownames(mle.df) <- paste(c(rep("psi", nSP), rep("col", nGP),
@@ -293,11 +232,7 @@ occuMS.fit <- function(psiformula, gamformula, epsformula, detformula, data, J,
                               c(1:nSP,1:nGP,1:nEP, 1:nDP))
 
     list(mle = mle.df, opt=fm, nP = nP, M = M, nDP = nDP, nGP = nGP,
-         nEP = nEP, nSP = nSP,
-         nllFun = nll, designMats = designMats,
-         projected = projected, projected.mean = projected.mean,
-         smoothed = gamma,
-         smoothed.mean = smoothed.mean)
+         nEP = nEP, nSP = nSP, nllFun = nll, designMats = designMats)
 }
 
 ## Helper functions

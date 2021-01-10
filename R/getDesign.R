@@ -262,12 +262,12 @@ getDesign.eFrameGRM<- function(emf, lamformula, phiformula, detformula, mdetform
 }
 #---------------------------------------------
 # Method for for occuMS
-getDesign.eFrameMS<- function(emf, psiformula, gamformula, epsformula, detformula, na.rm = TRUE) {
+getDesign.eFrameMS<- function(emf, lamformula, gamformula, epsformula, detformula, na.rm = TRUE) {
 
     M <- numSites(emf)
     R <- numY(emf)
-    J <- emf$obsPerSeason
-    nY<- R / J
+    nY <- emf$numPrimary
+    J<- R / nY
 
 
     ## Compute default design matrix for gamma/epsilon
@@ -285,10 +285,10 @@ getDesign.eFrameMS<- function(emf, psiformula, gamformula, epsformula, detformul
     else
       siteCovs <- siteCovs(emf)
 
-    W.mf <- model.frame(psiformula, siteCovs, na.action = NULL)
+    W.mf <- model.frame(lamformula, siteCovs, na.action = NULL)
     if(!is.null(model.offset(W.mf)))
       stop("offsets not currently allowed in occuMS", call.=FALSE)
-    W <- model.matrix(psiformula, W.mf)
+    W <- model.matrix(lamformula, W.mf)
 
     ## Compute detection design matrix
     if(is.null(obsCovs(emf))) {
@@ -801,8 +801,8 @@ handleNA.eFrameMS<- function(emf, W, X.gam, X.eps, V) {
 
   M <- numSites(emf)
   R <- numY(emf)
-  J <- emf$obsPerSeason
-  nY<- R / J
+  nY <- emf$numPrimary
+  J<- R / nY
 
   obsToY <- diag(R)
 

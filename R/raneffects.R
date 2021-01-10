@@ -102,12 +102,12 @@ raneffects.efitMS<- function(obj, ...) {
   data <- obj$data
   M <- numSites(data)
   nY <- data$numPrimary
-  J <- data$obsPerSeason
-  psiParms <- coef(obj, 'psi')
+  J <- ncol(data$y)/nY
+  psiParms <- coef(obj, 'state')
   detParms <- coef(obj, 'det')
   colParms <- coef(obj, 'col')
   extParms <- coef(obj, 'ext')
-  D <- getDesign(data, obj$psiformula, obj$gamformula, obj$epsformula, obj$detformula)
+  D <- getDesign(data, obj$lamformula, obj$gamformula, obj$epsformula, obj$detformula)
   V.itj <- D$V
   X.it.gam <- D$X.gam
   X.it.eps <- D$X.eps
@@ -317,7 +317,7 @@ raneffects.efitMNO <- function(obj, ...){
 }
 
 
-
+#-----------------------------------
 #' @rdname postSamples
 #' @export
 postSamples.raneffects<- function(obj, nsims=100, ...) {
@@ -328,7 +328,7 @@ postSamples.raneffects<- function(obj, nsims=100, ...) {
 
   for (i in 1:N) {
     for(t in 1:T) {
-    if(any(is.na(obj[i,t,]))) next
+    if(any(is.na(obj[i,,t]))) next
     out[i,t,] <- sample(0:(K-1), nsims, replace=TRUE, prob=obj[i,,t])
     }
   }

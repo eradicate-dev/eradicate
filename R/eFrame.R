@@ -279,10 +279,11 @@ eFrameGP<- function(catch, effort, index=NULL, ieffort=NULL) {
 #'
 #' @export
 #'
-eFrameMS<- function(y, obsPerSeason, siteCovs = NULL, obsCovs =  NULL) {
+eFrameMS<- function(y, numPrimary, siteCovs = NULL, obsCovs =  NULL) {
+  y <- truncateToBinary(y)
   emf <- eFrame(y, siteCovs, obsCovs)
-  if(ncol(y)%%obsPerSeason > 0) stop("obsPerSeason does not match dimensions of y")
-  emf$obsPerSeason <- obsPerSeason
+  if(ncol(y)%%numPrimary > 0) stop("numPrimary does not match dimensions of y")
+  emf$numPrimary <- numPrimary
   class(emf) <- c("eFrameMS",class(emf))
   emf
 }
@@ -1015,6 +1016,48 @@ covsToDF <- function(covs, name, obsNum, numSites){
   }
   siteCovs <- siteCovs(x)
   obsCovs <- obsCovs(x)
+  if (!is.null(siteCovs)) {
+    siteCovs <- siteCovs(x)[i, , drop = FALSE]
+  }
+  if (!is.null(obsCovs)) {
+    .site <- rep(1:M, each = J)
+    obsCovs <- obsCovs[which(.site %in% i),]
+  }
+  emf <- x
+  emf$y <- y
+  emf$siteCovs <- siteCovs
+  emf$obsCovs <- obsCovs
+  emf
+}
+
+#----------
+#' [.eFrameMS
+#'
+#' @description Site extractor methods for eFrame objects.
+#'
+#' @param emf A eFrame object.
+#'
+#' @export
+#'
+`[.eFrameMS` <- function(x, i) {
+  M <- numSites(x)
+  J <- x$obsPerSeason
+  y <- getY(x)
+  T <- ncol(y) / J
+
+  if(length(i) == 0) return(x)
+  if(any(i < 0) && any(i > 0))
+    stop("i must be all positive or all negative indices.")
+  if(all(i < 0)) { # if i is negative, then convert to positive
+    i <- (1:M)[i]
+  }
+  y <- getY(x)[i,]
+  if (length(i) == 1) {
+    y <- t(y)
+  }
+  siteCovs <- siteCovs(x)
+  obsCovs <- obsCovs(x)
+
   if (!is.null(siteCovs)) {
     siteCovs <- siteCovs(x)[i, , drop = FALSE]
   }
