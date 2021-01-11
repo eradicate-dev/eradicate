@@ -442,28 +442,17 @@ calcN.efitMS<- function(obj, newdata, off.set=NULL, CI.level=0.95, npost=500, ..
   grad <- do.call(invlinkGrad,list(eta))
   v<- (grad * off.set)^2 * vc
   cellpreds<- data.frame(Pocc = ests * off.set, se = sqrt(v), site = sites)
-  # Overall estimate
-  Pocc<- off.set %*% ests / M # mean occupancy
-  gradN<- off.set %*% (grad * X) / M
-  varN<- gradN %*% covMat %*% t(gradN)
-  seN<- sqrt(varN)
-  cv<- seN/Pocc
-  z <- qnorm((1-CI.level)/2, lower.tail = FALSE)
-  lwr<- Pocc - seN*z
-  upr<- Pocc + seN*z
-  # Residual Occupancy estimate (random effects)
+  # Overall Occupancy estimate (random effects)
   re<- raneffects(obj)
   pp<- postSamples(re, npost)
   pp.sum<- apply(pp, c(2,3), mean)
-  Nr<- apply(pp.sum, 1, mean)
-  seR<- apply(pp.sum, 1, sd)
-  lwr1<- apply(pp.sum, 1, quantile, (1-CI.level)/2)
-  upr1<- apply(pp.sum, 1, quantile, 1-((1-CI.level)/2))
-  bigN<- data.frame(OCC=round(Pocc,2),se=round(seN,2), lwr=round(lwr,2), upr=round(upr,2))
-  littleN<- data.frame(Occ = round(Nr,2),se=round(seR,2), .season = 1:T,
-                       lwr=round(lwr1,2), uprl=round(upr1,2))
-  row.names(bigN)<- "Initial"
-  list(cellpreds=cellpreds, Nhat=bigN, Nresid=littleN)
+  Nhat<- apply(pp.sum, 1, mean)
+  seN<- apply(pp.sum, 1, sd)
+  lwr<- apply(pp.sum, 1, quantile, (1-CI.level)/2)
+  upr<- apply(pp.sum, 1, quantile, 1-((1-CI.level)/2))
+  df<- data.frame(Nhat = round(Nhat,2),se=round(seN,2),
+                       lwr=round(lwr,2), uprl=round(upr,2),.season = 1:T)
+  list(cellpreds=cellpreds, Nhat=df)
 }
 
 

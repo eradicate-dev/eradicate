@@ -36,59 +36,98 @@
 #' @export
 #'
 occMS <- function(lamformula = ~ 1, gamformula = ~ 1, epsformula = ~ 1, detformula = ~ 1,
-                   data, starts, method = "BFGS", se = TRUE, ...)
-{
+                   data, starts, method = "BFGS", se = TRUE, ...) {
 
     if(!is(data, "eFrameMS"))
         stop("Data is not a eFrameMS.")
 
-    #K <- 1
-    ## truncate at K
-    #data$y[data$y > K] <- K
-    y <- getY(data)
-    nY <- data$numPrimary
+    designMats <- getDesign(data, lamformula, gamformula, epsformula, detformula)
+    y <- designMats$y
+    V.itjk <- designMats$V
+    X.it.gam <- designMats$X.gam
+    X.it.eps <- designMats$X.eps
+    W.i <- designMats$W
 
+    detParms <- colnames(V.itjk)
+    gamParms <- colnames(X.it.gam)
+    epsParms <- colnames(X.it.eps)
+    psiParms <- colnames(W.i)
+    parm.names <- c(psiParms, gamParms, epsParms, detParms)
     M <- nrow(y)
+    nY <- data$numPrimary
     J <- ncol(y)/nY
     n.det <- sum(apply(y > 0, 1, any, na.rm = TRUE))
 
-    fc <- match.call()
-    fc[[1]] <- as.name("occuMS.fit")
-    fc$lamformula = lamformula
-    fc$gamformula = gamformula
-    fc$epsformula = epsformula
-    fc$detformula = detformula
-    fc$data <- as.name("data")
-    fc$J <- as.name("J")
-    fc$method <- as.name("method")
-    fc$getHessian <- as.name("se")
-    fc$se <- NULL
-    if(missing(starts)) {
-        fc$starts <- NULL
-    } else {
-        fc$starts <- eval(starts)
-    }
+    ## remove final year from X.it
+    X.it.gam <- as.matrix(X.it.gam[-seq(nY,M*nY,by=nY),])
+    X.it.eps <- as.matrix(X.it.eps[-seq(nY,M*nY,by=nY),])
 
-    extras <- match.call(expand.dots = FALSE)$...
-    if (length(extras) > 0) {
-        existing <- !is.na(match(names(extras), names(fc)))
-        for (a in names(extras)[existing]) fc[[a]] <- extras[[a]]
-        if (any(!existing)) {
-            fc <- as.call(c(as.list(fc), extras[!existing]))
+    nDP <- length(detParms)
+    nGP <- length(gamParms)
+    nEP <- length(epsParms)
+    nSP <- length(psiParms)
+    nDMP <-  1
+
+    nP <- nDP + nSP + nGP + nEP  # total number of parameters
+    if(!missing(starts) && length(starts) != nP)
+        stop(paste("The number of starting values should be", nP))
+
+    y.itj <- as.numeric(t(y))
+
+    # get ragged array indices
+    y.it <- matrix(t(y), nY*M, J, byrow = TRUE)
+    J.it <- rowSums(!is.na(y.it))
+
+    V.arr <- array(t(V.itjk), c(nDP, nDMP, J, nY, M))
+    V.arr <- aperm(V.arr, c(2,1,5,4,3))
+
+    y.arr <- array(y.itj, c(J, nY, M))
+    y.arr <- aperm(y.arr, c(3:1))
+
+    alpha <- array(NA, c(K + 1, nY, M))
+
+    forward <- function(detParms, phis, psis, storeAlpha = FALSE) {
+        negloglike <- 0
+        psiSite <- matrix(c(1-psis,psis), K + 1, M, byrow = TRUE)
+        mp <- array(V.itjk %*% detParms, c(nDMP, J, nY, M))
+        for(t in 1:nY) {
+            detVecs <- gDetVecs(y.arr, mp, J.it[seq(from = t, to = length(J.it)-nY+t,
+                                                    by=nY)], t)
+            psiSite <- psiSite * detVecs
+            if(storeAlpha) alpha[,t,] <<- psiSite[,]
+            if(t < nY) {
+                for(i in 1:M) {
+                    psiSite[,i] <- phis[,,t,i] %*% psiSite[,i]
+                }
+            } else {
+                negloglike <- negloglike - sum(log(colSums(psiSite)))
+            }
         }
+        negloglike
     }
 
-    fm <- eval(fc)
+    X.gam <- X.it.gam %x% c(-1,1)
+    X.eps <- X.it.eps %x% c(-1,1)
+    phis <- array(NA,c(2,2,nY-1,M))
 
-    fm$n.det <- n.det
-    opt <- fm$opt
-    nP <- fm$nP; M <- fm$M; nDP <- fm$nDP; nGP <- fm$nGP
-    nEP <- fm$nEP; nSP <- fm$nSP
+    nll <- function(params) {
+        psis <- plogis(W.i %*% params[1:nSP])
+        colParams <- params[(nSP + 1) : (nSP + nGP)]
+        extParams <- params[(nSP + nGP + 1) : (nSP + nGP + nEP)]
+        detParams <- params[(nSP + nGP + nEP + 1) : nP]
+        # these are in site-major, year-minor order
+        phis[,1,,] <- plogis(X.gam %*% colParams)
+        phis[,2,,] <- plogis(X.eps %*% -extParams)
 
-    covMat <- invertHessian(opt, nP, se)
-    ests <- opt$par
-    names(ests) <- fm$mle$names
-    fmAIC <- 2 * opt$value + 2 * nP # + 2*nP*(nP + 1)/(M - nP - 1)
+        forward(detParams, phis, psis) + 0.001*sqrt(sum(params^2))
+    }
+
+    if(missing(starts)) starts <- rep(0,nP)
+    fm <- optim(starts, nll, method=method, hessian = se, ...)
+    covMat <- invertHessian(fm, nP, se)
+    ests <- fm$par
+    names(ests) <- parm.names
+    fmAIC <- 2 * fm$value + 2 * nP # + 2*nP*(nP + 1)/(M - nP - 1)
 
     psiParams <- ests[1:nSP]
     colParams <- ests[(nSP + 1) : (nSP + nGP)]
@@ -132,108 +171,15 @@ occMS <- function(lamformula = ~ 1, gamformula = ~ 1, epsformula = ~ 1, detformu
                  gamformula = gamformula,
                  epsformula = epsformula,
                  detformula = detformula,
-                 data = data, sitesRemoved = fm$designMats$removed.sites,
+                 data = data, sitesRemoved = designMats$removed.sites,
                  estimates = estimates,
-                 AIC = fmAIC, opt = opt, negLogLike = opt$value,
+                 AIC = fmAIC, opt = fm, negLogLike = fm$value,
                  nllFun = fm$nll)
 
     class(efit) <- c('efitMS','efit','list')
     return(efit)
 }
 
-
-occuMS.fit <- function(lamformula, gamformula, epsformula, detformula, data, J,
-                       starts=NULL, method, getHessian = TRUE, wts, ...) {
-    K <- 1
-    designMats <- getDesign(data, lamformula, gamformula, epsformula, detformula)
-    V.itjk <- designMats$V
-    X.it.gam <- designMats$X.gam
-    X.it.eps <- designMats$X.eps
-    W.i <- designMats$W
-
-    detParms <- colnames(V.itjk)
-    gamParms <- colnames(X.it.gam)
-    epsParms <- colnames(X.it.eps)
-    psiParms <- colnames(W.i)
-
-    y <- designMats$y
-    M <- nrow(y)
-    nY <- ncol(y)/J
-    if(missing(wts)) wts <- rep(1, M)
-
-    ## remove final year from X.it
-    X.it.gam <- as.matrix(X.it.gam[-seq(nY,M*nY,by=nY),])
-    X.it.eps <- as.matrix(X.it.eps[-seq(nY,M*nY,by=nY),])
-
-    nDP <- length(detParms)
-    nGP <- length(gamParms)
-    nEP <- length(epsParms)
-    nSP <- length(psiParms)
-    nDMP <-  1
-
-    nP <- nDP + nSP + nGP + nEP  # total number of parameters
-
-    y.itj <- as.numeric(t(y))
-
-    # get ragged array indices
-    y.it <- matrix(t(y), nY*M, J, byrow = TRUE)
-    J.it <- rowSums(!is.na(y.it))
-
-    V.arr <- array(t(V.itjk), c(nDP, nDMP, J, nY, M))
-    V.arr <- aperm(V.arr, c(2,1,5,4,3))
-
-    y.arr <- array(y.itj, c(J, nY, M))
-    y.arr <- aperm(y.arr, c(3:1))
-
-    alpha <- array(NA, c(K + 1, nY, M))
-
-    forward <- function(detParms, phis, psis, storeAlpha = FALSE) {
-        negloglike <- 0
-        psiSite <- matrix(c(1-psis,psis), K + 1, M, byrow = TRUE)
-        mp <- array(V.itjk %*% detParms, c(nDMP, J, nY, M))
-        for(t in 1:nY) {
-            detVecs <- gDetVecs(y.arr, mp, J.it[seq(from = t, to = length(J.it)-nY+t,
-                                          by=nY)], t)
-            psiSite <- psiSite * detVecs
-            if(storeAlpha) alpha[,t,] <<- psiSite[,]
-            if(t < nY) {
-                for(i in 1:M) {
-                    psiSite[,i] <- phis[,,t,i] %*% psiSite[,i]
-                }
-            } else {
-                negloglike <- negloglike - sum(wts*log(colSums(psiSite)))
-            }
-        }
-        negloglike
-    }
-
-    X.gam <- X.it.gam %x% c(-1,1)
-    X.eps <- X.it.eps %x% c(-1,1)
-    phis <- array(NA,c(2,2,nY-1,M))
-    nll <- function(params) {
-        psis <- plogis(W.i %*% params[1:nSP])
-        colParams <- params[(nSP + 1) : (nSP + nGP)]
-        extParams <- params[(nSP + nGP + 1) : (nSP + nGP + nEP)]
-        detParams <- params[(nSP + nGP + nEP + 1) : nP]
-        # these are in site-major, year-minor order
-        phis[,1,,] <- plogis(X.gam %*% colParams)
-        phis[,2,,] <- plogis(X.eps %*% -extParams)
-
-        forward(detParams, phis, psis) + 0.001*sqrt(sum(params^2))
-    }
-
-    if(is.null(starts)) starts <- rep(0,nP)
-    fm <- optim(starts, nll, method=method, hessian = getHessian, ...)
-    mle <- fm$par
-    parm.names <- c(psiParms, gamParms, epsParms, detParms)
-    mle.df <- data.frame(names = parm.names, value = mle)
-    rownames(mle.df) <- paste(c(rep("psi", nSP), rep("col", nGP),
-                                rep("ext", nEP), rep("det", nDP)),
-                              c(1:nSP,1:nGP,1:nEP, 1:nDP))
-
-    list(mle = mle.df, opt=fm, nP = nP, M = M, nDP = nDP, nGP = nGP,
-         nEP = nEP, nSP = nSP, nllFun = nll, designMats = designMats)
-}
 
 ## Helper functions
 
