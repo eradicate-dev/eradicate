@@ -68,7 +68,7 @@ remMN <- function(lamformula, detformula, data, mixture=c("P","NB","ZIP"), start
         nll <- function(parms) {
             lambda <- exp(X %*% parms[1 : nAP] + X.offset)
             lambda.mat <- matrix(lambda, M, J)
-            p <- plogis(V %*% parms[(nAP + 1) : nP] + V.offset)
+            p <- plogis(V %*% parms[(nAP + 1) : (nAP + nDP)] + V.offset)
             p.matrix <- matrix(p, M, J, byrow = TRUE)
             pi <- do.call(piFun, list(p = p.matrix))
             logLike <- y * (log(lambda.mat) + log(pi)) - (lambda.mat * pi) - ylogfact
@@ -79,7 +79,7 @@ remMN <- function(lamformula, detformula, data, mixture=c("P","NB","ZIP"), start
     else if(identical(mixture, "NB")){
         nll <- function(parms) {
             lambda <- exp(X %*% parms[1 : nAP] + X.offset)
-            p <- plogis(V %*% parms[(nAP + 1) : nP] + V.offset)
+            p <- plogis(V %*% parms[(nAP + 1) : (nAP + nDP)] + V.offset)
             alpha <- exp(parms[nP])
             p.matrix <- matrix(p, M, J, byrow = TRUE)
             pi <- do.call(piFun, list(p = p.matrix))
@@ -100,7 +100,7 @@ remMN <- function(lamformula, detformula, data, mixture=c("P","NB","ZIP"), start
     else if(identical(mixture, "ZIP")){
         nll <- function(parms) {
             lambda <- exp(X %*% parms[1 : nAP] + X.offset)
-            p <- plogis(V %*% parms[(nAP + 1) : nP] + V.offset)
+            p <- plogis(V %*% parms[(nAP + 1) : (nAP + nDP)] + V.offset)
             phi <- plogis(parms[nP])
             p.matrix <- matrix(p, M, J, byrow = TRUE)
             pi <- do.call(piFun, list(p = p.matrix))
