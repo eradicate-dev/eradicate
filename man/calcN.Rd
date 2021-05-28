@@ -27,7 +27,7 @@ calcN(obj, ...)
   ...
 )
 
-\method{calcN}{efitMS}(obj, newdata, off.set = NULL, CI.level = 0.95, ...)
+\method{calcN}{efitMS}(obj, newdata, off.set = NULL, CI.level = 0.95, npost = 500, ...)
 
 \method{calcN}{efitMNO}(obj, newdata, off.set = NULL, CI.level = 0.95, npost = 500, ...)
 

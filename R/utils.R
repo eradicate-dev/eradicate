@@ -409,3 +409,17 @@ sd_trim<- function(x, trim=0.1, const=TRUE){
   return(sdtrim)
 }
 
+wide_to_stacked <- function(input_df, nyears, surveys_per_year){
+  inds <- split(1:(nyears*surveys_per_year), rep(1:nyears, each=surveys_per_year))
+  split_df <- lapply(1:nyears, function(i){
+                      out <- input_df[,inds[[i]]]
+                      out$site <- 1:nrow(input_df)
+                      out$year <- i
+                      names(out)[1:3] <- paste0("obs",1:3)
+                      out
+              })
+  stack_df <- do.call("rbind", split_df)
+  stack_df$site <- as.factor(stack_df$site)
+  stack_df$year <- as.factor(stack_df$year)
+  stack_df
+}

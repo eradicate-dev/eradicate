@@ -468,7 +468,7 @@ calcN.efitMNO<- function(obj, newdata, off.set=NULL, CI.level=0.95, npost=500, .
       newdata <- siteCovs(origdata)
     }
   }
-  T<- fit$data$numPrimary
+  T<- obj$data$numPrimary
   design <- getDesign(obj, newdata)
   X<- design$X
   M<- nrow(X)

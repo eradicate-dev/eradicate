@@ -6,7 +6,7 @@
 \usage{
 \method{update}{efitMS}(
   obj,
-  psiformula.,
+  lamformula.,
   gamformula.,
   epsformula.,
   detformula.,
