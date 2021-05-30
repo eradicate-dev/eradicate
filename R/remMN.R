@@ -104,7 +104,7 @@ remMN <- function(lamformula, detformula, data, mixture=c("P","NB","ZIP"), start
             phi <- plogis(parms[nP])
             p.matrix <- matrix(p, M, J, byrow = TRUE)
             pi <- do.call(piFun, list(p = p.matrix))
-            yrow<- rowSums(y)
+            yrow<- rowSums(y, na.rm=TRUE)
             ptot<- rowSums(pi)
             logLike<- rep(NA, M)
             for(i in 1:M){
