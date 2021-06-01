@@ -264,7 +264,7 @@ remMNO <- function(lamformula, gamformula, omformula, detformula,
         invlinkGrad = "exp")
   }
   if(identical(mixture, "ZIP")) {
-    estimates$psi <- list(name = "Zero-inflation",
+    estimates$zeroinfl <- list(name = "Zero inflation",
         short.name = "psi", estimates = ests[nP],
         covMat = as.matrix(covMat[nP, nP]), invlink = "logistic",
         invlinkGrad = "logistic.grad")

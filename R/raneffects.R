@@ -252,7 +252,7 @@ raneffects.efitMNO <- function(obj, ...){
              g2 <- dnbinom(N, mu=lam[i], size=alpha)
            },
            ZIP = {
-             psi <- plogis(coef(obj, type="psi"))
+             psi <- plogis(coef(obj, type="zeroinfl"))
              g2 <- (1-psi)*dpois(N, lam[i])
              g2[1] <- psi + (1-psi)*exp(-lam[i])
            })
@@ -270,7 +270,8 @@ raneffects.efitMNO <- function(obj, ...){
 
     for(k in sumy:K){
       yit <- c(ysub, k-sumy)
-      g1[k+1] <- dmultinom(yit[!cp_na], k, cp[!cp_na])
+      yit_na <- is.na(yit)
+      g1[k+1] <- dmultinom(yit[!(cp_na | yit_na)], k, cp[!(cp_na | yit_na)])
     }
 
     g1g2 <- g1*g2
@@ -304,7 +305,8 @@ raneffects.efitMNO <- function(obj, ...){
 
       for(k in sumy:K){
         yit <- c(ysub, k-sumy)
-        g1[k+1] <- dmultinom(yit[!cp_na], k, cp[!cp_na])
+        yit_na <- is.na(yit)
+        g1[k+1] <- dmultinom(yit[!(cp_na | yit_na)], k, cp[!(cp_na | yit_na)])
       }
 
       g <- colSums(P * post[i,,t-1]) * g1

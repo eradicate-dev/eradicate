@@ -341,6 +341,7 @@ eFrameMNO<- function(y, numPrimary, siteCovs = NULL, obsCovs = NULL, primaryCovs
   ya <- array(y, c(M, J, T))
   yt.na <- apply(!is.na(ya), c(1,3), any)
   yt.na <- which(!yt.na)
+  num.removed<- apply(ya, 3, sum, na.rm=TRUE)
   d.na <- which(is.na(primaryPeriod))
   if(!all(d.na %in% yt.na))
     stop("primaryPeriod values must be supplied for all non-missing values of y")
@@ -357,6 +358,7 @@ eFrameMNO<- function(y, numPrimary, siteCovs = NULL, obsCovs = NULL, primaryCovs
   emf$numPrimary <- numPrimary
   emf$primaryCovs <- primaryCovs
   emf$primaryPeriod <- primaryPeriod
+  emf$num.removed<- num.removed
   class(emf) <- c("eFrameMNO",class(emf))
   emf
 }
@@ -408,13 +410,14 @@ eFrameMNS<- function(y, numPrimary, siteCovs = NULL, obsCovs = NULL, delta = NUL
     stop("Negative delta values are not allowed.")
   if(any(is.na(delta)))
     stop("Missing values are not allowed in delta.")
-
+  ya <- array(y, c(M, J, T))
+  num.removed <- apply(ya, 3, sum, na.rm=TRUE)
   obsCovs <- covsToDF(obsCovs, "obsCovs", J*T, M)
   emf <- eFrame(y, siteCovs, obsCovs)
   emf$piFun<- "removalPiFun"
   emf$numPrimary <- numPrimary
   emf$delta<- cumsum(delta)
-
+  emf$num.removed <- num.removed
   class(emf) <- c("eFrameMNS",class(emf))
   emf
 }

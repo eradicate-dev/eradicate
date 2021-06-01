@@ -41,13 +41,15 @@ remGP<- function (data, starts, K, method="Nelder-Mead", se = TRUE, ...){
   if (nobs < 3)
     stop("ml method requires at least 3 observations!")
   if(missing(starts)) {
-    cstart<- -log(max(x$effort))
+    cf <- coef(lm(cpue ~ cumcatch, data = x))
+    cstart<- log(-cf[2])
+    nstart<- log(-cf[1]/cf[2])
       if(!is.null(x$index)) {
         istart<- -log(max(x$ieffort))
-        starts<- c(log(sum(x$catch)+1), cstart, istart)
+        starts<- c(nstart, cstart, istart)
       }
       else {
-        starts<- c(log(sum(x$catch)+1), cstart)
+        starts<- c(nstart, cstart)
       }
   }
 

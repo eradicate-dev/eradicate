@@ -385,8 +385,12 @@ calcN.efitGP<- function(obj, CI.level=0.95, CI.calc = c("norm","lnorm","boot"), 
     for(j in 1:nboot) {
       newc <- rmultinom(1, N, c(pi, 1 - sum(pi)))
       Bdata <- data.frame(catch = newc[-length(newc)],effort = x$effort)
-      cstart<- -log(max(Bdata$effort))
-      starts<- c(log(sum(Bdata$catch)+1),cstart)
+      Bdata$cpue <- Bdata$catch/Bdata$effort
+      Bdata$cumcatch<- cumsum(Bdata$catch) - Bdata$catch
+      cf <- coef(lm(cpue ~ cumcatch, data = Bdata))
+      cstart<- log(-cf[2])
+      nstart<- log(-cf[1]/cf[2])
+      starts<- c(nstart,cstart)
       if(sum(Bdata$catch) > 0) {
         m<- optim(starts, nllFun, x=Bdata)
         Bout[j] <- do.call(invlink, list(m$par[1]))
@@ -469,6 +473,7 @@ calcN.efitMNO<- function(obj, newdata, off.set=NULL, CI.level=0.95, npost=500, .
     }
   }
   T<- obj$data$numPrimary
+  num.removed<- obj$data$num.removed
   design <- getDesign(obj, newdata)
   X<- design$X
   M<- nrow(X)
@@ -524,8 +529,16 @@ calcN.efitMNO<- function(obj, newdata, off.set=NULL, CI.level=0.95, npost=500, .
   upr1<- apply(pp.sum, 1, quantile, 1-((1-CI.level)/2))
   bigN<- data.frame(N=round(Nhat),se=round(seN,1), lwr=round(lwr), upr=round(upr))
   littleN<- data.frame(N = round(Nr),se=round(seR,1), .season = 1:T, lwr=round(lwr1), uprl=round(upr1))
+
+  Nresid<- Nr[T] - num.removed[T]
+  cv<- seR[T]/Nresid
+  z <- exp(qnorm((1-CI.level)/2) * sqrt(log(1+cv^2)))
+  lwr2<- Nresid*z
+  upr2<- Nresid/z
+  residN <- data.frame(N=round(Nresid), se=round(seR[T],1), lwr=round(lwr2), upr=round(upr2))
   row.names(bigN)<- "Initial"
-  list(cellpreds=cellpreds, Nhat=bigN, Nresid=littleN)
+  row.names(residN)<- "Residual"
+  list(cellpreds=cellpreds, Nhat=bigN, Nseason=littleN, Nresid=residN)
 }
 
 #' @rdname calcN
@@ -555,6 +568,7 @@ calcN.efitMNS<- function(obj, newdata, off.set=NULL, CI.level=0.95, ...) {
   design <- getDesign(obj, newdata)
   X<- design$X
   M<- nrow(X)
+  num.removed <- obj$data$num.removed
   sites<- design$retained.sites
   mixture<- obj$mixture
   invlink = obj$estimates$state$invlink
@@ -604,8 +618,15 @@ calcN.efitMNS<- function(obj, newdata, off.set=NULL, CI.level=0.95, ...) {
     bigN[i, ]<- c(round(Nhat), i, round(seN,1), round(lwr), round(upr))
   }
   bigN<- as.data.frame(bigN)
+  Nresid<- Nhat - num.removed[T]
+  cv<- seN/Nresid
+  z <- exp(qnorm((1-CI.level)/2) * sqrt(log(1+cv^2)))
+  lwr2<- Nresid*z
+  upr2<- Nresid/z
+  residN <- data.frame(N=round(Nresid), se=round(seN,1), lwr=round(lwr2), upr=round(upr2))
+  row.names(residN)<- "Residual"
   names(bigN)<- c("Nhat",".season","se","lwr","upr")
-  list(cellpreds=cellpreds, Nhat=bigN)
+  list(cellpreds=cellpreds, Nhat=bigN, Nresid=residN)
 }
 
 #-------------------------------------------

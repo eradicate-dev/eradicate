@@ -44,12 +44,10 @@ remCE<- function (catch = NULL, effort = NULL,
   names(x) <- c("catch", "effort")
   x$samp <- seq(1, length(x$catch), 1)
   x$cpue <- x$catch/x$effort
-  x$K[1] <- 0
-  x$F[1] <- 0
+  x$K <- cumsum(x$catch) - x$catch
+  x$F <- cumsum(x$effort) - x$effort
   nsam <- length(x$samp)
   R <- sum(x$catch)
-  x$K[c(seq(2, nsam, 1))] <- cumsum(x$catch[c(seq(1, nsam - 1, 1))])
-  x$F[c(seq(2, nsam, 1))] <- cumsum(x$effort[c(seq(1, nsam - 1, 1))])
   if (length(x$catch) < 2)
     stop(">=2 observations required!")
   if (length(x$catch) == 2) {
