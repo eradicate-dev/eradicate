@@ -122,25 +122,25 @@ SEXP nll_multmixOpen( SEXP y_, SEXP yt_, SEXP Xlam_, SEXP Xgam_, SEXP Xom_,
 
   //Indices
   int lk = as<int>(lk_);
-  IntegerVector N = seq_len(lk)-1;
+  Rcpp::IntegerVector N = seq_len(lk)-1;
   int M = as<int>(M_);
   int T = as<int>(T_);
   int J = as<int>(J_);
   ucube y = as<ucube>(y_);
   imat yt = as<imat>(yt_);
-  IntegerVector first(first_);
-  IntegerVector last(last_);
+  Rcpp::IntegerVector first(first_);
+  Rcpp::IntegerVector last(last_);
   int first1 = as<int>(first1_);
-  imat ytna = as<imat>(ytna_); // y[i,,t] are all NA
-  icube yna = as<icube>(yna_);
-  imat delta = as<imat>(delta_);
+  arma::imat ytna = as<arma::imat>(ytna_); // y[i,,t] are all NA
+  ucube yna = as<ucube>(yna_);
+  arma::imat delta = as<arma::imat>(delta_);
 
   vec lfac_k = as<vec>(lfac_k_);
   cube lfac_kmyt = as<cube>(lfac_kmyt_);
   cube kmyt = as<cube>(kmyt_);
   icube fin = as<icube>(fin_);
-  imat I = as<imat>(I_);
-  imat I1 = as<imat>(I1_);
+  imat I = as<arma::imat>(I_);
+  imat I1 = as<arma::imat>(I1_);
   List Ib(Ib_);
   List Ip(Ip_);
   int nrI = I.n_rows;
@@ -237,10 +237,11 @@ SEXP nll_multmixOpen( SEXP y_, SEXP yt_, SEXP Xlam_, SEXP Xgam_, SEXP Xom_,
   colvec g1_star = zeros(lk);
   cube g3_t = zeros(lk,lk,T-1);
   mat ky_slice(lk, T);
+  umat y_slice(J,T);
 
   // compute g3 if there are no covariates of omega/gamma
   if(go_dims == "scalar") {
-    if(dynamics=="constant")
+    if(dynamics=="constant" || dynamics=="notrend")
       tp1(g3, nrI, nrI1, N, I, I1, Ib, Ip, gam(first1,0), om(first1,0));
     else if(dynamics=="autoreg")
       tp2(g3, lk, gam(first1,0), om(first1,0), iota(first1,0));
@@ -251,7 +252,7 @@ SEXP nll_multmixOpen( SEXP y_, SEXP yt_, SEXP Xlam_, SEXP Xgam_, SEXP Xom_,
       if(ytna(first1,t)==1) { // FIXME: this is not generic!
         continue;
       }
-      if(dynamics=="constant") {
+      if(dynamics=="constant" || dynamics=="notrend") {
         tp1(g3_t.slice(t), nrI, nrI1, N, I, I1, Ib, Ip,
             gam(first1,t), om(first1,t));
       }
@@ -270,6 +271,7 @@ SEXP nll_multmixOpen( SEXP y_, SEXP yt_, SEXP Xlam_, SEXP Xgam_, SEXP Xom_,
     last_i = last[i];
 
     ky_slice = kmyt.slice(i); //using subcube causes segfaults
+    y_slice = y.slice(i);
 
     //Calculate g_star
     g_star.ones();
@@ -283,9 +285,10 @@ SEXP nll_multmixOpen( SEXP y_, SEXP yt_, SEXP Xlam_, SEXP Xgam_, SEXP Xom_,
         }
 
         //Detection
-        ivec na_sub = yna.subcube(span(i), span(t), span());
+        uvec na_sub = yna.slice(i).col(t);
 
-        uvec ysub = y.subcube(span(i), span(t), span());
+        //vec ysub = y.subcube(span(i), span(t), span());
+        uvec ysub = y_slice.col(t);
         vec lkmyt_sub = lfac_kmyt.subcube(span(i), span(t), span());
         vec psub = p.subcube(span(), span(i), span(t));
         vec cp = piFun(psub, pi_fun);
@@ -311,7 +314,7 @@ SEXP nll_multmixOpen( SEXP y_, SEXP yt_, SEXP Xlam_, SEXP Xgam_, SEXP Xom_,
         // computes transition probs for g3
         if(go_dims == "matrix") {
           g3.zeros();
-          if(dynamics=="constant") {
+          if(dynamics=="constant" || dynamics=="notrend") {
             tp1(g3, nrI, nrI1, N, I, I1, Ib, Ip, gam(i,t-1), om(i,t-1));
           }
           else if(dynamics=="autoreg") {
@@ -342,9 +345,10 @@ SEXP nll_multmixOpen( SEXP y_, SEXP yt_, SEXP Xlam_, SEXP Xgam_, SEXP Xom_,
     int delta_i0 = delta(i,0);
     g1.zeros();
 
-    ivec na_sub = yna.subcube(span(i), span(first_i), span());
+    uvec na_sub = yna.slice(i).col(first_i);
 
-    uvec ysub = y.subcube(span(i), span(first_i), span());
+    //vec ysub = y.subcube(span(i), span(first_i), span());
+    uvec ysub = y_slice.col(first_i);
     vec lkmyt_sub = lfac_kmyt.subcube(span(i), span(first_i), span());
     vec psub = p.subcube(span(), span(i), span(first_i));
     vec cp = piFun(psub, pi_fun);
@@ -403,11 +407,10 @@ SEXP nll_multmixOpen( SEXP y_, SEXP yt_, SEXP Xlam_, SEXP Xgam_, SEXP Xom_,
       ll_i += sum(g2star);
     }
 
-    ll += log(ll_i + DOUBLE_XMIN);
+    ll += log(ll_i + DBL_MIN);
 
   }
 
   return wrap(-ll);
 }
-
 

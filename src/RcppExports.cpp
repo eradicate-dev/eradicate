@@ -6,6 +6,11 @@
 
 using namespace Rcpp;
 
+#ifdef RCPP_USE_GLOBAL_ROSTREAM
+Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
+Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
+#endif
+
 // get_lik_trans
 SEXP get_lik_trans(SEXP I_, SEXP I1_);
 RcppExport SEXP _eradicate_get_lik_trans(SEXP I_SEXP, SEXP I1_SEXP) {

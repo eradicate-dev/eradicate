@@ -337,7 +337,7 @@ eFrameMNO<- function(y, numPrimary, siteCovs = NULL, obsCovs = NULL, primaryCovs
     mode(primaryPeriod) <- "integer"
     warning("primaryPeriod values have been converted to integers")
   }
-
+  if("data.frame" %in% class(y)) y <- as.matrix(y)
   ya <- array(y, c(M, J, T))
   yt.na <- apply(!is.na(ya), c(1,3), any)
   yt.na <- which(!yt.na)

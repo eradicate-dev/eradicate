@@ -263,19 +263,23 @@ raneffects.efitMNO <- function(obj, ...){
     cp_na <- is.na(cp)
     ysub <- ya[i,,1]
     ysub[cp_na] <- NA
+    cp <- c(cp, 1-sum(cp, na.rm=TRUE))
     sumy <- sum(ysub, na.rm=TRUE)
 
-    cp <- c(cp, 1-sum(cp, na.rm=TRUE))
-    cp_na <- is.na(cp)
+    is_na<- c(is.na(ysub), FALSE) | is.na(cp)
 
-    for(k in sumy:K){
-      yit <- c(ysub, k-sumy)
-      yit_na <- is.na(yit)
-      g1[k+1] <- dmultinom(yit[!(cp_na | yit_na)], k, cp[!(cp_na | yit_na)])
+    if (all(is.na(ysub))) {
+      post[i,,1]<- NA
+    }
+    else {
+      for(k in sumy:K){
+        yit <- c(ysub, k-sumy)
+        g1[k+1] <- dmultinom(yit[!is_na], k, cp[!is_na])
+      }
+      g1g2 <- g1*g2
+      post[i,,1] <- g1g2 / sum(g1g2)
     }
 
-    g1g2 <- g1*g2
-    post[i,,1] <- g1g2 / sum(g1g2)
     for(t in 2:T) {
       if(!is.na(gam[i,t-1]) & !is.na(om[i,t-1])) {
         for(n0 in N) {
@@ -298,19 +302,23 @@ raneffects.efitMNO <- function(obj, ...){
       cp_na <- is.na(cp)
       ysub <- ya[i,,t]
       ysub[cp_na] <- NA
+      cp <- c(cp, 1-sum(cp, na.rm=TRUE))
       sumy <- sum(ysub, na.rm=TRUE)
 
-      cp <- c(cp, 1-sum(cp, na.rm=TRUE))
-      cp_na <- is.na(cp)
+      is_na<- c(is.na(ysub), FALSE) | is.na(cp)
 
-      for(k in sumy:K){
-        yit <- c(ysub, k-sumy)
-        yit_na <- is.na(yit)
-        g1[k+1] <- dmultinom(yit[!(cp_na | yit_na)], k, cp[!(cp_na | yit_na)])
+      if (all(is.na(ysub))) {
+        post[i,,t]<- NA
       }
+      else {
+        for(k in sumy:K){
+          yit <- c(ysub, k-sumy)
+          g1[k+1] <- dmultinom(yit[!is_na], k, cp[!is_na])
+        }
 
-      g <- colSums(P * post[i,,t-1]) * g1
-      post[i,,t] <- g / sum(g)
+        g <- colSums(P * post[i,,t-1]) * g1
+        post[i,,t] <- g / sum(g)
+      }
     }
   }
 
