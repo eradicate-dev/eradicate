@@ -353,7 +353,8 @@ eFrameMNO<- function(y, numPrimary, siteCovs = NULL, obsCovs = NULL, primaryCovs
     stop("primaryPeriod values must increase over time for each site")
   obsCovs <- covsToDF(obsCovs, "obsCovs", J*T, M)
   primaryCovs <- covsToDF(primaryCovs, "primaryCovs", numPrimary, nrow(y))
-  emf <- eFrame(y, siteCovs, obsCovs)
+  emf <- eFrame(y, siteCovs)
+  emf$obsCovs<- obsCovs
   emf$piFun<- "removalPiFun"
   emf$numPrimary <- numPrimary
   emf$primaryCovs <- primaryCovs

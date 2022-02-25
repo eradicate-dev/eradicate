@@ -67,6 +67,7 @@ occMS <- function(lamformula = ~ 1, gamformula = ~ 1, epsformula = ~ 1, detformu
     nEP <- length(epsParms)
     nSP <- length(psiParms)
     nDMP <-  1
+    K <- 1
 
     nP <- nDP + nSP + nGP + nEP  # total number of parameters
     if(!missing(starts) && length(starts) != nP)

@@ -369,7 +369,6 @@ getDesign.eFrameMNO <- function(emf, lamformula, gamformula, omformula, detformu
     obsCovs <- data.frame(obsNum = as.factor(rep(1:(J*T), M)))
   else{
     obsCovs <- obsCovs(emf)
-    obsCovs <- data.frame(obsNum = as.factor(rep(1:(J*T), M)))
   }
   # add site and primarycovs covariates, which contain siteCovs
   cnames <- c(colnames(obsCovs), colnames(primaryCovs))
@@ -463,6 +462,7 @@ getDesign.eFrameMNS<- function(emf, lamformula, detformula, na.rm = TRUE) {
   R <- numY(emf) # 2*T for double observer sampling
   J <- R/T
   delta<- emf$delta
+  y <- stack.data(emf$y, T)
 
   ## Compute default design matrix for seasonal strata and numeric trend
   season <- data.frame(.season = as.factor(rep(1:T, each = M)))
@@ -491,9 +491,6 @@ getDesign.eFrameMNS<- function(emf, lamformula, detformula, na.rm = TRUE) {
   obsCovs <- cbind(obsCovs, seasCovs[rep(1:(M*T), each = J),])
   colnames(obsCovs) <- cnames
 
-  # stack y
-  y<- stack.data(y, T)
-
   detformula <- as.formula(detformula)
   stateformula <- as.formula(lamformula)
 
@@ -521,7 +518,6 @@ getDesign.eFrameMNS<- function(emf, lamformula, detformula, na.rm = TRUE) {
     V.offset <- out$V.offset
     removed.sites <- out$removed.sites
   } else {
-    y=getY(emf)
     removed.sites=integer(0)
   }
 
