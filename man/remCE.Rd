@@ -4,28 +4,31 @@
 \alias{remCE}
 \title{remCE}
 \usage{
-remCE(catch, effort, nboot)
+remCE(catch, effort, nboot, kbh = NULL, Nstart = NULL)
 }
 \arguments{
+\item{method}{the depletion method. Variable Effort Models:
+\code{l}= Leslie estimator,
+\code{hosc} = sampling coverage estimator for homogeneous model of Chao and Chang (1999),
+\code{bh} = generalized removal model of Otis et al 1978 (i.e. Model Mbh).}
+
+\item{nboot}{the number of bootstrap resamples for estimation of standard errors for model hosc,
+hosc, hesc and hemqle methods.}
+
+\item{kbh}{the number of capture parameters for model \code{bh}. NULL  for all possible parameters}
+
+\item{Nstart}{initial value for N for model \code{bh}.  automatically determined if NULL.}
+
 \item{catch}{the number of removals recorded for each period.}
 
 \item{effort}{the overall effort expended in each period (i.e. trapnights)}
-
-\item{method}{the depletion method. Variable Effort Models: l= Leslie estimator,
-ml= maximum likelihood estimator of Gould and Pollock (1997),
-hosc = sampling coverage estimator for homogeneous model of Chao and Chang (1999),
-hesc = sampling coverage estimator for heterogeneous model of Chao and Chang (1999), and
-hemqle = maximum quasi likelihood estimator for heterogeneous model of Chao and Chang (1999).}
-
-\item{nboot}{the number of bootstrap resamples for estimation of standard errors in the ml,
-hosc, hesc and hemqle methods.}
 }
 \value{
 a \code{efit} model object.
 }
 \description{
 \code{remCE} fits various catch-effort models to removal data from a single site
-(or combined data from many sites).  At least 3 removal periods
+(or combined data from many sites).  At least 2 removal periods
 are required to fit these models.  A port of the \code{deplet} function
 in the \code{fishmethods} package.
 }
