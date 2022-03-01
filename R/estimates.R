@@ -183,6 +183,29 @@ summary.efit<- function(object, ...)
   invisible(out.list)
 }
 
+#' summary.efitGPlist
+#'
+#' \code{summary} summarises an efitGPlist object giving the estimated parameters for the
+#'  model in \code{obj} (on the link scale) with associated SE and confidence
+#'  intervals.
+#'
+#' @param object A list of efitGP objects.
+#'
+#' @return a \code{list}
+#'
+#' @examples
+#'  emf <- eFrameGP(removals, effort, session=session)
+#'  mod <- remGP(emf)
+#'  summary(emf)
+#'
+#' @export
+#'
+summary.efitGPlist<- function(object, ...)
+{
+  out.list<- lapply(object, summary.efit)
+  invisible(out.list)
+}
+
 
 #' @rdname calcN
 #' @export
@@ -413,6 +436,14 @@ calcN.efitGP<- function(obj, CI.level=0.95, CI.calc = c("norm","lnorm","boot"), 
   row.names(littleN)<- "Residual"
   list(Nhat=bigN, Nresid=littleN)
 }
+
+#' @rdname calcN
+#' @export
+calcN.efitGPlist<- function(obj, CI.level=0.95, CI.calc = c("norm","lnorm","boot"), nboot=500, ...){
+  out<- lapply(obj, calcN.efitGP, CI.level=CI.level, CI.calc=CI.calc,nbot=nboot, ...)
+  out
+}
+
 
 #' @rdname calcN
 #' @export

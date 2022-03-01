@@ -6,6 +6,7 @@
 \alias{calcN.efitM}
 \alias{calcN.efitR}
 \alias{calcN.efitGP}
+\alias{calcN.efitGPlist}
 \alias{calcN.efitMS}
 \alias{calcN.efitMNO}
 \alias{calcN.efitMNS}
@@ -20,6 +21,14 @@ calcN(obj, ...)
 \method{calcN}{efitR}(obj, newdata, off.set = NULL, CI.level = 0.95, ...)
 
 \method{calcN}{efitGP}(
+  obj,
+  CI.level = 0.95,
+  CI.calc = c("norm", "lnorm", "boot"),
+  nboot = 500,
+  ...
+)
+
+\method{calcN}{efitGPlist}(
   obj,
   CI.level = 0.95,
   CI.calc = c("norm", "lnorm", "boot"),

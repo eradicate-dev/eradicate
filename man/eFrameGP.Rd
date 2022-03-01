@@ -4,7 +4,7 @@
 \alias{eFrameGP}
 \title{eFrameGP}
 \usage{
-eFrameGP(catch, effort, index = NULL, ieffort = NULL)
+eFrameGP(catch, effort, session = NULL, index = NULL, ieffort = NULL)
 }
 \arguments{
 \item{catch}{A vector of removals for each period.}
