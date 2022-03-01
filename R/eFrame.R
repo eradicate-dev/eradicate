@@ -236,10 +236,13 @@ eFrameGRM<- function(y, ym, numPrimary, siteCovs = NULL, obsCovs = NULL, primary
 #'
 #' @export
 #'
-eFrameGP<- function(catch, effort, index=NULL, ieffort=NULL) {
+eFrameGP<- function(catch, effort, session=NULL, index=NULL, ieffort=NULL) {
   if(length(catch) != length(effort))
     stop("catch and effort vectors must be same length")
-  x <- data.frame(catch=catch, effort=effort)
+  if(is.null(session)) session<- rep(1, length(catch))
+  if(!is.null(session) & (length(session) != length(catch)))
+    stop("session and catch vectors must be same length")
+  x <- data.frame(catch=catch, effort=effort, session=session)
   nobs<- nrow(x)
   if(!is.null(index) & length(index) == nobs) {
     x$index<- index
