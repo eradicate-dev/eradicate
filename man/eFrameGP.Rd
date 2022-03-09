@@ -11,7 +11,14 @@ eFrameGP(catch, effort, session = NULL, index = NULL, ieffort = NULL)
 
 \item{effort}{A vector of removal effort employed during each period (i.e. trapnights).}
 
+\item{session}{Optional vector indicating multiple removal 'sessions'. The population for
+a particular session is considered to be closed and removals for each session are
+analysed independently. Analysis of catch/effort data for multiple sessions returns a list
+with length equal to the number of sessions.}
+
 \item{index}{Optional vector of relative abundance indices for each period.}
+
+\item{ieffort}{Optional vector of effort employed for the relative index}
 }
 \value{
 a \code{eFrameGP} holding data suitable for use in \code{remGP}
