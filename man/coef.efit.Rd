@@ -4,7 +4,7 @@
 \alias{coef.efit}
 \title{coef}
 \usage{
-coef.efit(obj, type, ...)
+\method{coef}{efit}(obj, type, ...)
 }
 \arguments{
 \item{obj}{A fitted model object.}

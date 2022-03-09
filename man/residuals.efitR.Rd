@@ -4,7 +4,7 @@
 \alias{residuals.efitR}
 \title{residuals}
 \usage{
-residuals.efitR(obj)
+\method{residuals}{efitR}(obj)
 }
 \arguments{
 \item{obj}{A fitted model object.}

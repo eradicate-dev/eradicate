@@ -265,7 +265,7 @@ formatMult <- function(df.in) {
                                                   c(names(siteCovs),
                                                     names(yearlySiteCovs)))]
 
-  emf <- eFrameRGP(y = y, siteCovs = siteCovs, primaryCovs = yearlySiteCovs,
+  emf <- eFrameGR(y = y, siteCovs = siteCovs, primaryCovs = yearlySiteCovs,
                            numPrimary = nY)
   return(emf)
 }
@@ -377,3 +377,49 @@ make_encounters<- function(sites, events){
   ymat
 }
 
+
+
+stack.data<- function(y, np) {
+# helper function to create 'stacked' data for remMNS models
+# y - M x J*T matrix
+#
+  ylist<- list()
+  n<- ncol(y)
+  ns<- n/np
+  inds<- c(seq(1,n,ns),n+1)
+  for(i in 1:np) {
+    ylist[[i]]<- y[,inds[i]:(inds[i+1]-1)]
+  }
+  do.call(rbind, ylist)
+}
+
+sd_trim<- function(x, trim=0.1, const=TRUE){
+  # trimmed sd, where x is a matrix (column-wise)
+  x <- as.matrix(x)
+  if (const){
+    if (trim==0.1){const <- 0.7892}
+    else if (trim==0.2){const <- 0.6615}
+  }
+  else{const <- 1}
+  m <- apply(x,2,mean,trim)
+  res <- x-rep(1,nrow(x))%*%t(m)
+  qu <- apply(abs(res),2,quantile,1-trim)
+  sdtrim <- apply(matrix(res[t(abs(t(res))<=qu)]^2,ncol=ncol(x),byrow=FALSE),2,sum)
+  sdtrim <- sqrt(sdtrim/((nrow(x)*(1-trim)-1)))/const
+  return(sdtrim)
+}
+
+wide_to_stacked <- function(input_df, nyears, surveys_per_year){
+  inds <- split(1:(nyears*surveys_per_year), rep(1:nyears, each=surveys_per_year))
+  split_df <- lapply(1:nyears, function(i){
+                      out <- input_df[,inds[[i]]]
+                      out$site <- 1:nrow(input_df)
+                      out$year <- i
+                      names(out)[1:3] <- paste0("obs",1:3)
+                      out
+              })
+  stack_df <- do.call("rbind", split_df)
+  stack_df$site <- as.factor(stack_df$site)
+  stack_df$year <- as.factor(stack_df$year)
+  stack_df
+}

@@ -30,15 +30,11 @@ Each matrix or data.frame must be of dimension MxJ.}
 \item{primaryCovs}{A \code{data.frame} of covariates that vary at the
 site x primary period level.}
 
-\item{Z}{integer indicating the amount of monitoring effort occurring for each
-monitoring device used during each primary period. Ignored if \code{numPrimary}
-is greater than 1.}
-
 \item{SiteCovs}{A \code{data.frame} of covariates that vary at the
 site level. This should have M rows and one column per covariate}
 }
 \value{
-a \code{eFrameRGP} holding data containing the response and
+a \code{eFrameGRM} holding data containing the response and
  covariates required for removal models
 }
 \description{

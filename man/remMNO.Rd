@@ -55,8 +55,8 @@ repeated removal episodes from M sites over T primary periods with each primary 
 secondary periods. This is a port of the similar function in \code{unmarked}.
 }
 \examples{
- rem<- san_nic_rem$rem
- emf <- eFrameMNO(y=rem, numPrimary=1)
+ rem<- san_nic_open$removals
+ emf <- eFrameMNO(y=rem, numPrimary=8)
  mod <- remMNO(~1, ~1, ~1, ~1, data=emf)
  Nhat<- calcN(mod)
 

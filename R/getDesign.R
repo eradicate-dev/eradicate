@@ -262,12 +262,12 @@ getDesign.eFrameGRM<- function(emf, lamformula, phiformula, detformula, mdetform
 }
 #---------------------------------------------
 # Method for for occuMS
-getDesign.eFrameMS<- function(emf, psiformula, gamformula, epsformula, detformula, na.rm = TRUE) {
+getDesign.eFrameMS<- function(emf, lamformula, gamformula, epsformula, detformula, na.rm = TRUE) {
 
     M <- numSites(emf)
     R <- numY(emf)
-    J <- emf$obsPerSeason
-    nY<- R / J
+    nY <- emf$numPrimary
+    J<- R / nY
 
 
     ## Compute default design matrix for gamma/epsilon
@@ -285,10 +285,10 @@ getDesign.eFrameMS<- function(emf, psiformula, gamformula, epsformula, detformul
     else
       siteCovs <- siteCovs(emf)
 
-    W.mf <- model.frame(psiformula, siteCovs, na.action = NULL)
+    W.mf <- model.frame(lamformula, siteCovs, na.action = NULL)
     if(!is.null(model.offset(W.mf)))
       stop("offsets not currently allowed in occuMS", call.=FALSE)
-    W <- model.matrix(psiformula, W.mf)
+    W <- model.matrix(lamformula, W.mf)
 
     ## Compute detection design matrix
     if(is.null(obsCovs(emf))) {
@@ -334,7 +334,8 @@ getDesign.eFrameMS<- function(emf, psiformula, gamformula, epsformula, detformul
 
 #---------------------------------------------
 # Multinomial open models
-getDesign.eFrameMNO <- function(umf, lamformula, gamformula, omformula, detformula, iotaformula, na.rm = TRUE) {
+getDesign.eFrameMNO <- function(emf, lamformula, gamformula, omformula, detformula,
+                                iotaformula, na.rm = TRUE) {
 
   y <- emf$y
   M <- nrow(y)
@@ -368,7 +369,6 @@ getDesign.eFrameMNO <- function(umf, lamformula, gamformula, omformula, detformu
     obsCovs <- data.frame(obsNum = as.factor(rep(1:(J*T), M)))
   else{
     obsCovs <- obsCovs(emf)
-    obsCovs <- data.frame(obsNum = as.factor(rep(1:(J*T), M)))
   }
   # add site and primarycovs covariates, which contain siteCovs
   cnames <- c(colnames(obsCovs), colnames(primaryCovs))
@@ -450,6 +450,79 @@ getDesign.eFrameMNO <- function(umf, lamformula, gamformula, omformula, detformu
               Xom.offset=Xom.offset, Xp.offset=Xp.offset,
               Xiota.offset=Xiota.offset, delta = out$delta,
               removed.sites = out$removed.sites, go.dims = go.dims))
+}
+
+#--------
+# Stacked data for trend analysis
+
+getDesign.eFrameMNS<- function(emf, lamformula, detformula, na.rm = TRUE) {
+
+  M <- numSites(emf)
+  T <- emf$numPrimary
+  R <- numY(emf) # 2*T for double observer sampling
+  J <- R/T
+  delta<- emf$delta
+  y <- stack.data(emf$y, T)
+
+  ## Compute default design matrix for seasonal strata and numeric trend
+  season <- data.frame(.season = as.factor(rep(1:T, each = M)))
+  trend<- data.frame(.trend = rep(delta, each = M))
+
+  if(is.null(siteCovs(emf))) {
+    siteCovs <- data.frame(placeHolder = rep(1, M))
+  } else {
+    siteCovs <- siteCovs(emf)
+  }
+
+  # Combine above
+  seasCovs <- cbind(season, trend, siteCovs[rep(1:M, T),,drop=FALSE])
+
+
+  ## Compute detection design matrix
+  if(is.null(obsCovs(emf))) {
+    obsCovs <- data.frame(obsNum = as.factor(rep(1:J, M*T)))
+  } else {
+    obsCovs <- obsCovs(emf)
+    obsCovs <- cbind(obsCovs, obsNum = as.factor(rep(1:J, M*T)))
+  }
+
+  ## add site and season covariates, which contain siteCovs
+  cnames <- c(colnames(obsCovs), colnames(seasCovs))
+  obsCovs <- cbind(obsCovs, seasCovs[rep(1:(M*T), each = J),])
+  colnames(obsCovs) <- cnames
+
+  detformula <- as.formula(detformula)
+  stateformula <- as.formula(lamformula)
+
+   ## Compute design matrices
+  X.mf <- model.frame(stateformula, seasCovs, na.action = NULL)
+  X <- model.matrix(stateformula, X.mf)
+  X.offset <- as.vector(model.offset(X.mf))
+  if (!is.null(X.offset)) {
+    X.offset[is.na(X.offset)] <- 0
+  }
+
+  V.mf <- model.frame(detformula, obsCovs, na.action = NULL)
+  V <- model.matrix(detformula, V.mf)
+  V.offset <- as.vector(model.offset(V.mf))
+  if (!is.null(V.offset)) {
+    V.offset[is.na(V.offset)] <- 0
+  }
+
+  if (na.rm) {
+    out <- handleNA(emf, X, X.offset, V, V.offset)
+    y <- out$y
+    X <- out$X
+    X.offset <- out$X.offset
+    V <- out$V
+    V.offset <- out$V.offset
+    removed.sites <- out$removed.sites
+  } else {
+    removed.sites=integer(0)
+  }
+
+  return(list(y = y, X = X, X.offset = X.offset, V = V,
+              V.offset = V.offset, removed.sites = removed.sites))
 }
 
 
@@ -724,8 +797,8 @@ handleNA.eFrameMS<- function(emf, W, X.gam, X.eps, V) {
 
   M <- numSites(emf)
   R <- numY(emf)
-  J <- emf$obsPerSeason
-  nY<- R / J
+  nY <- emf$numPrimary
+  J<- R / nY
 
   obsToY <- diag(R)
 
@@ -888,6 +961,52 @@ handleNA.eFrameMNO<- function(emf, Xlam, Xgam, Xom, Xp, Xiota, Xlam.offset, Xgam
        Xlam.offset=Xlam.offset, Xgam.offset=Xgam.offset,
        Xom.offset=Xom.offset, Xp.offset=Xp.offset,
        Xiota.offset=Xiota.offset, delta = delta,
+       removed.sites = which(sites.to.remove))
+}
+
+#--------
+# Stacked multinomial
+handleNA.eFrameMNS<- function(emf, X, X.offset, V, V.offset) {
+
+  T <- emf$numPrimary
+  y <- stack.data(emf$y, T)
+  J <- ncol(y)
+  M <- nrow(y)
+
+  X.long <- X[rep(1:M, each = J),]
+  X.long.na <- is.na(X.long)
+
+  V.long <- V[rep(1:M, each = J),]
+  V.long.na <- is.na(V.long)
+
+  y.long <- as.vector(t(y))
+  y.long.na <- is.na(y.long)
+
+  covs.na <- apply(cbind(X.long.na, V.long.na), 1, any)
+
+  ## are any NA in covs not in y already?
+  y.new.na <- covs.na & !y.long.na
+
+  if(sum(y.new.na) > 0) {
+    y.long[y.new.na] <- NA
+    warning("Some observations have been discarded because
+                corresponding covariates were missing.", call. = FALSE)
+  }
+
+  y <- matrix(y.long, M, J, byrow = TRUE)
+  sites.to.remove <- apply(y, 1, function(x) all(is.na(x)))
+
+  num.to.remove <- sum(sites.to.remove)
+  if(num.to.remove > 0) {
+    y <- y[!sites.to.remove, ,drop = FALSE]
+    X <- X[!sites.to.remove, ,drop = FALSE]
+    X.offset <- X.offset[!sites.to.remove]
+    V <- V[!sites.to.remove, ,drop = FALSE]
+    V.offset <- V.offset[!sites.to.remove]
+    warning(paste(num.to.remove,"sites have been discarded because of missing data."), call. = FALSE)
+  }
+
+  list(y = y, X = X, X.offset = X.offset, V = V, V.offset = V.offset,
        removed.sites = which(sites.to.remove))
 }
 

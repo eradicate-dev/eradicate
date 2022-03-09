@@ -4,21 +4,21 @@
 \alias{eFrameMS}
 \title{eFrameMS}
 \usage{
-eFrameMS(y, obsPerSeason, siteCovs = NULL, obsCovs = NULL)
+eFrameMS(y, numPrimary, siteCovs = NULL, obsCovs = NULL)
 }
 \arguments{
 \item{y}{An MxSJ matrix of the observed detection/non-detection data
 where M is the number of sites, S is the number of seasons and J is
 the maximum number of observations per season.}
 
-\item{obsPerSeason}{scalar of the maximum number of observations (replicates)
-per season.}
-
 \item{siteCovs}{A \code{data.frame} of covariates that vary at the
 site level. This should have M rows and one column per covariate}
 
 \item{obsCovs}{A list of matrices or data.frames of variables varying within sites.
 Each matrix or data.frame must be of dimension MxJ.}
+
+\item{obsPerSeason}{scalar of the maximum number of observations (replicates)
+per season.}
 }
 \value{
 a \code{eFrameMS} holding data containing the response and

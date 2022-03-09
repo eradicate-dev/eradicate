@@ -4,11 +4,11 @@
 \alias{occMS}
 \title{occMS}
 \usage{
-occMS(psiformula, gamformula, epsformula, detformula,
+occMS(lamformula, gamformula, epsformula, detformula,
 data, starts, method="BFGS", se=TRUE, ...)
 }
 \arguments{
-\item{psiformula}{formula for the latent occupancy component.}
+\item{lamformula}{formula for the latent occupancy component.}
 
 \item{gamformula}{formula for the latent colonisation component. If season
 specific colonisation/extinction parameters are desired, then use the

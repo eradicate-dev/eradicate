@@ -102,12 +102,12 @@ raneffects.efitMS<- function(obj, ...) {
   data <- obj$data
   M <- numSites(data)
   nY <- data$numPrimary
-  J <- data$obsPerSeason
-  psiParms <- coef(obj, 'psi')
+  J <- ncol(data$y)/nY
+  psiParms <- coef(obj, 'state')
   detParms <- coef(obj, 'det')
   colParms <- coef(obj, 'col')
   extParms <- coef(obj, 'ext')
-  D <- getDesign(data, obj$psiformula, obj$gamformula, obj$epsformula, obj$detformula)
+  D <- getDesign(data, obj$lamformula, obj$gamformula, obj$epsformula, obj$detformula)
   V.itj <- D$V
   X.it.gam <- D$X.gam
   X.it.eps <- D$X.eps
@@ -252,7 +252,7 @@ raneffects.efitMNO <- function(obj, ...){
              g2 <- dnbinom(N, mu=lam[i], size=alpha)
            },
            ZIP = {
-             psi <- plogis(coef(obj, type="psi"))
+             psi <- plogis(coef(obj, type="zeroinfl"))
              g2 <- (1-psi)*dpois(N, lam[i])
              g2[1] <- psi + (1-psi)*exp(-lam[i])
            })
@@ -263,18 +263,23 @@ raneffects.efitMNO <- function(obj, ...){
     cp_na <- is.na(cp)
     ysub <- ya[i,,1]
     ysub[cp_na] <- NA
+    cp <- c(cp, 1-sum(cp, na.rm=TRUE))
     sumy <- sum(ysub, na.rm=TRUE)
 
-    cp <- c(cp, 1-sum(cp, na.rm=TRUE))
-    cp_na <- is.na(cp)
+    is_na<- c(is.na(ysub), FALSE) | is.na(cp)
 
-    for(k in sumy:K){
-      yit <- c(ysub, k-sumy)
-      g1[k+1] <- dmultinom(yit[!cp_na], k, cp[!cp_na])
+    if (all(is.na(ysub))) {
+      post[i,,1]<- NA
+    }
+    else {
+      for(k in sumy:K){
+        yit <- c(ysub, k-sumy)
+        g1[k+1] <- dmultinom(yit[!is_na], k, cp[!is_na])
+      }
+      g1g2 <- g1*g2
+      post[i,,1] <- g1g2 / sum(g1g2)
     }
 
-    g1g2 <- g1*g2
-    post[i,,1] <- g1g2 / sum(g1g2)
     for(t in 2:T) {
       if(!is.na(gam[i,t-1]) & !is.na(om[i,t-1])) {
         for(n0 in N) {
@@ -297,18 +302,23 @@ raneffects.efitMNO <- function(obj, ...){
       cp_na <- is.na(cp)
       ysub <- ya[i,,t]
       ysub[cp_na] <- NA
+      cp <- c(cp, 1-sum(cp, na.rm=TRUE))
       sumy <- sum(ysub, na.rm=TRUE)
 
-      cp <- c(cp, 1-sum(cp, na.rm=TRUE))
-      cp_na <- is.na(cp)
+      is_na<- c(is.na(ysub), FALSE) | is.na(cp)
 
-      for(k in sumy:K){
-        yit <- c(ysub, k-sumy)
-        g1[k+1] <- dmultinom(yit[!cp_na], k, cp[!cp_na])
+      if (all(is.na(ysub))) {
+        post[i,,t]<- NA
       }
+      else {
+        for(k in sumy:K){
+          yit <- c(ysub, k-sumy)
+          g1[k+1] <- dmultinom(yit[!is_na], k, cp[!is_na])
+        }
 
-      g <- colSums(P * post[i,,t-1]) * g1
-      post[i,,t] <- g / sum(g)
+        g <- colSums(P * post[i,,t-1]) * g1
+        post[i,,t] <- g / sum(g)
+      }
     }
   }
 
@@ -317,7 +327,7 @@ raneffects.efitMNO <- function(obj, ...){
 }
 
 
-
+#-----------------------------------
 #' @rdname postSamples
 #' @export
 postSamples.raneffects<- function(obj, nsims=100, ...) {
@@ -328,7 +338,7 @@ postSamples.raneffects<- function(obj, nsims=100, ...) {
 
   for (i in 1:N) {
     for(t in 1:T) {
-    if(any(is.na(obj[i,t,]))) next
+    if(any(is.na(obj[i,,t]))) next
     out[i,t,] <- sample(0:(K-1), nsims, replace=TRUE, prob=obj[i,,t])
     }
   }

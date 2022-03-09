@@ -30,25 +30,41 @@
 remGP<- function (data, starts, K, method="Nelder-Mead", se = TRUE, ...){
   if(!is(data, "eFrameGP"))
     stop("Data is not a eFrameGP")
-  x<- data$counts
-  nobs<- nrow(x)
-  x$samp <- seq_len(nobs)
-  x$cpue <- x$catch/x$effort
-  x$cumcatch<- cumsum(x$catch) - x$catch
-  x$cumeffort<- cumsum(x$effort) - x$effort
+  rr<- data$counts
+  rlist<- split(rr, rr$session)
+  names(rlist)<- paste0("S",names(rlist))
+  nP<- length(rlist)
+  nobs<- sapply(rlist, nrow)
+  if (any(nobs < 3))
+    stop("ml method requires at least 3 observations!")
+  rlist <- lapply(rlist, function(z) {z$cpue<- z$catch/z$effort
+                                      z$cumcatch<- cumsum(z$catch) - z$catch
+                                      z$cumeffort<- cumsum(z$effort) - z$effort
+                                      return(z)
+                                      })
+ if(nP == 1) ans<- GPest(rlist[[1]], starts=starts, K=K, method=method, se=se)
+  else {
+    ans<- lapply(rlist, GPest, starts=starts, K=K, method=method, se=se)
+    class(ans)<- c('efitGPlist')
+  }
+  return(ans)
+}
+
+
+GPest<- function(x, starts, K, method, se) {
   if(missing(K) || is.null(K)) K <- sum(x$catch) + 100
   k <- 0:K
-  if (nobs < 3)
-    stop("ml method requires at least 3 observations!")
   if(missing(starts)) {
-    cstart<- -log(max(x$effort))
-      if(!is.null(x$index)) {
-        istart<- -log(max(x$ieffort))
-        starts<- c(log(sum(x$catch)+1), cstart, istart)
-      }
-      else {
-        starts<- c(log(sum(x$catch)+1), cstart)
-      }
+    cf <- coef(lm(cpue ~ cumcatch, data = x))
+    cstart<- log(-cf[2])
+    nstart<- log(-cf[1]/cf[2])
+    if(!is.null(x$index)) {
+      istart<- -log(max(x$ieffort))
+      starts<- c(nstart, cstart, istart)
+    }
+    else {
+      starts<- c(nstart, cstart)
+    }
   }
 
   nll <- function(parm, x, idx=FALSE) {
@@ -76,48 +92,44 @@ remGP<- function (data, starts, K, method="Nelder-Mead", se = TRUE, ...){
     return((-1)*(ll+lli))
   }
 
-    if(!is.null(x$index)) {
-      nP<- 3
-      m <- optim(starts, nll, x=x, idx=TRUE, method=method, hessian=se)
-    }
-    else {
-      nP<- 2
-      m <- optim(starts, nll, x=x, idx=FALSE, method=method, hessian=se)
-    }
+  if(!is.null(x$index)) {
+    nP<- 3
+    m <- optim(starts, nll, x=x, idx=TRUE, method=method, hessian=se)
+  }
+  else {
+    nP<- 2
+    m <- optim(starts, nll, x=x, idx=FALSE, method=method, hessian=se)
+  }
 
-    ests<- m$par
-    covMat<- invertHessian(m, nP, se)
+  ests<- m$par
+  covMat<- invertHessian(m, nP, se)
 
-    state <- list(name = "Abundance", short.name = "N",
-                  estimates = ests[1],
-                  covMat = as.matrix(covMat[1,1]),
-                  invlink = "exp",
-                  invlinkGrad = "exp.grad")
+  state <- list(name = "Abundance", short.name = "N",
+                estimates = ests[1],
+                covMat = as.matrix(covMat[1,1]),
+                invlink = "exp",
+                invlinkGrad = "exp.grad")
 
-    catch <- list(name = "catchability", short.name = "p",
+  catch <- list(name = "catchability", short.name = "p",
                 estimates = ests[2],
                 covMat = as.matrix(covMat[2,2]),
                 invlink = "logistic",
                 invlinkGrad = "logistic.grad")
 
-    estimates<- list(state=state, catch=catch)
-    if(nP==3) {
-      det<- list(name = "detection", short.name = "lambda",
-           estimates = ests[3],
-           covMat = as.matrix(covMat[3,3]),
-           invlink = "exp",
-           invlinkGrad = "exp.grad")
-      estimates$det<- det
-    }
+  estimates<- list(state=state, catch=catch)
+  if(nP==3) {
+    det<- list(name = "detection", short.name = "lambda",
+               estimates = ests[3],
+               covMat = as.matrix(covMat[3,3]),
+               invlink = "exp",
+               invlinkGrad = "exp.grad")
+    estimates$det<- det
+  }
 
-    efit <- list(fitType = "remGP", estimates=estimates, opt = m, nllFun=nll, data=x)
-    class(efit) <- c('efitGP','efit','list')
-
-    return(efit)
+  efit <- list(fitType = "remGP", estimates=estimates, opt = m, nllFun=nll, data=x)
+  class(efit) <- c('efitGP','efit','list')
+  return(efit)
 }
-
-
-
 
 
 

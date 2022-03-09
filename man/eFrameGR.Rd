@@ -7,9 +7,10 @@
 eFrameGR(y, numPrimary, siteCovs = NULL, obsCovs = NULL, primaryCovs = NULL)
 }
 \arguments{
-\item{y}{An NxJ matrix of the additional monitoring data, where N is the
-number of monitored sites and J is the maximum number of primary periods
-per site as for \code{y}.}
+\item{y}{An MxJ matrix of the observed removal data, where M is the
+number of sites and J is the maximum number of removal (primary)
+periods per site. Each primary period can consist of k secondary
+periods but this is not used here.}
 
 \item{numPrimary}{the number of primary periods. For each primary period, the
 population is assumed to be closed.}
@@ -22,10 +23,6 @@ Each matrix or data.frame must be of dimension MxJ.}
 
 \item{primaryCovs}{A \code{data.frame} of covariates that vary at the
 site x primary period level.}
-
-\item{Z}{integer indicating the amount of monitoring effort occurring for each
-monitoring device used during each primary period. Ignored if \code{numPrimary}
-is greater than 1.}
 }
 \value{
 a \code{eFrameGR} holding data containing the response and

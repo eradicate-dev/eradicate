@@ -126,17 +126,18 @@ residuals.efitR<- function(obj) {
   return(r)
 }
 
-#' occTraject
+#' traject
 #'
-#' @description extracts occupancy trajectories from \code{occuMS} objects.
+#' @description extracts trajectories for open population models
+#' \code{occuMS} and \code{remMNO} objects.
 #'
 #' @param obj A fitted model object.
 #'
 #' @export
 #'
-occTraject <- function(obj, ...){
+traject <- function(obj, ...){
   # method generic
-  UseMethod("occTraject", obj)
+  UseMethod("traject", obj)
 }
 
 
@@ -179,6 +180,29 @@ summary.efit<- function(object, ...)
     invisible(outDF)
     cat(" ","\n")
   }
+  invisible(out.list)
+}
+
+#' summary.efitGPlist
+#'
+#' \code{summary} summarises an efitGPlist object giving the estimated parameters for the
+#'  model in \code{obj} (on the link scale) with associated SE and confidence
+#'  intervals.
+#'
+#' @param object A list of efitGP objects.
+#'
+#' @return a \code{list}
+#'
+#' @examples
+#'  emf <- eFrameGP(removals, effort, session=session)
+#'  mod <- remGP(emf)
+#'  summary(emf)
+#'
+#' @export
+#'
+summary.efitGPlist<- function(object, ...)
+{
+  out.list<- lapply(object, summary.efit)
   invisible(out.list)
 }
 
@@ -287,7 +311,7 @@ calcN.efitR<- function(obj, newdata, off.set=NULL, CI.level=0.95, ...) {
   tot.rem<- sum(obj$data$y, na.rm=TRUE)
   design <- getDesign(obj, newdata)
   X<- design$X
-  M<- nrow(X)
+  M<- nrow(X) # for stacked data
   sites<- design$retained.sites
   mixture<- obj$mixture
   invlink = obj$estimates$state$invlink
@@ -384,8 +408,12 @@ calcN.efitGP<- function(obj, CI.level=0.95, CI.calc = c("norm","lnorm","boot"), 
     for(j in 1:nboot) {
       newc <- rmultinom(1, N, c(pi, 1 - sum(pi)))
       Bdata <- data.frame(catch = newc[-length(newc)],effort = x$effort)
-      cstart<- -log(max(Bdata$effort))
-      starts<- c(log(sum(Bdata$catch)+1),cstart)
+      Bdata$cpue <- Bdata$catch/Bdata$effort
+      Bdata$cumcatch<- cumsum(Bdata$catch) - Bdata$catch
+      cf <- coef(lm(cpue ~ cumcatch, data = Bdata))
+      cstart<- log(-cf[2])
+      nstart<- log(-cf[1]/cf[2])
+      starts<- c(nstart,cstart)
       if(sum(Bdata$catch) > 0) {
         m<- optim(starts, nllFun, x=Bdata)
         Bout[j] <- do.call(invlink, list(m$par[1]))
@@ -411,6 +439,60 @@ calcN.efitGP<- function(obj, CI.level=0.95, CI.calc = c("norm","lnorm","boot"), 
 
 #' @rdname calcN
 #' @export
+calcN.efitGPlist<- function(obj, CI.level=0.95, CI.calc = c("norm","lnorm","boot"), nboot=500, ...){
+  out<- lapply(obj, calcN.efitGP, CI.level=CI.level, CI.calc=CI.calc,nbot=nboot, ...)
+  out
+}
+
+
+#' @rdname calcN
+#' @export
+calcN.efitMS<- function(obj, newdata, off.set=NULL, CI.level=0.95, npost=500, ...) {
+  if(missing(newdata) || is.null(newdata)) {
+    origdata <- obj$data
+    M <- numSites(origdata)
+    if(is.null(siteCovs(origdata))) {
+      newdata <- data.frame(Intercept = rep(1, M))
+    } else {
+      newdata <- siteCovs(origdata)
+    }
+  }
+  design <- getDesign(obj, newdata)
+  X<- design$X
+  M<- nrow(X)
+  T <- origdata$numPrimary
+  J <- ncol(origdata$y)/T
+  sites<- design$retained.sites
+  invlink = obj$estimates$state$invlink
+  invlinkGrad = obj$estimates$state$invlinkGrad
+  estimates<- coef(obj,"state")
+  covMat<- obj$estimates$state$covMat
+  if(ncol(X) != length(estimates)) stop("error - wrong number of covariates")
+  if (is.null(off.set)) off.set <- rep(1, M)
+  else if(length(off.set) == 1) off.set<- rep(off.set, M)
+  # cellwise estimates
+  eta <- as.vector(X %*% estimates)
+  vc <- rowSums((X %*% covMat) * X) # equivalent to diag(X %*% covMat %*% t(X))
+  ests<- do.call(invlink,list(eta))
+  grad <- do.call(invlinkGrad,list(eta))
+  v<- (grad * off.set)^2 * vc
+  cellpreds<- data.frame(Pocc = ests * off.set, se = sqrt(v), site = sites)
+  # Overall Occupancy estimate (random effects)
+  re<- raneffects(obj)
+  pp<- postSamples(re, npost)
+  pp.sum<- apply(pp, c(2,3), mean)
+  Nhat<- apply(pp.sum, 1, mean)
+  seN<- apply(pp.sum, 1, sd)
+  lwr<- apply(pp.sum, 1, quantile, (1-CI.level)/2)
+  upr<- apply(pp.sum, 1, quantile, 1-((1-CI.level)/2))
+  df<- data.frame(Nhat = round(Nhat,2),se=round(seN,2),
+                       lwr=round(lwr,2), uprl=round(upr,2),.season = 1:T)
+  list(cellpreds=cellpreds, Nhat=df)
+}
+
+
+#' @rdname calcN
+#' @export
 calcN.efitMNO<- function(obj, newdata, off.set=NULL, CI.level=0.95, npost=500, ...) {
   if(missing(newdata) || is.null(newdata)) {
     origdata <- obj$data
@@ -421,8 +503,8 @@ calcN.efitMNO<- function(obj, newdata, off.set=NULL, CI.level=0.95, npost=500, .
       newdata <- siteCovs(origdata)
     }
   }
-  tot.rem<- sum(obj$data$y, na.rm=TRUE)
-  numPrimary<- fit$data$numPrimary
+  T<- obj$data$numPrimary
+  num.removed<- obj$data$num.removed
   design <- getDesign(obj, newdata)
   X<- design$X
   M<- nrow(X)
@@ -468,20 +550,114 @@ calcN.efitMNO<- function(obj, newdata, off.set=NULL, CI.level=0.95, npost=500, .
   z <- exp(qnorm((1-CI.level)/2) * sqrt(log(1+cv^2)))
   lwr<- Nhat*z
   upr<- Nhat/z
-  # Residual estimate (random effects)
+  # Residual N estimate (random effects)
   re<- raneffects(obj)
   pp<- postSamples(re, npost)
-  pp<- pp[,numPrimary,]
-  Nr<- apply(pp, 2, sum)
-  Nresid<- mean(Nr)
-  seR<- sd(Nr)
-  lwr1<- quantile(Nr, (1-CI.level)/2)
-  upr1<- quantile(Nr, 1-((1-CI.level)/2))
-  bigN<- data.frame(N=round(Nhat,1),se=round(seN,1), lcl=round(lwr,1), ucl=round(upr,1))
-  littleN<- data.frame(N = round(Nresid,1),se=round(seR,1), lcl=round(lwr1,1), ucl=round(upr1,1))
-  row.names(bigN)<- "Total"
-  row.names(littleN)<- "Residual"
-  list(cellpreds=cellpreds, Nhat=bigN, Nresid=littleN)
+  pp.sum<- apply(pp, c(2,3), sum)
+  Nr<- apply(pp.sum, 1, mean)
+  seR<- apply(pp.sum, 1, sd)
+  lwr1<- apply(pp.sum, 1, quantile, (1-CI.level)/2)
+  upr1<- apply(pp.sum, 1, quantile, 1-((1-CI.level)/2))
+  bigN<- data.frame(N=round(Nhat),se=round(seN,1), lwr=round(lwr), upr=round(upr))
+  littleN<- data.frame(N = round(Nr),se=round(seR,1), .season = 1:T, lwr=round(lwr1), uprl=round(upr1))
+
+  Nresid<- Nr[T] - num.removed[T]
+  cv<- seR[T]/Nresid
+  z <- exp(qnorm((1-CI.level)/2) * sqrt(log(1+cv^2)))
+  lwr2<- Nresid*z
+  upr2<- Nresid/z
+  residN <- data.frame(N=round(Nresid), se=round(seR[T],1), lwr=round(lwr2), upr=round(upr2))
+  row.names(bigN)<- "Initial"
+  row.names(residN)<- "Residual"
+  list(cellpreds=cellpreds, Nhat=bigN, Nseason=littleN, Nresid=residN)
+}
+
+#' @rdname calcN
+#' @export
+calcN.efitMNS<- function(obj, newdata, off.set=NULL, CI.level=0.95, ...) {
+  # get original data
+  origdata <- obj$data
+  T <- origdata$numPrimary
+  delta <- origdata$delta
+  if(missing(newdata) || is.null(newdata)) {
+    M <- numSites(origdata)
+    season <- data.frame(.season = as.factor(rep(1:T, each = M)))
+    trend<- data.frame(.trend = rep(delta, each = M))
+    if(is.null(siteCovs(origdata))) {
+      scovs <- data.frame(Intercept = rep(1, M))
+    } else {
+      scovs <- siteCovs(origdata)
+    }
+    newdata <- cbind(season, trend, scovs[rep(1:M, T),,drop=FALSE])
+  } else {
+    M<- nrow(newdata)
+    season <- data.frame(.season = as.factor(rep(1:T, each = M)))
+    trend<- data.frame(.trend = rep(delta, each = M))
+    newdata <- cbind(season, trend, newdata[rep(1:M, T),,drop=FALSE])
+  }
+
+  design <- getDesign(obj, newdata)
+  X<- design$X
+  M<- nrow(X)
+  num.removed <- obj$data$num.removed
+  sites<- design$retained.sites
+  mixture<- obj$mixture
+  invlink = obj$estimates$state$invlink
+  invlinkGrad = obj$estimates$state$invlinkGrad
+  estimates<- coef(obj, "state")
+  covMat<- vcov(obj, "state")
+  if(mixture == "ZIP") {
+    logit.psi<- coef(obj, "zeroinfl")
+    logit.psi.var<- vcov(obj, "zeroinfl")
+    psi<- do.call(obj$estimates$zeroinfl$invlink, list(logit.psi))
+    psi.grad<- 1/(exp(-logit.psi) + 1) # derivative of log(psi)
+    psi.var<- psi.grad^2 * logit.psi.var
+  }
+  if(ncol(X) != length(estimates)) stop("error - wrong number of covariates")
+  if (is.null(off.set)) off.set <- rep(1, M)
+  else if(length(off.set) == 1) off.set<- rep(off.set, M)
+  # cellwise estimates
+  if(mixture == "ZIP") {
+    eta <- as.vector(X %*% estimates) + log(1-psi)
+    vc <- rowSums((X %*% covMat) * X) + as.vector(rep(psi.var, M))
+    ests<- do.call(invlink,list(eta))
+    grad <- do.call(invlinkGrad,list(eta))
+    v<- (grad * off.set)^2 * vc
+    cellpreds<- data.frame(N = ests * off.set, se = sqrt(v), site = sites, .season = season)
+  }
+  else{
+    eta <- as.vector(X %*% estimates)
+    vc <- rowSums((X %*% covMat) * X) # equivalent to diag(X %*% covMat %*% t(X))
+    ests<- do.call(invlink,list(eta))
+    grad <- do.call(invlinkGrad,list(eta))
+    v<- (grad * off.set)^2 * vc
+    cellpreds<- data.frame(N = ests * off.set, se = sqrt(v), site = sites, .season = season)
+  }
+  # overall estimate
+  bigN<- matrix(NA, nrow=T, ncol=5)
+  for(i in 1:T) {
+    off.seas<- off.set
+    off.seas[which(season != i)]<- 0
+    Nhat<- off.seas %*% ests
+    gradN<- off.seas %*% (grad * X)
+    varN<- gradN %*% covMat %*% t(gradN)
+    seN<- sqrt(varN)
+    cv<- sqrt(varN)/Nhat
+    z <- exp(qnorm((1-CI.level)/2) * sqrt(log(1+cv^2)))
+    lwr<- Nhat*z
+    upr<- Nhat/z
+    bigN[i, ]<- c(round(Nhat), i, round(seN,1), round(lwr), round(upr))
+  }
+  bigN<- as.data.frame(bigN)
+  Nresid<- Nhat - num.removed[T]
+  cv<- seN/Nresid
+  z <- exp(qnorm((1-CI.level)/2) * sqrt(log(1+cv^2)))
+  lwr2<- Nresid*z
+  upr2<- Nresid/z
+  residN <- data.frame(N=round(Nresid), se=round(seN,1), lwr=round(lwr2), upr=round(upr2))
+  row.names(residN)<- "Residual"
+  names(bigN)<- c("Nhat",".season","se","lwr","upr")
+  list(cellpreds=cellpreds, Nhat=bigN, Nresid=residN)
 }
 
 #-------------------------------------------
@@ -559,7 +735,7 @@ calcP.efitMNO<- function(obj, na.rm = TRUE) {
 calcP.efitMS<- function(obj, na.rm = TRUE) {
   data <- obj$data
   detParms <- coef(obj, 'det')
-  D <- getDesign(data, obj$psiformula, obj$gamformula, obj$epsformula, obj$detformula, na.rm=na.rm)
+  D <- getDesign(data, obj$lamformula, obj$gamformula, obj$epsformula, obj$detformula, na.rm=na.rm)
   y <- D$y
   V <- D$V
 
@@ -573,34 +749,195 @@ calcP.efitMS<- function(obj, na.rm = TRUE) {
   p <- matrix(p, nrow=M)
   return(p)
 }
-
 #-------------------------------------------------------
-#' @rdname occTraject
-#' @export
-occTraject.efitMS<- function(obj, type = c("projected","smoothed"), mean=TRUE, ...){
-  type <- match.arg(type, c("projected","smoothed"))
-  if(identical(type,"projected")) {
-    if(mean) obj$projected.mean
-    else obj$projected
-  }
-  else if(identical(type,"smoothed")) {
-    if(mean) obj$smoothed.mean
-    else obj$smoothed
-  }
-  else stop("type must be one of 'smoothed' or 'projected' ")
-}
-
-
-#' fitted.efitMNO
+# update methods
+#-------------------------------------------------------
+#' update
 #'
-#' @description calculates fitted values for the open population
-#' multinomial removal model.
+#' @description updates efit model objects.
 #'
 #' @param obj A fitted model object.
 #'
 #' @export
 #'
-fitted.efitMNO <- function(obj, na.rm=FALSE) {
+update.efitMS<- function(obj, lamformula., gamformula., epsformula.,
+                          detformula., ..., evaluate = TRUE) {
+
+  if(is.null(call <- obj$call)) stop("need an object with call component")
+  lamformula <- as.formula(call[['lamformula']])
+  gamformula <- as.formula(call[['gamformula']])
+  epsformula <- as.formula(call[['epsformula']])
+  detformula <- as.formula(call[['detformula']])
+
+  extras <- match.call(expand.dots = FALSE)$...
+  if (!missing(lamformula.)) {
+    uplamformula <- update.formula(lamformula, lamformula.)
+    call[['lamformula']] <- uplamformula
+  }
+  if (!missing(gamformula.)) {
+    upgamformula <- update.formula(gamformula, gamformula.)
+    call[['gamformula']] <- upgamformula
+  }
+  if (!missing(epsformula.)) {
+    upepsformula <- update.formula(epsformula, epsformula.)
+    call[['epsformula']] <- upepsformula
+  }
+  if (!missing(detformula.)) {
+    updetformula <- update.formula(detformula, detformula.)
+    call[['detformula']] <- updetformula
+  }
+  if (length(extras) > 0) {
+    existing <- !is.na(match(names(extras), names(call)))
+    for (a in names(extras)[existing]) call[[a]] <- extras[[a]]
+    if (any(!existing)) {
+      call <- c(as.list(call), extras[!existing])
+      call <- as.call(call)
+    }
+  }
+  if (evaluate)
+    eval(call, parent.frame())
+  else call
+}
+
+
+
+#' update
+#'
+#' @description updates efit model objects.
+#'
+#' @param obj A fitted model object.
+#'
+#' @export
+#'
+update.efitMNO<- function(obj, lamformula., detformula., gamformula.,
+                          omformula., ..., evaluate = TRUE) {
+
+  if(is.null(call <- obj$call)) stop("need an object with call component")
+  lamformula <- as.formula(call[['lamformula']])
+  detformula <- as.formula(call[['detformula']])
+  gamformula <- as.formula(call[['gamformula']])
+  omformula <- as.formula(call[['omformula']])
+
+  extras <- match.call(expand.dots = FALSE)$...
+  if (!missing(lamformula.)) {
+    upLamformula <- update.formula(lamformula,lamformula.)
+    call[['lamformula']] <- upLamformula
+  }
+  if (!missing(gamformula.)) {
+    upGamformula <- update.formula(gamformula, gamformula.)
+    call[['gamformula']] <- upGamformula
+  }
+  if (!missing(omformula.)) {
+    upOmformula <- update.formula(omformula, omformula.)
+    call[['omformula']] <- upOmformula
+  }
+  if (!missing(detformula.)) {
+    upDetformula <- update.formula(detformula, detformula.)
+    call[['detformula']] <- upDetformula
+  }
+  if (length(extras) > 0) {
+    existing <- !is.na(match(names(extras), names(call)))
+    for (a in names(extras)[existing]) call[[a]] <- extras[[a]]
+    if (any(!existing)) {
+      call <- c(as.list(call), extras[!existing])
+      call <- as.call(call)
+    }
+  }
+  if (evaluate)
+    eval(call, parent.frame())
+  else call
+}
+
+
+#-------------------------------------------------------
+#' @rdname traject
+#' @export
+traject.efitMS<- function(obj, mean=TRUE, ...){
+
+  backward <- function(detParams, phis) {
+    beta <- array(NA, c(K + 1, nY, M))
+    for (i in 1:M) {
+      backP <- rep(1, K + 1)
+      for (t in nY:1) {
+
+        beta[, t, i] <- backP
+
+        detVec <- rep(1, K + 1)
+        for (j in 1:J) {
+          if(!is.na(y.arr[i,t,j])) {
+            mp <- V.arr[,,i,t,j] %*% detParams
+            detVecObs <- gSingleDetVec(y.arr[i,t,j], mp)
+
+            detVec <- detVec * detVecObs
+          }
+        }
+        if (t > 1)
+          backP <- t(phis[,,t-1,i]) %*% (detVec * backP)
+      }
+    }
+    return(beta)
+  }
+
+  data <- obj$data
+  nY <- data$numPrimary
+  ests <- obj$estimates
+
+  lamformula <- obj$lamformula
+  gamformula <- obj$gamformula
+  epsformula <- obj$epsformula
+  detformula <- obj$detformula
+  K <- 1
+  designMats <- getDesign(data, lamformula, gamformula, epsformula, detformula)
+  V.itjk <- designMats$V
+  X.it.gam <- designMats$X.gam
+  X.it.eps <- designMats$X.eps
+  W.i <- designMats$W
+
+  detParms <- colnames(V.itjk)
+  gamParms <- colnames(X.it.gam)
+  epsParms <- colnames(X.it.eps)
+  psiParms <- colnames(W.i)
+
+  psiParams <- ests$state$estimates
+  colParams <- ests$col$estimates
+  extParams <- ests$ext$estimates
+  detParams <- ests$det$estimates
+
+  y <- designMats$y
+  M <- nrow(y)
+  J <- ncol(y)/nY
+
+  ## remove final year from X.it
+  X.it.gam <- as.matrix(X.it.gam[-seq(nY,M*nY,by=nY),])
+  X.it.eps <- as.matrix(X.it.eps[-seq(nY,M*nY,by=nY),])
+
+  X.gam <- X.it.gam %x% c(-1,1)
+  X.eps <- X.it.eps %x% c(-1,1)
+  phis <- array(NA,c(2,2,nY-1,M))
+
+  psis <- plogis(W.i %*% psiParams)
+
+  ## computed projected estimates
+  phis[,1,,] <- plogis(X.gam %*% colParams)
+  phis[,2,,] <- plogis(X.eps %*% -extParams)
+
+  projected <- array(NA, c(2, nY, M))
+  projected[1,1,] <- 1 - psis
+  projected[2,1,] <- psis
+  for(i in 1:M) {
+    for(t in 2:nY) {
+      projected[,t,i] <- phis[,,t-1,i] %*% projected[,t-1,i]
+    }
+  }
+  return(t(projected[2,,]))
+}
+
+
+
+#' @rdname traject
+#' @export
+#'
+traject.efitMNO <- function(obj, na.rm=FALSE) {
   dynamics <- obj$dynamics
   mixture <- obj$mixture
   fix <- obj$fix
@@ -632,21 +969,14 @@ fitted.efitMNO <- function(obj, na.rm=FALSE) {
   if (fix == 'omega'){
     omega <- matrix(1, M, T-1)
   } else if(!identical(dynamics, "trend")) {
-    if(identical(dynamics, "ricker") || identical(dynamics, "gompertz"))
-      omega <- matrix(exp(Xom %*% coef(object, 'omega') + Xom.offset),
-                      M, T-1, byrow=TRUE)
-    else
       omega <- matrix(plogis(Xom %*% coef(obj, 'omega') + Xom.offset),
                       M, T-1, byrow=TRUE)
   }
   if(fix == "gamma"){
     gamma <- matrix(0, M, T-1)
-  } else if(!identical(dynamics, "notrend")){
+  } else {
     gamma <- matrix(exp(Xgam %*% coef(obj, 'gamma') + Xgam.offset),
                     M, T-1, byrow=TRUE)
-  } else {
-    if(identical(dynamics, "notrend"))
-      gamma <- (1-omega)*lambda
   }
   if(immigration)
     iota <- matrix(exp(Xiota %*% coef(obj, 'iota') + Xiota.offset),
@@ -663,12 +993,6 @@ fitted.efitMNO <- function(obj, na.rm=FALSE) {
           N[i, 1] <- N[i, 1] * (omega[i,1] + gamma[i, 1]) + iota[i, 1]
         else if(identical(dynamics, "trend"))
           N[i,1] <- N[i,1] * gamma[i,1] + iota[i, 1]
-        else if(identical(dynamics, "ricker"))
-          N[i,1] <- N[i,1] * exp(gamma[i,1]*(1-N[i,1]/omega[i,1])) +
-            iota[i, 1]
-        else if(identical(dynamics, "gompertz"))
-          N[i,1] <- N[i,1] * exp(gamma[i,1]*(1-log(N[i,1]+1)/
-                                               log(omega[i,1]+1))) + iota[i, 1]
         else
           N[i,1] <- N[i,1] * omega[i,1] + gamma[i,1]
       }
@@ -679,12 +1003,6 @@ fitted.efitMNO <- function(obj, na.rm=FALSE) {
           iota[i, t-1]
       else if(identical(dynamics, "trend"))
         N[i,t] <- N[i,t-1] * gamma[i,t-1] + iota[i, t-1]
-      else if(identical(dynamics, "ricker"))
-        N[i,t] <- N[i,t-1]*exp(gamma[i,t-1]*(1-N[i,t-1]/omega[i,t-1]))+
-          iota[i, t-1]
-      else if(identical(dynamics, "gompertz"))
-        N[i,1] <- N[i,t-1] * exp(gamma[i,t-1]*(1-log(N[i,t-1]+1)/
-                                                 log(omega[i,t-1]+1))) + iota[i, t-1]
       else
         N[i,t] <- N[i,t-1] * omega[i,t-1] + gamma[i,t-1]
       if(delta[i, t] > 1) {
@@ -694,20 +1012,12 @@ fitted.efitMNO <- function(obj, na.rm=FALSE) {
               iota[i, t-1]
           else if(identical(dynamics, "trend"))
             N[i, t] <- N[i, t] * gamma[i, t-1] + iota[i, t-1]
-          else if(identical(dynamics, "ricker"))
-            N[i, t] <- N[i, t] * exp(gamma[i, t-1] * (1 - N[i,t] /
-                                                        omega[i,t-1]))+ iota[i, t-1]
-          else if(identical(dynamics, "gompertz"))
-            N[i, 1] <- N[i, t] * exp(gamma[i, t-1] * (1 -
-                                                        log(N[i, t]+1) / log(omega[i, t-1] + 1))) +
-              iota[i, t-1]
           else
             N[i,t] <- N[i,t] * omega[i, t-1] + gamma[i, t-1]
         }
       }
     }
   }
-  N <- N[,rep(1:T, each=J)]
   N
 }
 

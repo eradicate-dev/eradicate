@@ -38,8 +38,8 @@
 #' @return a \code{efit} model object.
 #'
 #' @examples
-#'  rem<- san_nic_rem$rem
-#'  emf <- eFrameMNO(y=rem, numPrimary=1)
+#'  rem<- san_nic_open$removals
+#'  emf <- eFrameMNO(y=rem, numPrimary=8)
 #'  mod <- remMNO(~1, ~1, ~1, ~1, data=emf)
 #'  Nhat<- calcN(mod)
 #'
@@ -181,7 +181,7 @@ remMNO <- function(lamformula, gamformula, omformula, detformula,
   #finding all unique likelihood transitions
   I <- cbind(rep(k, times=lk), rep(k, each=lk))
   I1 <- I[I[,1] <= I[,2],]
-  lik_trans <- .Call("get_lik_trans", I, I1, PACKAGE="unmarked")
+  lik_trans <- get_lik_trans(I, I1)
 
   beta_ind <- matrix(NA, 6, 2)
   beta_ind[1,] <- c(1, nAP) #Abundance
@@ -199,8 +199,7 @@ remMNO <- function(lamformula, gamformula, omformula, detformula,
   yperm <- aperm(yperm, c(3,2,1)) # fix asan problem
 
   nll <- function(parms) {
-    .Call("nll_multmixOpen",
-          yperm, yt,
+    nll_multmixOpen(yperm, yt,
           D$Xlam, D$Xgam, D$Xom, D$Xp, D$Xiota,
           parms, beta_ind - 1,
           Xlam.offset, Xgam.offset, Xom.offset, Xp.offset, Xiota.offset,
@@ -208,8 +207,7 @@ remMNO <- function(lamformula, gamformula, omformula, detformula,
           lk, mixture, first - 1, last - 1, first1 - 1, M, T, J,
           D$delta, dynamics, fix, D$go.dims, immigration,
           I, I1, lik_trans$Ib, lik_trans$Ip,
-          piFun, lfac.k, kmyt, lfac.kmyt, fin,
-          PACKAGE = "unmarked")
+          piFun, lfac.k, kmyt, lfac.kmyt, fin)
   }
 
   if(missing(starts)){
@@ -268,13 +266,13 @@ remMNO <- function(lamformula, gamformula, omformula, detformula,
         invlinkGrad = "exp")
   }
   if(identical(mixture, "ZIP")) {
-    estimates$psi <- list(name = "Zero-inflation",
+    estimates$zeroinfl <- list(name = "Zero inflation",
         short.name = "psi", estimates = ests[nP],
         covMat = as.matrix(covMat[nP, nP]), invlink = "logistic",
         invlinkGrad = "logistic.grad")
   }
 
-  efit <- list(fitType = "multmixOpen",
+  efit <- list(fitType = "multinomial removal open",
       call = match.call(), lamformula = lamformula, detformula=detformula,
       gamformula=gamformula, omformula=omformula, iotaformula=iotaformula,
       data = data, sitesRemoved=D$removed.sites, estimates = estimates, AIC = fmAIC,

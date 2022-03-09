@@ -133,14 +133,12 @@ eFrameR <- function(y, siteCovs = NULL, obsCovs = NULL) {
 #' secondary periods.
 #'
 #'
-#' @param y An NxJ matrix of the additional monitoring data, where N is the
-#'    number of monitored sites and J is the maximum number of primary periods
-#'    per site as for \code{y}.
+#' @param y An MxJ matrix of the observed removal data, where M is the
+#'    number of sites and J is the maximum number of removal (primary)
+#'    periods per site. Each primary period can consist of k secondary
+#'    periods but this is not used here.
 #' @param numPrimary the number of primary periods. For each primary period, the
 #' population is assumed to be closed.
-#' @param Z integer indicating the amount of monitoring effort occurring for each
-#' monitoring device used during each primary period. Ignored if \code{numPrimary}
-#' is greater than 1.
 #' @param siteCovs A \code{data.frame} of covariates that vary at the
 #'    site level. This should have M rows and one column per covariate.
 #' @param obsCovs A list of matrices or data.frames of variables varying within sites.
@@ -187,16 +185,13 @@ eFrameGR<- function(y, numPrimary, siteCovs = NULL, obsCovs = NULL, primaryCovs 
 #' @param ym An MxJ matrix of the additional monitoring (index) data.
 #' @param numPrimary the number of primary periods. For each primary period, the
 #' population is assumed to be closed.
-#' @param Z integer indicating the amount of monitoring effort occurring for each
-#' monitoring device used during each primary period. Ignored if \code{numPrimary}
-#' is greater than 1.
 #' @param SiteCovs A \code{data.frame} of covariates that vary at the
 #'    site level. This should have M rows and one column per covariate
 #' @param obsCovs A list of matrices or data.frames of variables varying within sites.
 #' Each matrix or data.frame must be of dimension MxJ.
 #' @param primaryCovs A \code{data.frame} of covariates that vary at the
 #'    site x primary period level.
-#' @return a \code{eFrameRGP} holding data containing the response and
+#' @return a \code{eFrameGRM} holding data containing the response and
 #'  covariates required for removal models
 #'
 #' @examples
@@ -226,6 +221,11 @@ eFrameGRM<- function(y, ym, numPrimary, siteCovs = NULL, obsCovs = NULL, primary
 #' @param catch A vector of removals for each period.
 #' @param effort A vector of removal effort employed during each period (i.e. trapnights).
 #' @param index Optional vector of relative abundance indices for each period.
+#' @param ieffort Optional vector of effort employed for the relative index
+#' @param session Optional vector indicating multiple removal 'sessions'. The population for
+#' a particular session is considered to be closed and removals for each session are
+#' analysed independently. Analysis of catch/effort data for multiple sessions returns a list
+#' with length equal to the number of sessions.
 #'
 #' @return a \code{eFrameGP} holding data suitable for use in \code{remGP}
 #'
@@ -241,10 +241,13 @@ eFrameGRM<- function(y, ym, numPrimary, siteCovs = NULL, obsCovs = NULL, primary
 #'
 #' @export
 #'
-eFrameGP<- function(catch, effort, index=NULL, ieffort=NULL) {
+eFrameGP<- function(catch, effort, session=NULL, index=NULL, ieffort=NULL) {
   if(length(catch) != length(effort))
     stop("catch and effort vectors must be same length")
-  x <- data.frame(catch=catch, effort=effort)
+  if(is.null(session)) session<- rep(1, length(catch))
+  if(!is.null(session) & (length(session) != length(catch)))
+    stop("session and catch vectors must be same length")
+  x <- data.frame(catch=catch, effort=effort, session=session)
   nobs<- nrow(x)
   if(!is.null(index) & length(index) == nobs) {
     x$index<- index
@@ -284,10 +287,11 @@ eFrameGP<- function(catch, effort, index=NULL, ieffort=NULL) {
 #'
 #' @export
 #'
-eFrameMS<- function(y, obsPerSeason, siteCovs = NULL, obsCovs =  NULL) {
+eFrameMS<- function(y, numPrimary, siteCovs = NULL, obsCovs =  NULL) {
+  y <- truncateToBinary(y)
   emf <- eFrame(y, siteCovs, obsCovs)
-  if(ncol(y)%%obsPerSeason > 0) stop("obsPerSeason does not match dimensions of y")
-  emf$obsPerSeason <- obsPerSeason
+  if(ncol(y)%%numPrimary > 0) stop("numPrimary does not match dimensions of y")
+  emf$numPrimary <- numPrimary
   class(emf) <- c("eFrameMS",class(emf))
   emf
 }
@@ -341,10 +345,11 @@ eFrameMNO<- function(y, numPrimary, siteCovs = NULL, obsCovs = NULL, primaryCovs
     mode(primaryPeriod) <- "integer"
     warning("primaryPeriod values have been converted to integers")
   }
-
+  if("data.frame" %in% class(y)) y <- as.matrix(y)
   ya <- array(y, c(M, J, T))
   yt.na <- apply(!is.na(ya), c(1,3), any)
   yt.na <- which(!yt.na)
+  num.removed<- apply(ya, 3, sum, na.rm=TRUE)
   d.na <- which(is.na(primaryPeriod))
   if(!all(d.na %in% yt.na))
     stop("primaryPeriod values must be supplied for all non-missing values of y")
@@ -354,13 +359,75 @@ eFrameMNO<- function(y, numPrimary, siteCovs = NULL, obsCovs = NULL, primaryCovs
   }
   if(!all(apply(primaryPeriod, 1, increasing)))
     stop("primaryPeriod values must increase over time for each site")
+  obsCovs <- covsToDF(obsCovs, "obsCovs", J*T, M)
+  primaryCovs <- covsToDF(primaryCovs, "primaryCovs", numPrimary, nrow(y))
+  emf <- eFrame(y, siteCovs)
+  emf$obsCovs<- obsCovs
+  emf$piFun<- "removalPiFun"
+  emf$numPrimary <- numPrimary
+  emf$primaryCovs <- primaryCovs
+  emf$primaryPeriod <- primaryPeriod
+  emf$num.removed<- num.removed
+  class(emf) <- c("eFrameMNO",class(emf))
+  emf
+}
 
+#' eFrameMNS
+#'
+#' \code{eFrameMNS} creates an eFrameMNS 'stacked' data object for use with closed population
+#' multinomial removal models using the robust design where sampling occurs over
+#' a number of primary and secondary periods. Data for each primary period is 'stacked'
+#' into rows with an indicator variable added to identify each primary period. The data can
+#' then be analysed using closed population removal models to estimate the trend in abundance
+#' between primary periods.
+#'
+#' @param y An MxJxT matrix of the observed removal data, where M is the
+#'    number of sites, J is the maximum number of removal (secondary) periods
+#'    per site and T is the number of primary periods.
+#' @param numPrimary the number of primary periods. For each primary period, the
+#' population is assumed to be closed.
+#' @param SiteCovs A \code{data.frame} of covariates that vary at the
+#'    site level. This should have M rows and one column per covariate
+#' @param obsCovs A list of matrices or data.frames of variables varying within sites.
+#' Each matrix or data.frame must be of dimension MxJ.
+#' @param delta A vector with T elements giving the time units between primary periods for each site
+#' beginning with 1 for the first primary period. A default value of 1 is used to
+#' indicate equal time intervals between primary periods.
+#' @return a \code{eFrameMNS} holding stacked data for each primary period.
+#'
+#' @examples
+#'  rem<- san_nic_rem$rem
+#'  ym<- san_nic_rem$ym # detections from additional monitoring
+#'
+#'  emf<-eFrameMNO(rem, numPrimary=1)
+#'  summary(emf)
+#'
+#' @export
+#'
+eFrameMNS<- function(y, numPrimary, siteCovs = NULL, obsCovs = NULL, delta = NULL) {
+
+  J <- ncol(y) / numPrimary
+  if (J %% 1 != 0) stop("numPrimary leads to unequal number of secondary periods")
+  if (J < 2) stop("y contains less than 2 primary periods")
+  M <- nrow(y)
+  T <- numPrimary
+  if(missing(delta))
+    delta <- rep(1.0, T)
+  if(!is.vector(delta) || length(delta) != T)
+    stop("delta should be a vector of length T")
+  if(any(delta < 0, na.rm=TRUE))
+    stop("Negative delta values are not allowed.")
+  if(any(is.na(delta)))
+    stop("Missing values are not allowed in delta.")
+  ya <- array(y, c(M, J, T))
+  num.removed <- apply(ya, 3, sum, na.rm=TRUE)
+  obsCovs <- covsToDF(obsCovs, "obsCovs", J*T, M)
   emf <- eFrame(y, siteCovs, obsCovs)
   emf$piFun<- "removalPiFun"
   emf$numPrimary <- numPrimary
-  emf$primaryCovs <- covsToDF(primaryCovs, "primaryCovs", numPrimary, nrow(y))
-  emf$primaryPeriod <- primaryPeriod
-  class(emf) <- c("eFrameMNO",class(emf))
+  emf$delta<- cumsum(delta)
+  emf$num.removed <- num.removed
+  class(emf) <- c("eFrameMNS",class(emf))
   emf
 }
 
@@ -407,42 +474,6 @@ eFrameDS <- function(distance, size, siteID, cutpoints, w, bin_nums=FALSE) {
   return(emf)
 }
 
-############################ EXTRACTORS ##################################
-
-siteCovs<- function(object) return(object$siteCovs)
-
-obsCovs<- function(object, matrices=FALSE) {
-  M<- numSites(object)
-  R<- numY(object)
-  if(matrices) {
-    value <- list()
-    for(i in seq(length=length(object$obsCovs))){
-      value[[i]] <- matrix(object$obsCovs[,i], M, R, byrow = TRUE)
-    }
-    names(value) <- names(object$obsCovs)
-  } else {
-    value <- object$obsCovs
-  }
-  return(value)
-}
-
-numSites<- function(object) nrow(object$y)
-
-numY<- function(object) ncol(object$y)
-
-getY<- function(object) object$y
-
-covsToDF <- function(covs, name, obsNum, numSites){
-# Convert covs provided as list of matrices/dfs to data frame
-  if(!inherits(covs, "list")) return(covs)
-  lapply(covs, function(x){
-    if(!inherits(x, c("matrix", "data.frame")))
-      stop(paste("At least one element of", name, "is not a matrix or data frame."))
-    if(ncol(x) != obsNum | nrow(x) != numSites)
-      stop(paste("At least one element of", name, "has incorrect number of dimensions."))
-  })
-  data.frame(lapply(covs, function(x) as.vector(t(x))))
-}
 
 ################################### PRINT/SUMMARY METHODS ######################
 #' print.eFrame
@@ -927,4 +958,176 @@ summary.eFrameMNO<- function(object,...) {
     cat("\nObservation-level covariates:\n")
     print(summary(object$obsCovs))
   }
+}
+
+############################ EXTRACTORS ##################################
+
+siteCovs<- function(object) return(object$siteCovs)
+
+obsCovs<- function(object, matrices=FALSE) {
+  M<- numSites(object)
+  R<- numY(object)
+  if(matrices) {
+    value <- list()
+    for(i in seq(length=length(object$obsCovs))){
+      value[[i]] <- matrix(object$obsCovs[,i], M, R, byrow = TRUE)
+    }
+    names(value) <- names(object$obsCovs)
+  } else {
+    value <- object$obsCovs
+  }
+  return(value)
+}
+
+primaryCovs<- function(object) return(object$primaryCovs)
+
+numSites<- function(object) nrow(object$y)
+
+numY<- function(object) ncol(object$y)
+
+getY<- function(object) object$y
+
+covsToDF <- function(covs, name, obsNum, numSites){
+  # Convert covs provided as list of matrices/dfs to data frame
+  if(!inherits(covs, "list")) return(covs)
+  lapply(covs, function(x){
+    if(!inherits(x, c("matrix", "data.frame")))
+      stop(paste("At least one element of", name, "is not a matrix or data frame."))
+    if(ncol(x) != obsNum | nrow(x) != numSites)
+      stop(paste("At least one element of", name, "has incorrect number of dimensions."))
+  })
+  data.frame(lapply(covs, function(x) as.vector(t(x))))
+}
+
+#-----------------------------------------
+# bracket methods
+#-----------------------------------------
+
+#' [.eFrame
+#'
+#' @description Site extractor methods for eFrame objects.
+#'
+#' @param emf A eFrame object.
+#'
+#' @export
+#'
+`[.eFrame` <- function(x, i) {
+  M <- numSites(x)
+  y <- getY(x)
+  J <- ncol(y)
+
+  if(length(i) == 0) return(x)
+  if(any(i < 0) && any(i > 0))
+    stop("i must be all positive or all negative indices.")
+  if(all(i < 0)) { # if i is negative, then convert to positive
+    i <- (1:M)[i]
+  }
+  y <- getY(x)[i,]
+  if (length(i) == 1) {
+    y <- t(y)
+  }
+  siteCovs <- siteCovs(x)
+  obsCovs <- obsCovs(x)
+  if (!is.null(siteCovs)) {
+    siteCovs <- siteCovs(x)[i, , drop = FALSE]
+  }
+  if (!is.null(obsCovs)) {
+    .site <- rep(1:M, each = J)
+    obsCovs <- obsCovs[which(.site %in% i),]
+  }
+  emf <- x
+  emf$y <- y
+  emf$siteCovs <- siteCovs
+  emf$obsCovs <- obsCovs
+  emf
+}
+
+#----------
+#' [.eFrameMS
+#'
+#' @description Site extractor methods for eFrame objects.
+#'
+#' @param emf A eFrame object.
+#'
+#' @export
+#'
+`[.eFrameMS` <- function(x, i) {
+  M <- numSites(x)
+  J <- x$obsPerSeason
+  y <- getY(x)
+  T <- ncol(y) / J
+
+  if(length(i) == 0) return(x)
+  if(any(i < 0) && any(i > 0))
+    stop("i must be all positive or all negative indices.")
+  if(all(i < 0)) { # if i is negative, then convert to positive
+    i <- (1:M)[i]
+  }
+  y <- getY(x)[i,]
+  if (length(i) == 1) {
+    y <- t(y)
+  }
+  siteCovs <- siteCovs(x)
+  obsCovs <- obsCovs(x)
+
+  if (!is.null(siteCovs)) {
+    siteCovs <- siteCovs(x)[i, , drop = FALSE]
+  }
+  if (!is.null(obsCovs)) {
+    .site <- rep(1:M, each = J)
+    obsCovs <- obsCovs[which(.site %in% i),]
+  }
+  emf <- x
+  emf$y <- y
+  emf$siteCovs <- siteCovs
+  emf$obsCovs <- obsCovs
+  emf
+}
+
+#----------
+#' [.eFrameMNO
+#'
+#' @description Site extractor methods for eFrame objects.
+#'
+#' @param emf A eFrame object.
+#'
+#' @export
+#'
+`[.eFrameMNO` <- function(x, i) {
+  M <- numSites(x)
+  T <- x$numPrimary
+  y <- getY(x)
+  J <- ncol(y) / T
+
+  if(length(i) == 0) return(x)
+  if(any(i < 0) && any(i > 0))
+    stop("i must be all positive or all negative indices.")
+  if(all(i < 0)) { # if i is negative, then convert to positive
+    i <- (1:M)[i]
+  }
+  y <- getY(x)[i,]
+  if (length(i) == 1) {
+    y <- t(y)
+  }
+  siteCovs <- siteCovs(x)
+  obsCovs <- obsCovs(x)
+  primaryCovs<- primaryCovs(x)
+
+  if (!is.null(siteCovs)) {
+    siteCovs <- siteCovs(x)[i, , drop = FALSE]
+  }
+  if (!is.null(obsCovs)) {
+    .site <- rep(1:M, each = J)
+    obsCovs <- obsCovs[which(.site %in% i),]
+  }
+  if(!is.null(primaryCovs)) {
+    .site <- rep(1:M, each = T)
+    primaryCovs <- primaryCovs[which(.site %in% i),]
+  }
+  emf <- x
+  emf$y <- y
+  emf$siteCovs <- siteCovs
+  emf$obsCovs <- obsCovs
+  emf$primaryCovs<- primaryCovs
+  emf
 }

@@ -1,12 +1,12 @@
 
-#' remMN
+#' remMNS
 #'
-#' @name remMN
+#' @name remMNS
 #'
 #' @description
-#' \code{remMN} fits multinomial removal models (e.g. Haines 2019, Dorazio et al 2005)
-#' to data from a number of primary periods where individuals removed are recorded for each site.
-#' Currently supported models include the Poisson, Negative binomial and
+#' \code{remMNS} fits multinomial removal models (e.g. Haines 2019, Dorazio et al 2005)
+#' to 'stacked' data from from M sites over T primary periods with each primary consisting of J
+#' secondary periods. Currently supported models include the Poisson, Negative binomial and
 #' zero-inflated Poisson (ZIP).
 #'
 #' @usage remMN(lamformula, detformula, data, starts, method="BFGS", se=TRUE, ...)
@@ -34,11 +34,11 @@
 #'
 #' @export
 #'
-remMN <- function(lamformula, detformula, data, mixture=c("P","NB","ZIP"), starts,
+remMNS <- function(lamformula, detformula, data, mixture=c("P","NB","ZIP"), starts,
                     method = "BFGS", se = TRUE, ...) {
 
-    if(!is(data, "eFrameR"))
-		    stop("Data is not a eFrameR.")
+    if(!is(data, "eFrameMNS"))
+		    stop("Data is not a eFrameMNS")
     mixture <- match.arg(mixture)
     designMats <- getDesign(data, lamformula, detformula)
     X <- designMats$X; V <- designMats$V; y <- designMats$y
@@ -175,6 +175,6 @@ remMN <- function(lamformula, detformula, data, mixture=c("P","NB","ZIP"), start
         call = match.call(), lamformula = lamformula, detformula=detformula,
         estimates=estimates, sitesRemoved = designMats$removed.sites, mixture=mixture,
         AIC = fmAIC, opt = fm, negLogLike = fm$value, nllFun = nll, data = data)
-    class(efit) <- c('efitR','efit','list')
+    class(efit) <- c('efitMNS','efit','list')
     return(efit)
 }

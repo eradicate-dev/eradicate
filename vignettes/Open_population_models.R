@@ -43,15 +43,16 @@ summary(fit)
 
 ## -----------------------------------------------------------------------------
 
-calcN(fit)$Nhat
+ests<- calcN(fit)
+#Initial population size
+ests$Nhat
 
 
 ## -----------------------------------------------------------------------------
-set.seed(1)
-re<- raneffects(fit)
-ppd<- postSamples(re, 1000)
-Nhat<- round(apply(ppd, c(1,2), mean))
+# Population size at the start of each session (.season)
+ests$Nseason
 
-apply(Nhat,2,sum)  # Total population size for each trapping session (= primary period)
+# Residual population size
+ests$Nresid
 
 

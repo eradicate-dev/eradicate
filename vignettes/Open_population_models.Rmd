@@ -22,7 +22,7 @@ Here we illustrate the use of 'open population models' in the `eradicate` packag
 
 We illustrate these models using an example of the eradication of a hypothetical population of rabbits from San Nicolas island, California. In this example, rabbits were removed over the course of two years (or two breeding seasons) using trapping.  Hence, during the eradication program, the population was also changing due to natural demographic processes of births and natural mortality.  There was also the possibility that rabbits could potentially move between trapping locations.
 
-Since this is a simulated dataset, we know exactly what the population size was before the eradication program began (86 cats).  Before we start we load various the packages necessary for our analysis ...
+Since this is a simulated dataset, we know exactly what the population size was before the eradication program began (2500 rabbits).  Before we start we load various the packages necessary for our analysis ...
 
 ```{r setup, message=FALSE, warning=FALSE}
 library(eradicate)
@@ -81,24 +81,25 @@ summary(fit)
 
 ```
 
-The model summary indicates that all parameters are highly significant.  The parameter for the effect of `pgrass` on abundance indicates that rabbit abundance is around 6 times higher on grassland than forest habitat. The estimate of recruitment was `r round(exp(coef.efit(fit, "gamma")),3)` rabbits per primary session and the estimate of apparent survival was `r round(plogis(coef.efit(fit,"omega")),3)`.  Detection probability was `r round(plogis(coef.efit(fit,"det")),3)` per sampling occasion.  Assuming that each trapping location is independent, we can get an estimate of the total initial population size using `calcN()`.
+The model summary indicates that all parameters are highly significant.  The parameter for the effect of `pgrass` on abundance indicates that rabbit abundance is around 6 times higher on grassland than forest habitat. The estimate of recruitment was `r round(exp(coef(fit, "gamma")),3)` rabbits per primary session and the estimate of apparent survival was `r round(plogis(coef(fit,"omega")),3)`.  Detection probability was `r round(plogis(coef(fit,"det")),3)` per sampling occasion.  Assuming that each trapping location is independent, we can get an estimate of the total initial population size over all the sampled sites using `calcN()`.
 
 ```{r}
 
-calcN(fit)$Nhat
+ests<- calcN(fit)
+#Initial population size
+ests$Nhat
 
 ```
 
-Which indicates that there were around 2500 rabbits on the island before the eradication program.  To get an estimate of the residual population size following trapping, we can't simply subtract the number of rabbits removed from the initial population estimate like we do with closed population removal methods.  This is because the population is subject to recruitment and survival processes between trapping sessions in addition to the removals due to trapping.  Hence we must recreate the population trajectory for each site from the estimates of initial population size, recruitment and survival and then subtract the removals from trapping.  This is accomplished in `eradicate` using empirical Bayesian methods, to estimate the posterior predictive distributions of the parameters, which are then used to simulate population trajectories accounting for all sources of additions and losses to the population.
+Which indicates that there were around 2500 rabbits on the island before the eradication program.  To get an estimate of the residual population size following trapping, we can't simply subtract the number of rabbits removed from the initial population estimate like we do with closed population removal methods.  This is because the population is subject to recruitment and survival processes between trapping sessions in addition to the removals due to trapping.  Hence we must recreate the population trajectory for each site from the estimates of initial population size, recruitment and survival and then subtract the removals from trapping.  This is accomplished in `eradicate` using empirical Bayesian methods, to estimate the posterior predictive distributions of the parameters, which are then used to simulate population trajectories accounting for all sources of additions and losses to the population.  Fortunately, this is all taken care of with `calcN()`.  
 
 ```{r}
-set.seed(1)
-re<- raneffects(fit)
-ppd<- postSamples(re, 1000)
-Nhat<- round(apply(ppd, c(1,2), mean))
+# Population size at the start of each session (.season)
+ests$Nseason
 
-apply(Nhat,2,sum)  # Total population size for each trapping session (= primary period)
+# Residual population size
+ests$Nresid
 
 ```
 
-which indicates there are around 12 rabbits remaining at the start of the last trapping session. 
+which indicates there are around 17 rabbits remaining at the start of the last trapping session (i.e. season 8). Since 7 rabbits were subsequently removed during the last session, the residual population of rabbits remaining was 10.

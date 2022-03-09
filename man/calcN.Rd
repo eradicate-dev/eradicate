@@ -6,7 +6,10 @@
 \alias{calcN.efitM}
 \alias{calcN.efitR}
 \alias{calcN.efitGP}
+\alias{calcN.efitGPlist}
+\alias{calcN.efitMS}
 \alias{calcN.efitMNO}
+\alias{calcN.efitMNS}
 \title{calcN}
 \usage{
 calcN(obj, ...)
@@ -25,7 +28,19 @@ calcN(obj, ...)
   ...
 )
 
+\method{calcN}{efitGPlist}(
+  obj,
+  CI.level = 0.95,
+  CI.calc = c("norm", "lnorm", "boot"),
+  nboot = 500,
+  ...
+)
+
+\method{calcN}{efitMS}(obj, newdata, off.set = NULL, CI.level = 0.95, npost = 500, ...)
+
 \method{calcN}{efitMNO}(obj, newdata, off.set = NULL, CI.level = 0.95, npost = 500, ...)
+
+\method{calcN}{efitMNS}(obj, newdata, off.set = NULL, CI.level = 0.95, ...)
 }
 \arguments{
 \item{obj}{A fitted model object.}
