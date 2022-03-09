@@ -1,7 +1,7 @@
 Package: eradicate
 Type: Package
 Title: Functions to support the "eradication tools" shiny app
-Version: 0.2.0
+Version: 0.3.0
 Author: Dave Ramsey
 Maintainer: Dave Ramsey <david.ramsey@delwp.vic.gov.au>
 Imports: 
