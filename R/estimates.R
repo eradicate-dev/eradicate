@@ -485,7 +485,7 @@ calcN.efitMS<- function(obj, newdata, off.set=NULL, CI.level=0.95, npost=500, ..
   seN<- apply(pp.sum, 1, sd)
   lwr<- apply(pp.sum, 1, quantile, (1-CI.level)/2)
   upr<- apply(pp.sum, 1, quantile, 1-((1-CI.level)/2))
-  df<- data.frame(Nhat = round(Nhat,2),se=round(seN,2),
+  df<- data.frame(N = round(Nhat,2),se=round(seN,2),
                        lcl=round(lwr,2), ucl=round(upr,2),.season = 1:T)
   list(cellpreds=cellpreds, Nhat=df)
 }
