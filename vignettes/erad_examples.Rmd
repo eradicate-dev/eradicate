@@ -72,11 +72,11 @@ emf<- eFrame(counts, siteCovs = site.data)
 summary(emf)
 
 # Occupancy model
-m1<- occuM(~pgrass, ~1, data=emf)
+m1<- occM(~pgrass, ~1, data=emf)
 summary(m1)
 
 # Royle/Nichols model
-m2<- occuRN(~pgrass, ~1, K=50, data=emf)
+m2<- occRN(~pgrass, ~1, K=50, data=emf)
 summary(m2)
 
 m3<- nmix(~pgrass, ~1, K=50, data=emf)

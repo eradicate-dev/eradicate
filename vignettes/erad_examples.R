@@ -7,11 +7,11 @@ knitr::opts_chunk$set(
 ## ----setup, message=FALSE, warning=FALSE--------------------------------------
 library(eradicate)
 library(sf)
-library(raster)
+library(terra)
 
 ## ---- fig.height=5, fig.width=7-----------------------------------------------
 region<- read_sf(system.file("extdata", "shape/san_nic_region.shp", package="eradicate"))
-habitat<- raster(system.file("extdata", "san_nic_habitat.tif", package="eradicate"))
+habitat<- rast(system.file("extdata", "san_nic_habitat.tif", package="eradicate"))
 
 plot(habitat, axes=F)
 plot(st_geometry(region), add=T)
@@ -26,9 +26,11 @@ plot(st_geometry(region), add=TRUE)
 points(traps, pch=16)
 
 ## -----------------------------------------------------------------------------
-habvals<- extract(habitat, traps, buffer=500)
-pgrass<- sapply(habvals, function(x) mean(x, na.rm=T))
-site.data<- cbind(traps, pgrass)
+traps_sf<- st_as_sf(traps, coords=c(1,2), crs=st_crs(region))
+traps_buff<- st_buffer(traps_sf, dist=500)
+pgrass<- terra::extract(habitat, vect(traps_buff), fun=mean, na.rm=TRUE)
+names(pgrass)<- c("id","pgrass")
+site.data<- cbind(pgrass, traps)
 
 
 ## -----------------------------------------------------------------------------
@@ -77,9 +79,11 @@ ym<- san_nic_rem$ym # detections from additional monitoring
 nights<- san_nic_rem$nights
 traps<- san_nic_rem$traps
 
-habvals<- raster::extract(habitat, traps, buffer=500)
-pgrass<- sapply(habvals, function(x) mean(x, na.rm=T))
-site.data<- cbind(traps, pgrass)
+traps_sf<- st_as_sf(traps, coords=c(1,2), crs=st_crs(region))
+traps_buff<- st_buffer(traps_sf, dist=500)
+pgrass<- terra::extract(habitat, vect(traps_buff), fun=mean, na.rm=TRUE)
+names(pgrass)<- c("id","pgrass")
+site.data<- cbind(pgrass, traps)
 
 # Poisson abundance 
 emf<- eFrameR(rem, siteCovs = site.data)
@@ -113,7 +117,7 @@ effort<- rep(nrow(rem), length(catch))
 index<- apply(ym,2,sum)
 ieffort<- rep(nrow(ym), length(index))
 
-emf<- eFrameGP(catch, effort, index, ieffort)
+emf<- eFrameGP(catch, effort, index=index, ieffort=ieffort)
 mod<- remGP(emf)
 summary(mod)
 nce<- calcN(mod)

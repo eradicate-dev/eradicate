@@ -1,7 +1,7 @@
 
 #' occuRN
 #'
-#' @name occuRN
+#' @name occRN
 #'
 #' @description
 #' \code{occuRN} fits the occupancy/abundance model of Royle & Nichols (2003).
@@ -32,7 +32,7 @@
 #'
 #' @export
 #'
-occuRN <- function(lamformula, detformula, data, K = 25, starts, method = "BFGS", se = TRUE, ...)
+occRN <- function(lamformula, detformula, data, K = 25, starts, method = "BFGS", se = TRUE, ...)
 {
     if(!is(data, "eFrame")) stop("Data is not an eFrame")
 

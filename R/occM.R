@@ -1,7 +1,7 @@
 
 #' occuM
 #'
-#' @name occuM
+#' @name occM
 #'
 #' @description
 #' \code{occuM} fits the occupancy model of McKenzie et al. (2002).
@@ -30,7 +30,7 @@
 #'
 #' @export
 #'
-occuM<- function(lamformula, detformula, data, knownOcc = numeric(0), starts,
+occM<- function(lamformula, detformula, data, knownOcc = numeric(0), starts,
                  method = "BFGS", se = TRUE, ...) {
 
     if(!is(data, "eFrame")) stop("Data is not an eFrame")

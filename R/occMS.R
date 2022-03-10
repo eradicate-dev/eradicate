@@ -1,7 +1,7 @@
 
 #' occMS
 #'
-#' @name occuMS
+#' @name occMS
 #'
 #' @description
 #' \code{occMS} fits the dynamic multi-season occupancy model of MacKenzie et al. (2003).
@@ -35,7 +35,7 @@
 #'
 #' @export
 #'
-occuMS <- function(lamformula = ~ 1, gamformula = ~ 1, epsformula = ~ 1, detformula = ~ 1,
+occMS <- function(lamformula = ~ 1, gamformula = ~ 1, epsformula = ~ 1, detformula = ~ 1,
                    data, starts, method = "BFGS", se = TRUE, ...) {
 
     if(!is(data, "eFrameMS"))
