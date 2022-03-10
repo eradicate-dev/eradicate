@@ -14,39 +14,41 @@
 
 <title>Eradication tools examples</title>
 
-<script>// Hide empty <a> tag within highlighted CodeBlock for screen reader accessibility (see https://github.com/jgm/pandoc/issues/6352#issuecomment-626106786) -->
-// v0.0.1
-// Written by JooYoung Seo (jooyoung@psu.edu) and Atsushi Yasumoto on June 1st, 2020.
+<script src="data:application/javascript;base64,Ly8gUGFuZG9jIDIuOSBhZGRzIGF0dHJpYnV0ZXMgb24gYm90aCBoZWFkZXIgYW5kIGRpdi4gV2UgcmVtb3ZlIHRoZSBmb3JtZXIgKHRvCi8vIGJlIGNvbXBhdGlibGUgd2l0aCB0aGUgYmVoYXZpb3Igb2YgUGFuZG9jIDwgMi44KS4KZG9jdW1lbnQuYWRkRXZlbnRMaXN0ZW5lcignRE9NQ29udGVudExvYWRlZCcsIGZ1bmN0aW9uKGUpIHsKICB2YXIgaHMgPSBkb2N1bWVudC5xdWVyeVNlbGVjdG9yQWxsKCJkaXYuc2VjdGlvbltjbGFzcyo9J2xldmVsJ10gPiA6Zmlyc3QtY2hpbGQiKTsKICB2YXIgaSwgaCwgYTsKICBmb3IgKGkgPSAwOyBpIDwgaHMubGVuZ3RoOyBpKyspIHsKICAgIGggPSBoc1tpXTsKICAgIGlmICghL15oWzEtNl0kL2kudGVzdChoLnRhZ05hbWUpKSBjb250aW51ZTsgIC8vIGl0IHNob3VsZCBiZSBhIGhlYWRlciBoMS1oNgogICAgYSA9IGguYXR0cmlidXRlczsKICAgIHdoaWxlIChhLmxlbmd0aCA+IDApIGgucmVtb3ZlQXR0cmlidXRlKGFbMF0ubmFtZSk7CiAgfQp9KTsK"></script>
 
-document.addEventListener('DOMContentLoaded', function() {
-  const codeList = document.getElementsByClassName("sourceCode");
-  for (var i = 0; i < codeList.length; i++) {
-    var linkList = codeList[i].getElementsByTagName('a');
-    for (var j = 0; j < linkList.length; j++) {
-      if (linkList[j].innerHTML === "") {
-        linkList[j].setAttribute('aria-hidden', 'true');
-      }
-    }
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+
+
+<style type="text/css">
+  code {
+    white-space: pre;
   }
-});
-</script>
-
-
-<style type="text/css">code{white-space: pre;}</style>
+  .sourceCode {
+    overflow: visible;
+  }
+</style>
 <style type="text/css" data-origin="pandoc">
-code.sourceCode > span { display: inline-block; line-height: 1.25; }
-code.sourceCode > span { color: inherit; text-decoration: inherit; }
-code.sourceCode > span:empty { height: 1.2em; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
 .sourceCode { overflow: visible; }
-code.sourceCode { white-space: pre; position: relative; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
 div.sourceCode { margin: 1em 0; }
 pre.sourceCode { margin: 0; }
 @media screen {
 div.sourceCode { overflow: auto; }
 }
 @media print {
-code.sourceCode { white-space: pre-wrap; }
-code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
 }
 pre.numberSource code
   { counter-reset: source-line 0; }
@@ -66,7 +68,7 @@ pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-le
 div.sourceCode
   {   }
 @media screen {
-code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
 code span.al { color: #ff0000; font-weight: bold; } /* Alert */
 code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
@@ -123,187 +125,8 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 
 
 
-<style type="text/css">body {
-background-color: #fff;
-margin: 1em auto;
-max-width: 700px;
-overflow: visible;
-padding-left: 2em;
-padding-right: 2em;
-font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
-font-size: 14px;
-line-height: 1.35;
-}
-#TOC {
-clear: both;
-margin: 0 0 10px 10px;
-padding: 4px;
-width: 400px;
-border: 1px solid #CCCCCC;
-border-radius: 5px;
-background-color: #f6f6f6;
-font-size: 13px;
-line-height: 1.3;
-}
-#TOC .toctitle {
-font-weight: bold;
-font-size: 15px;
-margin-left: 5px;
-}
-#TOC ul {
-padding-left: 40px;
-margin-left: -1.5em;
-margin-top: 5px;
-margin-bottom: 5px;
-}
-#TOC ul ul {
-margin-left: -2em;
-}
-#TOC li {
-line-height: 16px;
-}
-table {
-margin: 1em auto;
-border-width: 1px;
-border-color: #DDDDDD;
-border-style: outset;
-border-collapse: collapse;
-}
-table th {
-border-width: 2px;
-padding: 5px;
-border-style: inset;
-}
-table td {
-border-width: 1px;
-border-style: inset;
-line-height: 18px;
-padding: 5px 5px;
-}
-table, table th, table td {
-border-left-style: none;
-border-right-style: none;
-}
-table thead, table tr.even {
-background-color: #f7f7f7;
-}
-p {
-margin: 0.5em 0;
-}
-blockquote {
-background-color: #f6f6f6;
-padding: 0.25em 0.75em;
-}
-hr {
-border-style: solid;
-border: none;
-border-top: 1px solid #777;
-margin: 28px 0;
-}
-dl {
-margin-left: 0;
-}
-dl dd {
-margin-bottom: 13px;
-margin-left: 13px;
-}
-dl dt {
-font-weight: bold;
-}
-ul {
-margin-top: 0;
-}
-ul li {
-list-style: circle outside;
-}
-ul ul {
-margin-bottom: 0;
-}
-pre, code {
-background-color: #f7f7f7;
-border-radius: 3px;
-color: #333;
-white-space: pre-wrap; 
-}
-pre {
-border-radius: 3px;
-margin: 5px 0px 10px 0px;
-padding: 10px;
-}
-pre:not([class]) {
-background-color: #f7f7f7;
-}
-code {
-font-family: Consolas, Monaco, 'Courier New', monospace;
-font-size: 85%;
-}
-p > code, li > code {
-padding: 2px 0px;
-}
-div.figure {
-text-align: center;
-}
-img {
-background-color: #FFFFFF;
-padding: 2px;
-border: 1px solid #DDDDDD;
-border-radius: 3px;
-border: 1px solid #CCCCCC;
-margin: 0 5px;
-}
-h1 {
-margin-top: 0;
-font-size: 35px;
-line-height: 40px;
-}
-h2 {
-border-bottom: 4px solid #f7f7f7;
-padding-top: 10px;
-padding-bottom: 2px;
-font-size: 145%;
-}
-h3 {
-border-bottom: 2px solid #f7f7f7;
-padding-top: 10px;
-font-size: 120%;
-}
-h4 {
-border-bottom: 1px solid #f7f7f7;
-margin-left: 8px;
-font-size: 105%;
-}
-h5, h6 {
-border-bottom: 1px solid #ccc;
-font-size: 105%;
-}
-a {
-color: #0033dd;
-text-decoration: none;
-}
-a:hover {
-color: #6666ff; }
-a:visited {
-color: #800080; }
-a:visited:hover {
-color: #BB00BB; }
-a[href^="http:"] {
-text-decoration: underline; }
-a[href^="https:"] {
-text-decoration: underline; }
 
-code > span.kw { color: #555; font-weight: bold; } 
-code > span.dt { color: #902000; } 
-code > span.dv { color: #40a070; } 
-code > span.bn { color: #d14; } 
-code > span.fl { color: #d14; } 
-code > span.ch { color: #d14; } 
-code > span.st { color: #d14; } 
-code > span.co { color: #888888; font-style: italic; } 
-code > span.ot { color: #007020; } 
-code > span.al { color: #ff0000; font-weight: bold; } 
-code > span.fu { color: #900; font-weight: bold; } 
-code > span.er { color: #a61717; background-color: #e3d2d2; } 
-</style>
+<link rel="stylesheet" href="data:text/css,body%20%7B%0Abackground%2Dcolor%3A%20%23fff%3B%0Amargin%3A%201em%20auto%3B%0Amax%2Dwidth%3A%20700px%3B%0Aoverflow%3A%20visible%3B%0Apadding%2Dleft%3A%202em%3B%0Apadding%2Dright%3A%202em%3B%0Afont%2Dfamily%3A%20%22Open%20Sans%22%2C%20%22Helvetica%20Neue%22%2C%20Helvetica%2C%20Arial%2C%20sans%2Dserif%3B%0Afont%2Dsize%3A%2014px%3B%0Aline%2Dheight%3A%201%2E35%3B%0A%7D%0A%23TOC%20%7B%0Aclear%3A%20both%3B%0Amargin%3A%200%200%2010px%2010px%3B%0Apadding%3A%204px%3B%0Awidth%3A%20400px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Aborder%2Dradius%3A%205px%3B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Afont%2Dsize%3A%2013px%3B%0Aline%2Dheight%3A%201%2E3%3B%0A%7D%0A%23TOC%20%2Etoctitle%20%7B%0Afont%2Dweight%3A%20bold%3B%0Afont%2Dsize%3A%2015px%3B%0Amargin%2Dleft%3A%205px%3B%0A%7D%0A%23TOC%20ul%20%7B%0Apadding%2Dleft%3A%2040px%3B%0Amargin%2Dleft%3A%20%2D1%2E5em%3B%0Amargin%2Dtop%3A%205px%3B%0Amargin%2Dbottom%3A%205px%3B%0A%7D%0A%23TOC%20ul%20ul%20%7B%0Amargin%2Dleft%3A%20%2D2em%3B%0A%7D%0A%23TOC%20li%20%7B%0Aline%2Dheight%3A%2016px%3B%0A%7D%0Atable%20%7B%0Amargin%3A%201em%20auto%3B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dcolor%3A%20%23DDDDDD%3B%0Aborder%2Dstyle%3A%20outset%3B%0Aborder%2Dcollapse%3A%20collapse%3B%0A%7D%0Atable%20th%20%7B%0Aborder%2Dwidth%3A%202px%3B%0Apadding%3A%205px%3B%0Aborder%2Dstyle%3A%20inset%3B%0A%7D%0Atable%20td%20%7B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dstyle%3A%20inset%3B%0Aline%2Dheight%3A%2018px%3B%0Apadding%3A%205px%205px%3B%0A%7D%0Atable%2C%20table%20th%2C%20table%20td%20%7B%0Aborder%2Dleft%2Dstyle%3A%20none%3B%0Aborder%2Dright%2Dstyle%3A%20none%3B%0A%7D%0Atable%20thead%2C%20table%20tr%2Eeven%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Ap%20%7B%0Amargin%3A%200%2E5em%200%3B%0A%7D%0Ablockquote%20%7B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Apadding%3A%200%2E25em%200%2E75em%3B%0A%7D%0Ahr%20%7B%0Aborder%2Dstyle%3A%20solid%3B%0Aborder%3A%20none%3B%0Aborder%2Dtop%3A%201px%20solid%20%23777%3B%0Amargin%3A%2028px%200%3B%0A%7D%0Adl%20%7B%0Amargin%2Dleft%3A%200%3B%0A%7D%0Adl%20dd%20%7B%0Amargin%2Dbottom%3A%2013px%3B%0Amargin%2Dleft%3A%2013px%3B%0A%7D%0Adl%20dt%20%7B%0Afont%2Dweight%3A%20bold%3B%0A%7D%0Aul%20%7B%0Amargin%2Dtop%3A%200%3B%0A%7D%0Aul%20li%20%7B%0Alist%2Dstyle%3A%20circle%20outside%3B%0A%7D%0Aul%20ul%20%7B%0Amargin%2Dbottom%3A%200%3B%0A%7D%0Apre%2C%20code%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0Aborder%2Dradius%3A%203px%3B%0Acolor%3A%20%23333%3B%0Awhite%2Dspace%3A%20pre%2Dwrap%3B%20%0A%7D%0Apre%20%7B%0Aborder%2Dradius%3A%203px%3B%0Amargin%3A%205px%200px%2010px%200px%3B%0Apadding%3A%2010px%3B%0A%7D%0Apre%3Anot%28%5Bclass%5D%29%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Acode%20%7B%0Afont%2Dfamily%3A%20Consolas%2C%20Monaco%2C%20%27Courier%20New%27%2C%20monospace%3B%0Afont%2Dsize%3A%2085%25%3B%0A%7D%0Ap%20%3E%20code%2C%20li%20%3E%20code%20%7B%0Apadding%3A%202px%200px%3B%0A%7D%0Adiv%2Efigure%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0Aimg%20%7B%0Abackground%2Dcolor%3A%20%23FFFFFF%3B%0Apadding%3A%202px%3B%0Aborder%3A%201px%20solid%20%23DDDDDD%3B%0Aborder%2Dradius%3A%203px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Amargin%3A%200%205px%3B%0A%7D%0Ah1%20%7B%0Amargin%2Dtop%3A%200%3B%0Afont%2Dsize%3A%2035px%3B%0Aline%2Dheight%3A%2040px%3B%0A%7D%0Ah2%20%7B%0Aborder%2Dbottom%3A%204px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Apadding%2Dbottom%3A%202px%3B%0Afont%2Dsize%3A%20145%25%3B%0A%7D%0Ah3%20%7B%0Aborder%2Dbottom%3A%202px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Afont%2Dsize%3A%20120%25%3B%0A%7D%0Ah4%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23f7f7f7%3B%0Amargin%2Dleft%3A%208px%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Ah5%2C%20h6%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23ccc%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Aa%20%7B%0Acolor%3A%20%230033dd%3B%0Atext%2Ddecoration%3A%20none%3B%0A%7D%0Aa%3Ahover%20%7B%0Acolor%3A%20%236666ff%3B%20%7D%0Aa%3Avisited%20%7B%0Acolor%3A%20%23800080%3B%20%7D%0Aa%3Avisited%3Ahover%20%7B%0Acolor%3A%20%23BB00BB%3B%20%7D%0Aa%5Bhref%5E%3D%22http%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0Aa%5Bhref%5E%3D%22https%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0A%0Acode%20%3E%20span%2Ekw%20%7B%20color%3A%20%23555%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Edt%20%7B%20color%3A%20%23902000%3B%20%7D%20%0Acode%20%3E%20span%2Edv%20%7B%20color%3A%20%2340a070%3B%20%7D%20%0Acode%20%3E%20span%2Ebn%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Efl%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Ech%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Est%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Eco%20%7B%20color%3A%20%23888888%3B%20font%2Dstyle%3A%20italic%3B%20%7D%20%0Acode%20%3E%20span%2Eot%20%7B%20color%3A%20%23007020%3B%20%7D%20%0Acode%20%3E%20span%2Eal%20%7B%20color%3A%20%23ff0000%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Efu%20%7B%20color%3A%20%23900%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Eer%20%7B%20color%3A%20%23a61717%3B%20background%2Dcolor%3A%20%23e3d2d2%3B%20%7D%20%0A" type="text/css" />
 
 
 
@@ -326,248 +149,252 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <p>The <code>eradicate</code> package contains some functions to undertake basic populaton estimation from data that would typically be collected as part of a pest eradication program. The package borrows heavily from ideas and code used in the <code>unmarked</code> package, and additionally includes some custom models not included in that package. It additionally uses the simpler S3 classes for object orientation and method dispatch, which are less formal that the S4 classes used in <code>unmarked</code>.</p>
 <p>Here we illustrate the basic use of the models in the <code>eradicate</code> package by running through a theoretical program to eradicate feral cats on San Nicolas Island, off the coast of California. We start by undertaking a preliminary assessment of the population (assessment phase) using camera trap sampling before attempting to eradicate the population using removal trapping with leg-hold traps (removal phase). During the removal phase we will undertake periodic assessments of the population to track our progress towards eradication.</p>
 <p>Since this is a simulated dataset, we know exactly what the population size was before the eradication program began (86 cats). Before we start we load various the packages necessary for our analysis …</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="kw">library</span>(eradicate)</span>
-<span id="cb1-2"><a href="#cb1-2"></a><span class="kw">library</span>(sf)</span>
-<span id="cb1-3"><a href="#cb1-3"></a><span class="kw">library</span>(raster)</span></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(eradicate)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(sf)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(terra)</span></code></pre></div>
 <p>… and then read in the shapefile of the region and a raster of habitat values. The raster has a resolution (cell size) of 100 m indicating the presence of grassland or forest.</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a>region&lt;-<span class="st"> </span><span class="kw">read_sf</span>(<span class="kw">system.file</span>(<span class="st">&quot;extdata&quot;</span>, <span class="st">&quot;shape/san_nic_region.shp&quot;</span>, <span class="dt">package=</span><span class="st">&quot;eradicate&quot;</span>))</span>
-<span id="cb2-2"><a href="#cb2-2"></a>habitat&lt;-<span class="st"> </span><span class="kw">raster</span>(<span class="kw">system.file</span>(<span class="st">&quot;extdata&quot;</span>, <span class="st">&quot;san_nic_habitat.tif&quot;</span>, <span class="dt">package=</span><span class="st">&quot;eradicate&quot;</span>))</span>
-<span id="cb2-3"><a href="#cb2-3"></a></span>
-<span id="cb2-4"><a href="#cb2-4"></a><span class="kw">plot</span>(habitat, <span class="dt">axes=</span>F)</span>
-<span id="cb2-5"><a href="#cb2-5"></a><span class="kw">plot</span>(<span class="kw">st_geometry</span>(region), <span class="dt">add=</span>T)</span></code></pre></div>
-<p><img src="data:image/png;base64,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" /><!-- --></p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>region<span class="ot">&lt;-</span> <span class="fu">read_sf</span>(<span class="fu">system.file</span>(<span class="st">&quot;extdata&quot;</span>, <span class="st">&quot;shape/san_nic_region.shp&quot;</span>, <span class="at">package=</span><span class="st">&quot;eradicate&quot;</span>))</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>habitat<span class="ot">&lt;-</span> <span class="fu">rast</span>(<span class="fu">system.file</span>(<span class="st">&quot;extdata&quot;</span>, <span class="st">&quot;san_nic_habitat.tif&quot;</span>, <span class="at">package=</span><span class="st">&quot;eradicate&quot;</span>))</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(habitat, <span class="at">axes=</span>F)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(<span class="fu">st_geometry</span>(region), <span class="at">add=</span>T)</span></code></pre></div>
+<p><img src="data:image/png;base64,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" /><!-- --></p>
 </div>
 </div>
 <div id="asessment-phase" class="section level2">
 <h2>Asessment phase</h2>
 <p>We undertake an initial assessment of the population using a grid of 55 camera traps spread systematically across the island at 1 km spacing. The example dataset <code>san_nic_pre</code>, contains the camera locations as well as simulated counts of cat encounters at these cameras over 30 nights sampling.</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a>traps&lt;-<span class="st"> </span>san_nic_pre<span class="op">$</span>traps</span>
-<span id="cb3-2"><a href="#cb3-2"></a>counts&lt;-<span class="st"> </span>san_nic_pre<span class="op">$</span>counts</span>
-<span id="cb3-3"><a href="#cb3-3"></a><span class="kw">dim</span>(counts)</span>
-<span id="cb3-4"><a href="#cb3-4"></a><span class="co">#&gt; [1] 55 30</span></span>
-<span id="cb3-5"><a href="#cb3-5"></a></span>
-<span id="cb3-6"><a href="#cb3-6"></a><span class="kw">plot</span>(habitat, <span class="dt">axes =</span> <span class="ot">FALSE</span>)</span>
-<span id="cb3-7"><a href="#cb3-7"></a><span class="kw">plot</span>(<span class="kw">st_geometry</span>(region), <span class="dt">add=</span><span class="ot">TRUE</span>)</span>
-<span id="cb3-8"><a href="#cb3-8"></a><span class="kw">points</span>(traps, <span class="dt">pch=</span><span class="dv">16</span>)</span></code></pre></div>
-<p><img src="data:image/png;base64,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" /><!-- --></p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>traps<span class="ot">&lt;-</span> san_nic_pre<span class="sc">$</span>traps</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>counts<span class="ot">&lt;-</span> san_nic_pre<span class="sc">$</span>counts</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="fu">dim</span>(counts)</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 55 30</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(habitat, <span class="at">axes =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(<span class="fu">st_geometry</span>(region), <span class="at">add=</span><span class="cn">TRUE</span>)</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="fu">points</span>(traps, <span class="at">pch=</span><span class="dv">16</span>)</span></code></pre></div>
+<p><img src="data:image/png;base64,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" /><!-- --></p>
 <p>It was thought that the cats on the island had a tendency to favour the grassland over the forest habitat so this information may be useful for modelling the variation in cat abundance across the island. We therefore extract habitat information from <code>habitat</code> for use in further modelling. Cells in the habitat raster took values of either 1 (grassland) or 0 (forest). Rather than just extract the habitat value from the focal cell containing each trap location, we get the average of all cells within 500 m of the focal cell</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a>habvals&lt;-<span class="st"> </span><span class="kw">extract</span>(habitat, traps, <span class="dt">buffer=</span><span class="dv">500</span>)</span>
-<span id="cb4-2"><a href="#cb4-2"></a>pgrass&lt;-<span class="st"> </span><span class="kw">sapply</span>(habvals, <span class="cf">function</span>(x) <span class="kw">mean</span>(x, <span class="dt">na.rm=</span>T))</span>
-<span id="cb4-3"><a href="#cb4-3"></a>site.data&lt;-<span class="st"> </span><span class="kw">cbind</span>(traps, pgrass)</span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>traps_sf<span class="ot">&lt;-</span> <span class="fu">st_as_sf</span>(traps, <span class="at">coords=</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>), <span class="at">crs=</span><span class="fu">st_crs</span>(region))</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>traps_buff<span class="ot">&lt;-</span> <span class="fu">st_buffer</span>(traps_sf, <span class="at">dist=</span><span class="dv">500</span>)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>pgrass<span class="ot">&lt;-</span> terra<span class="sc">::</span><span class="fu">extract</span>(habitat, <span class="fu">vect</span>(traps_buff), <span class="at">fun=</span>mean, <span class="at">na.rm=</span><span class="cn">TRUE</span>)</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(pgrass)<span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;id&quot;</span>,<span class="st">&quot;pgrass&quot;</span>)</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>site.data<span class="ot">&lt;-</span> <span class="fu">cbind</span>(pgrass, traps)</span></code></pre></div>
 <p>We are now ready to fit some models! There are two types of model suitable for the basic count data collected from these cameras. Since the data are counts, and assuming that the counts from each camera are independent (i.e. cats recorded on one camera are not recorded on another camera), we can choose to fit an occupancy type model to estimate the proportion of sites occupied by cats or we can estimate the abundance of cats on the sampled sites. For occupancy analysis, <code>eradicate</code> can fit the basic Mackenzie type occupancy model using the function <code>occuM()</code>. To estimate abundance, we have two types of model, either the Nmixture model of Royle (2004) <code>nmix()</code> or the occupancy model of Royle and Nichols (2003) <code>occuRN()</code>. Although the latter is strictly an occupancy model, it also estimates abundance by positing a relationship between occupancy and abundance.</p>
 <p>The first step in the analysis is to collate the count data and the associated covariate information (i.e. habitat) into a custom data class using <code>eFrame()</code>. See <code>?eFrame</code> for more info on organizing the data necessary to use the models in <code>eradicate</code>.</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a>emf&lt;-<span class="st"> </span><span class="kw">eFrame</span>(counts, <span class="dt">siteCovs =</span> site.data)</span>
-<span id="cb5-2"><a href="#cb5-2"></a><span class="kw">summary</span>(emf)</span>
-<span id="cb5-3"><a href="#cb5-3"></a><span class="co">#&gt; eFrame Object</span></span>
-<span id="cb5-4"><a href="#cb5-4"></a><span class="co">#&gt; </span></span>
-<span id="cb5-5"><a href="#cb5-5"></a><span class="co">#&gt; 55 sites</span></span>
-<span id="cb5-6"><a href="#cb5-6"></a><span class="co">#&gt; Maximum number of observations per site: 30 </span></span>
-<span id="cb5-7"><a href="#cb5-7"></a><span class="co">#&gt; Mean number of observations per site: 30 </span></span>
-<span id="cb5-8"><a href="#cb5-8"></a><span class="co">#&gt; Sites with at least one detection: 32 </span></span>
-<span id="cb5-9"><a href="#cb5-9"></a><span class="co">#&gt; </span></span>
-<span id="cb5-10"><a href="#cb5-10"></a><span class="co">#&gt; Tabulation of y observations:</span></span>
-<span id="cb5-11"><a href="#cb5-11"></a><span class="co">#&gt;    0    1    2 </span></span>
-<span id="cb5-12"><a href="#cb5-12"></a><span class="co">#&gt; 1563   82    5 </span></span>
-<span id="cb5-13"><a href="#cb5-13"></a><span class="co">#&gt; </span></span>
-<span id="cb5-14"><a href="#cb5-14"></a><span class="co">#&gt; Site-level covariates:</span></span>
-<span id="cb5-15"><a href="#cb5-15"></a><span class="co">#&gt;        x                 y              pgrass      </span></span>
-<span id="cb5-16"><a href="#cb5-16"></a><span class="co">#&gt;  Min.   :1853405   Min.   :469790   Min.   :0.0000  </span></span>
-<span id="cb5-17"><a href="#cb5-17"></a><span class="co">#&gt;  1st Qu.:1857405   1st Qu.:471790   1st Qu.:0.2375  </span></span>
-<span id="cb5-18"><a href="#cb5-18"></a><span class="co">#&gt;  Median :1859405   Median :472790   Median :0.6286  </span></span>
-<span id="cb5-19"><a href="#cb5-19"></a><span class="co">#&gt;  Mean   :1859732   Mean   :473063   Mean   :0.5268  </span></span>
-<span id="cb5-20"><a href="#cb5-20"></a><span class="co">#&gt;  3rd Qu.:1862405   3rd Qu.:474790   3rd Qu.:0.7562  </span></span>
-<span id="cb5-21"><a href="#cb5-21"></a><span class="co">#&gt;  Max.   :1865405   Max.   :476790   Max.   :1.0000</span></span>
-<span id="cb5-22"><a href="#cb5-22"></a></span>
-<span id="cb5-23"><a href="#cb5-23"></a><span class="co"># Occupancy model</span></span>
-<span id="cb5-24"><a href="#cb5-24"></a>m1&lt;-<span class="st"> </span><span class="kw">occuM</span>(<span class="op">~</span>pgrass, <span class="op">~</span><span class="dv">1</span>, <span class="dt">data=</span>emf)</span>
-<span id="cb5-25"><a href="#cb5-25"></a><span class="co">#&gt; Warning in truncateToBinary(y): Some observations were &gt; 1. These were truncated</span></span>
-<span id="cb5-26"><a href="#cb5-26"></a><span class="co">#&gt; to 1.</span></span>
-<span id="cb5-27"><a href="#cb5-27"></a><span class="kw">summary</span>(m1)</span>
-<span id="cb5-28"><a href="#cb5-28"></a><span class="co">#&gt; Occupancy (logit-scale):</span></span>
-<span id="cb5-29"><a href="#cb5-29"></a><span class="co">#&gt;             Estimate    SE     z P(&gt;|z|)</span></span>
-<span id="cb5-30"><a href="#cb5-30"></a><span class="co">#&gt; (Intercept)    0.160 0.576 0.278   0.781</span></span>
-<span id="cb5-31"><a href="#cb5-31"></a><span class="co">#&gt; pgrass         0.693 0.970 0.714   0.475</span></span>
-<span id="cb5-32"><a href="#cb5-32"></a><span class="co">#&gt;   </span></span>
-<span id="cb5-33"><a href="#cb5-33"></a><span class="co">#&gt; Detection (logit-scale):</span></span>
-<span id="cb5-34"><a href="#cb5-34"></a><span class="co">#&gt;             Estimate    SE     z P(&gt;|z|)</span></span>
-<span id="cb5-35"><a href="#cb5-35"></a><span class="co">#&gt; (Intercept)    -2.39 0.126 -18.9 1.2e-79</span></span>
-<span id="cb5-36"><a href="#cb5-36"></a><span class="co">#&gt; </span></span>
-<span id="cb5-37"><a href="#cb5-37"></a></span>
-<span id="cb5-38"><a href="#cb5-38"></a><span class="co"># Royle/Nichols model</span></span>
-<span id="cb5-39"><a href="#cb5-39"></a>m2&lt;-<span class="st"> </span><span class="kw">occuRN</span>(<span class="op">~</span>pgrass, <span class="op">~</span><span class="dv">1</span>, <span class="dt">K=</span><span class="dv">50</span>, <span class="dt">data=</span>emf)</span>
-<span id="cb5-40"><a href="#cb5-40"></a><span class="co">#&gt; Warning in truncateToBinary(y): Some observations were &gt; 1. These were truncated</span></span>
-<span id="cb5-41"><a href="#cb5-41"></a><span class="co">#&gt; to 1.</span></span>
-<span id="cb5-42"><a href="#cb5-42"></a><span class="kw">summary</span>(m2)</span>
-<span id="cb5-43"><a href="#cb5-43"></a><span class="co">#&gt; Abundance (log-scale):</span></span>
-<span id="cb5-44"><a href="#cb5-44"></a><span class="co">#&gt;             Estimate    SE      z P(&gt;|z|)</span></span>
-<span id="cb5-45"><a href="#cb5-45"></a><span class="co">#&gt; (Intercept)   -0.130 0.366 -0.356   0.722</span></span>
-<span id="cb5-46"><a href="#cb5-46"></a><span class="co">#&gt; pgrass         0.503 0.498  1.010   0.312</span></span>
-<span id="cb5-47"><a href="#cb5-47"></a><span class="co">#&gt;   </span></span>
-<span id="cb5-48"><a href="#cb5-48"></a><span class="co">#&gt; Detection (logit-scale):</span></span>
-<span id="cb5-49"><a href="#cb5-49"></a><span class="co">#&gt;             Estimate    SE     z  P(&gt;|z|)</span></span>
-<span id="cb5-50"><a href="#cb5-50"></a><span class="co">#&gt; (Intercept)    -3.01 0.241 -12.5 7.03e-36</span></span>
-<span id="cb5-51"><a href="#cb5-51"></a><span class="co">#&gt; </span></span>
-<span id="cb5-52"><a href="#cb5-52"></a></span>
-<span id="cb5-53"><a href="#cb5-53"></a>m3&lt;-<span class="st"> </span><span class="kw">nmix</span>(<span class="op">~</span>pgrass, <span class="op">~</span><span class="dv">1</span>, <span class="dt">K=</span><span class="dv">50</span>, <span class="dt">data=</span>emf)</span>
-<span id="cb5-54"><a href="#cb5-54"></a><span class="kw">summary</span>(m3)</span>
-<span id="cb5-55"><a href="#cb5-55"></a><span class="co">#&gt; Abundance (log-scale):</span></span>
-<span id="cb5-56"><a href="#cb5-56"></a><span class="co">#&gt;             Estimate    SE      z P(&gt;|z|)</span></span>
-<span id="cb5-57"><a href="#cb5-57"></a><span class="co">#&gt; (Intercept)  -0.0759 0.358 -0.212   0.832</span></span>
-<span id="cb5-58"><a href="#cb5-58"></a><span class="co">#&gt; pgrass        0.5071 0.484  1.048   0.295</span></span>
-<span id="cb5-59"><a href="#cb5-59"></a><span class="co">#&gt;   </span></span>
-<span id="cb5-60"><a href="#cb5-60"></a><span class="co">#&gt; Detection (logit-scale):</span></span>
-<span id="cb5-61"><a href="#cb5-61"></a><span class="co">#&gt;             Estimate    SE     z  P(&gt;|z|)</span></span>
-<span id="cb5-62"><a href="#cb5-62"></a><span class="co">#&gt; (Intercept)    -3.04 0.239 -12.8 2.93e-37</span></span>
-<span id="cb5-63"><a href="#cb5-63"></a><span class="co">#&gt; </span></span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>emf<span class="ot">&lt;-</span> <span class="fu">eFrame</span>(counts, <span class="at">siteCovs =</span> site.data)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(emf)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; eFrame Object</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 55 sites</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Maximum number of observations per site: 30 </span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Mean number of observations per site: 30 </span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Sites with at least one detection: 32 </span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Tabulation of y observations:</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    0    1    2 </span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1563   82    5 </span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Site-level covariates:</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;        id           pgrass             x                 y         </span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  Min.   : 1.0   Min.   :0.0000   Min.   :1853405   Min.   :469790  </span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  1st Qu.:14.5   1st Qu.:0.2375   1st Qu.:1857405   1st Qu.:471790  </span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  Median :28.0   Median :0.6286   Median :1859405   Median :472790  </span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  Mean   :28.0   Mean   :0.5268   Mean   :1859732   Mean   :473063  </span></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  3rd Qu.:41.5   3rd Qu.:0.7562   3rd Qu.:1862405   3rd Qu.:474790  </span></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  Max.   :55.0   Max.   :1.0000   Max.   :1865405   Max.   :476790</span></span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a><span class="co"># Occupancy model</span></span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>m1<span class="ot">&lt;-</span> <span class="fu">occM</span>(<span class="sc">~</span>pgrass, <span class="sc">~</span><span class="dv">1</span>, <span class="at">data=</span>emf)</span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Warning in truncateToBinary(y): Some observations were &gt; 1. These were truncated</span></span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; to 1.</span></span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(m1)</span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Occupancy (logit-scale):</span></span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;             Estimate    SE     z P(&gt;|z|)</span></span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; (Intercept)    0.160 0.576 0.278   0.781</span></span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; pgrass         0.693 0.970 0.714   0.475</span></span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   </span></span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Detection (logit-scale):</span></span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;             Estimate    SE     z P(&gt;|z|)</span></span>
+<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; (Intercept)    -2.39 0.126 -18.9 1.2e-79</span></span>
+<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a><span class="co"># Royle/Nichols model</span></span>
+<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a>m2<span class="ot">&lt;-</span> <span class="fu">occRN</span>(<span class="sc">~</span>pgrass, <span class="sc">~</span><span class="dv">1</span>, <span class="at">K=</span><span class="dv">50</span>, <span class="at">data=</span>emf)</span>
+<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Warning in truncateToBinary(y): Some observations were &gt; 1. These were truncated</span></span>
+<span id="cb5-41"><a href="#cb5-41" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; to 1.</span></span>
+<span id="cb5-42"><a href="#cb5-42" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(m2)</span>
+<span id="cb5-43"><a href="#cb5-43" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Abundance (log-scale):</span></span>
+<span id="cb5-44"><a href="#cb5-44" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;             Estimate    SE      z P(&gt;|z|)</span></span>
+<span id="cb5-45"><a href="#cb5-45" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; (Intercept)   -0.130 0.366 -0.356   0.722</span></span>
+<span id="cb5-46"><a href="#cb5-46" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; pgrass         0.503 0.498  1.010   0.312</span></span>
+<span id="cb5-47"><a href="#cb5-47" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   </span></span>
+<span id="cb5-48"><a href="#cb5-48" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Detection (logit-scale):</span></span>
+<span id="cb5-49"><a href="#cb5-49" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;             Estimate    SE     z  P(&gt;|z|)</span></span>
+<span id="cb5-50"><a href="#cb5-50" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; (Intercept)    -3.01 0.241 -12.5 7.03e-36</span></span>
+<span id="cb5-51"><a href="#cb5-51" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb5-52"><a href="#cb5-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-53"><a href="#cb5-53" aria-hidden="true" tabindex="-1"></a>m3<span class="ot">&lt;-</span> <span class="fu">nmix</span>(<span class="sc">~</span>pgrass, <span class="sc">~</span><span class="dv">1</span>, <span class="at">K=</span><span class="dv">50</span>, <span class="at">data=</span>emf)</span>
+<span id="cb5-54"><a href="#cb5-54" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(m3)</span>
+<span id="cb5-55"><a href="#cb5-55" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Abundance (log-scale):</span></span>
+<span id="cb5-56"><a href="#cb5-56" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;             Estimate    SE      z P(&gt;|z|)</span></span>
+<span id="cb5-57"><a href="#cb5-57" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; (Intercept)  -0.0759 0.358 -0.212   0.832</span></span>
+<span id="cb5-58"><a href="#cb5-58" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; pgrass        0.5071 0.484  1.048   0.295</span></span>
+<span id="cb5-59"><a href="#cb5-59" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   </span></span>
+<span id="cb5-60"><a href="#cb5-60" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Detection (logit-scale):</span></span>
+<span id="cb5-61"><a href="#cb5-61" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;             Estimate    SE     z  P(&gt;|z|)</span></span>
+<span id="cb5-62"><a href="#cb5-62" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; (Intercept)    -3.04 0.239 -12.8 2.93e-37</span></span>
+<span id="cb5-63"><a href="#cb5-63" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span></code></pre></div>
 <p>These three models have a common modelling interface. The first argument specifies the model for the abundance or occupancy component, while the second argment specifies the model for the detection component. Unlike <code>unmarked</code>, which can include covariates at the observation level, <code>eradicate</code> currently only uses site-level covariates to model the detection process. For <code>occuRN()</code> and <code>nmix()</code> we also need to specify the parameter <code>K</code>, which is an integer specifying the possible upper value for abundance at each site. Note that all three models give similar parameter estimates.</p>
 <p>In order to get estimates of either the proportion of sites occupied or total abundance, we can use the function <code>calcN()</code>, which has an additional argument <code>newdata</code> where the user can supply covariate values for prediction sites. Since we wish to predict only for the sampled sites, we can simply use <code>calcN()</code> without any <code>newdata</code> argument.</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a>nhat1&lt;-<span class="st"> </span><span class="kw">calcN</span>(m1)</span>
-<span id="cb6-2"><a href="#cb6-2"></a>nhat2&lt;-<span class="st"> </span><span class="kw">calcN</span>(m2)</span>
-<span id="cb6-3"><a href="#cb6-3"></a>nhat3&lt;-<span class="st"> </span><span class="kw">calcN</span>(m3)</span>
-<span id="cb6-4"><a href="#cb6-4"></a></span>
-<span id="cb6-5"><a href="#cb6-5"></a>nhat1<span class="op">$</span>Occ</span>
-<span id="cb6-6"><a href="#cb6-6"></a><span class="co">#&gt;       Pocc    se  lcl  ucl</span></span>
-<span id="cb6-7"><a href="#cb6-7"></a><span class="co">#&gt; Total 0.63 0.073 0.48 0.77</span></span>
-<span id="cb6-8"><a href="#cb6-8"></a>nhat2<span class="op">$</span>Nhat</span>
-<span id="cb6-9"><a href="#cb6-9"></a><span class="co">#&gt;          N   se lcl   ucl</span></span>
-<span id="cb6-10"><a href="#cb6-10"></a><span class="co">#&gt; Total 63.8 15.4  40 101.7</span></span>
-<span id="cb6-11"><a href="#cb6-11"></a>nhat3<span class="op">$</span>Nhat</span>
-<span id="cb6-12"><a href="#cb6-12"></a><span class="co">#&gt;          N se  lcl   ucl</span></span>
-<span id="cb6-13"><a href="#cb6-13"></a><span class="co">#&gt; Total 67.5 16 42.6 106.8</span></span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>nhat1<span class="ot">&lt;-</span> <span class="fu">calcN</span>(m1)</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>nhat2<span class="ot">&lt;-</span> <span class="fu">calcN</span>(m2)</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>nhat3<span class="ot">&lt;-</span> <span class="fu">calcN</span>(m3)</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>nhat1<span class="sc">$</span>Occ</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;       Pocc    se  lcl  ucl</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Total 0.63 0.073 0.48 0.77</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>nhat2<span class="sc">$</span>Nhat</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;          N   se lcl   ucl</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Total 63.8 15.4  40 101.7</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>nhat3<span class="sc">$</span>Nhat</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;          N se  lcl   ucl</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Total 67.5 16 42.6 106.8</span></span></code></pre></div>
 <p>The return values for <code>calcN</code> contain the predicted occupancy or abundance for each site as well as for the total population over all sites. Confidence intervals for abundance are calculated using a log-normal transformation, which are guaranteed not to include negative values in the interval.</p>
 <p>In addition to these three models, <code>eradicate</code> additionally includes another model that is exclusively applied to camera data. Introduced by Nakashima et al. (2018), the REST model (short for Random Encounter and Staying Time model) uses data on the number of encounters per camera as well as additional information on the time taken for each detected individual to cross the cameras field of view (the staying time). Under the assumption that detection in the field of view (or some known proportion of it) is perfect, the REST model can estimate animal density. Further information on this model is available in Nakashima et al (2018) and in the help file.</p>
 <p>We fit the REST model to the example data found in the <code>san_nic_rest</code> dataset. A more involved example that uses additional distance sampling data from camera traps to estimate the effective sampling area is provided in the vignette <code>REST_example</code>.</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a>counts&lt;-<span class="st"> </span>san_nic_rest<span class="op">$</span>y</span>
-<span id="cb7-2"><a href="#cb7-2"></a>stay&lt;-<span class="st"> </span>san_nic_rest<span class="op">$</span>stay</span>
-<span id="cb7-3"><a href="#cb7-3"></a>cens&lt;-<span class="st"> </span>san_nic_rest<span class="op">$</span>cens</span>
-<span id="cb7-4"><a href="#cb7-4"></a>A&lt;-<span class="st"> </span>san_nic_rest<span class="op">$</span>area <span class="co"># in km2</span></span>
-<span id="cb7-5"><a href="#cb7-5"></a>active&lt;-<span class="st"> </span>san_nic_rest<span class="op">$</span>active_hours</span>
-<span id="cb7-6"><a href="#cb7-6"></a></span>
-<span id="cb7-7"><a href="#cb7-7"></a>emf&lt;-<span class="st"> </span><span class="kw">eFrameREST</span>(counts, stay, cens, A, active, <span class="dt">siteCovs =</span> site.data)</span>
-<span id="cb7-8"><a href="#cb7-8"></a></span>
-<span id="cb7-9"><a href="#cb7-9"></a>m4&lt;-<span class="st"> </span><span class="kw">REST</span>(<span class="op">~</span>pgrass, <span class="dt">data=</span>emf)</span>
-<span id="cb7-10"><a href="#cb7-10"></a><span class="kw">summary</span>(m4)</span>
-<span id="cb7-11"><a href="#cb7-11"></a><span class="co">#&gt; Abundance (log-scale):</span></span>
-<span id="cb7-12"><a href="#cb7-12"></a><span class="co">#&gt;             Estimate    SE     z  P(&gt;|z|)</span></span>
-<span id="cb7-13"><a href="#cb7-13"></a><span class="co">#&gt; (Intercept)    -1.06 0.313 -3.38 7.38e-04</span></span>
-<span id="cb7-14"><a href="#cb7-14"></a><span class="co">#&gt; pgrass          2.41 0.380  6.35 2.14e-10</span></span>
-<span id="cb7-15"><a href="#cb7-15"></a><span class="co">#&gt;   </span></span>
-<span id="cb7-16"><a href="#cb7-16"></a><span class="co">#&gt; Staying time (log-scale):</span></span>
-<span id="cb7-17"><a href="#cb7-17"></a><span class="co">#&gt;             Estimate    SE     z  P(&gt;|z|)</span></span>
-<span id="cb7-18"><a href="#cb7-18"></a><span class="co">#&gt; (Intercept)    -1.73 0.105 -16.4 2.43e-60</span></span>
-<span id="cb7-19"><a href="#cb7-19"></a><span class="co">#&gt; </span></span>
-<span id="cb7-20"><a href="#cb7-20"></a></span>
-<span id="cb7-21"><a href="#cb7-21"></a><span class="kw">calcN</span>(m4)<span class="op">$</span>Nhat</span>
-<span id="cb7-22"><a href="#cb7-22"></a><span class="co">#&gt;          N   se  lcl ucl</span></span>
-<span id="cb7-23"><a href="#cb7-23"></a><span class="co">#&gt; Total 89.4 12.7 67.8 118</span></span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>counts<span class="ot">&lt;-</span> san_nic_rest<span class="sc">$</span>y</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>stay<span class="ot">&lt;-</span> san_nic_rest<span class="sc">$</span>stay</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>cens<span class="ot">&lt;-</span> san_nic_rest<span class="sc">$</span>cens</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>A<span class="ot">&lt;-</span> san_nic_rest<span class="sc">$</span>area <span class="co"># in km2</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>active<span class="ot">&lt;-</span> san_nic_rest<span class="sc">$</span>active_hours</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>emf<span class="ot">&lt;-</span> <span class="fu">eFrameREST</span>(counts, stay, cens, A, active, <span class="at">siteCovs =</span> site.data)</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>m4<span class="ot">&lt;-</span> <span class="fu">REST</span>(<span class="sc">~</span>pgrass, <span class="at">data=</span>emf)</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(m4)</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Abundance (log-scale):</span></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;             Estimate    SE     z  P(&gt;|z|)</span></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; (Intercept)    -1.06 0.313 -3.38 7.38e-04</span></span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; pgrass          2.41 0.380  6.35 2.14e-10</span></span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   </span></span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Staying time (log-scale):</span></span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;             Estimate    SE     z  P(&gt;|z|)</span></span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; (Intercept)    -1.73 0.105 -16.4 2.43e-60</span></span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a><span class="fu">calcN</span>(m4)<span class="sc">$</span>Nhat</span>
+<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;          N   se  lcl ucl</span></span>
+<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Total 89.4 12.7 67.8 118</span></span></code></pre></div>
 </div>
 <div id="eradication-phase" class="section level2">
 <h2>Eradication phase</h2>
 <p>Now that we have some idea of the size of the cat population on San Nicolas (i.e. around 70-90 individuals, which compares well with the true population size of 86), we now turn to the eradication phase. The eradication will be attempted using 100 leg-hold traps located across the island. At a proportion of these trap locations, additional monitoring will also be undertaken using camera traps. This two-technique approach is useful as the cameras could detect a cat that approaches a trap, but does not get captured. Along with the data on cat removals, information from these extra detections can be used to update the estimate of the residual population size.</p>
 <p>The dataset <code>san_nic_rem</code> contains example data from an eradication phase conducted over 10 separate (primary) periods. During each period, the leg-hold traps and cameras were operated for 20 consecutive nights (secondary periods). As well as the leg-hold trap locations, the dataset also contains information on the IDs of the traps where the cameras were placed. Again, since this is a simulated dataset, we know exactly how many cats remained following the eradication effort (9 cats).</p>
 <p>The <code>eradicate</code> package contains a several functions for use with removal type data. The function <code>remPois()</code> can be applied to removal data for the particular case when the latent abundance is assumed to follow a Poisson distribution. <code>remPois</code> also assumes that the population is closed over the primary periods. There are two other functions that employ generalized removal models, <code>remGR()</code> and <code>remGRM()</code> where the former is applied to removal only data while the latter is applied to the joint removal and additional detection data. These models are more flexible than <code>remPois()</code> as abundance can be modeled as a negative binomial distribution as well as the Poisson. In addition, the models also allow for a specific form of lack of closure over the sampling period by allowing for temporary emigration. This allows for the estimation of the proportion of the population that is available for detection during each sampling period (availability). We start by collating the data and extracting habitat info for use in the models as before.</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1"></a>rem&lt;-<span class="st"> </span>san_nic_rem<span class="op">$</span>rem</span>
-<span id="cb8-2"><a href="#cb8-2"></a>ym&lt;-<span class="st"> </span>san_nic_rem<span class="op">$</span>ym <span class="co"># detections from additional monitoring</span></span>
-<span id="cb8-3"><a href="#cb8-3"></a>nights&lt;-<span class="st"> </span>san_nic_rem<span class="op">$</span>nights</span>
-<span id="cb8-4"><a href="#cb8-4"></a>traps&lt;-<span class="st"> </span>san_nic_rem<span class="op">$</span>traps</span>
-<span id="cb8-5"><a href="#cb8-5"></a></span>
-<span id="cb8-6"><a href="#cb8-6"></a>habvals&lt;-<span class="st"> </span>raster<span class="op">::</span><span class="kw">extract</span>(habitat, traps, <span class="dt">buffer=</span><span class="dv">500</span>)</span>
-<span id="cb8-7"><a href="#cb8-7"></a>pgrass&lt;-<span class="st"> </span><span class="kw">sapply</span>(habvals, <span class="cf">function</span>(x) <span class="kw">mean</span>(x, <span class="dt">na.rm=</span>T))</span>
-<span id="cb8-8"><a href="#cb8-8"></a>site.data&lt;-<span class="st"> </span><span class="kw">cbind</span>(traps, pgrass)</span>
-<span id="cb8-9"><a href="#cb8-9"></a></span>
-<span id="cb8-10"><a href="#cb8-10"></a><span class="co"># Poisson abundance </span></span>
-<span id="cb8-11"><a href="#cb8-11"></a>emf&lt;-<span class="st"> </span><span class="kw">eFrameR</span>(rem, <span class="dt">siteCovs =</span> site.data)</span>
-<span id="cb8-12"><a href="#cb8-12"></a>r1&lt;-<span class="st"> </span><span class="kw">remMN</span>(<span class="op">~</span>pgrass, <span class="op">~</span><span class="dv">1</span>, <span class="dt">data=</span>emf)</span>
-<span id="cb8-13"><a href="#cb8-13"></a><span class="kw">summary</span>(r1)</span>
-<span id="cb8-14"><a href="#cb8-14"></a><span class="co">#&gt; Abundance (log-scale):</span></span>
-<span id="cb8-15"><a href="#cb8-15"></a><span class="co">#&gt;             Estimate    SE     z P(&gt;|z|)</span></span>
-<span id="cb8-16"><a href="#cb8-16"></a><span class="co">#&gt; (Intercept)   -0.472 0.229 -2.06  0.0397</span></span>
-<span id="cb8-17"><a href="#cb8-17"></a><span class="co">#&gt; pgrass         0.380 0.341  1.12  0.2647</span></span>
-<span id="cb8-18"><a href="#cb8-18"></a><span class="co">#&gt;   </span></span>
-<span id="cb8-19"><a href="#cb8-19"></a><span class="co">#&gt; Detection (logit-scale):</span></span>
-<span id="cb8-20"><a href="#cb8-20"></a><span class="co">#&gt;             Estimate    SE     z P(&gt;|z|)</span></span>
-<span id="cb8-21"><a href="#cb8-21"></a><span class="co">#&gt; (Intercept)   -0.268 0.161 -1.66  0.0961</span></span>
-<span id="cb8-22"><a href="#cb8-22"></a><span class="co">#&gt; </span></span>
-<span id="cb8-23"><a href="#cb8-23"></a>nr1&lt;-<span class="st"> </span><span class="kw">calcN</span>(r1)</span>
-<span id="cb8-24"><a href="#cb8-24"></a>nr1<span class="op">$</span>Nhat</span>
-<span id="cb8-25"><a href="#cb8-25"></a><span class="co">#&gt;          N  se  lcl  ucl</span></span>
-<span id="cb8-26"><a href="#cb8-26"></a><span class="co">#&gt; Total 77.3 8.8 61.8 96.5</span></span>
-<span id="cb8-27"><a href="#cb8-27"></a>nr1<span class="op">$</span>Nresid</span>
-<span id="cb8-28"><a href="#cb8-28"></a><span class="co">#&gt;            N  se lcl ucl</span></span>
-<span id="cb8-29"><a href="#cb8-29"></a><span class="co">#&gt; Residual 0.3 8.8 0.2 0.3</span></span>
-<span id="cb8-30"><a href="#cb8-30"></a></span>
-<span id="cb8-31"><a href="#cb8-31"></a><span class="co"># Generalized Poisson</span></span>
-<span id="cb8-32"><a href="#cb8-32"></a>emf&lt;-<span class="st"> </span><span class="kw">eFrameGR</span>(rem, <span class="dt">numPrimary=</span><span class="dv">1</span>, <span class="dt">siteCovs =</span> site.data)</span>
-<span id="cb8-33"><a href="#cb8-33"></a>r2&lt;-<span class="st"> </span><span class="kw">remGR</span>(<span class="op">~</span>pgrass, <span class="op">~</span><span class="dv">1</span>, <span class="op">~</span><span class="dv">1</span>, <span class="dt">data=</span>emf)</span>
-<span id="cb8-34"><a href="#cb8-34"></a><span class="kw">summary</span>(r2)</span>
-<span id="cb8-35"><a href="#cb8-35"></a><span class="co">#&gt; Abundance (log-scale):</span></span>
-<span id="cb8-36"><a href="#cb8-36"></a><span class="co">#&gt;             Estimate    SE     z P(&gt;|z|)</span></span>
-<span id="cb8-37"><a href="#cb8-37"></a><span class="co">#&gt; (Intercept)   -0.472 0.229 -2.06  0.0397</span></span>
-<span id="cb8-38"><a href="#cb8-38"></a><span class="co">#&gt; pgrass         0.380 0.341  1.12  0.2647</span></span>
-<span id="cb8-39"><a href="#cb8-39"></a><span class="co">#&gt;   </span></span>
-<span id="cb8-40"><a href="#cb8-40"></a><span class="co">#&gt; Detection (logit-scale):</span></span>
-<span id="cb8-41"><a href="#cb8-41"></a><span class="co">#&gt;             Estimate    SE     z P(&gt;|z|)</span></span>
-<span id="cb8-42"><a href="#cb8-42"></a><span class="co">#&gt; (Intercept)   -0.268 0.161 -1.66  0.0961</span></span>
-<span id="cb8-43"><a href="#cb8-43"></a><span class="co">#&gt; </span></span>
-<span id="cb8-44"><a href="#cb8-44"></a>nr2&lt;-<span class="st"> </span><span class="kw">calcN</span>(r2)</span>
-<span id="cb8-45"><a href="#cb8-45"></a>nr2<span class="op">$</span>Nhat</span>
-<span id="cb8-46"><a href="#cb8-46"></a><span class="co">#&gt;          N  se  lcl  ucl</span></span>
-<span id="cb8-47"><a href="#cb8-47"></a><span class="co">#&gt; Total 77.3 8.8 61.8 96.5</span></span>
-<span id="cb8-48"><a href="#cb8-48"></a>nr2<span class="op">$</span>Nresid</span>
-<span id="cb8-49"><a href="#cb8-49"></a><span class="co">#&gt;            N  se lcl ucl</span></span>
-<span id="cb8-50"><a href="#cb8-50"></a><span class="co">#&gt; Residual 0.3 8.8 0.2 0.3</span></span>
-<span id="cb8-51"><a href="#cb8-51"></a></span>
-<span id="cb8-52"><a href="#cb8-52"></a><span class="co"># Including additional camera monitoring data in ym </span></span>
-<span id="cb8-53"><a href="#cb8-53"></a>emf&lt;-<span class="st"> </span><span class="kw">eFrameGRM</span>(rem, ym, <span class="dt">numPrimary=</span><span class="dv">1</span>, <span class="dt">siteCovs =</span> site.data)</span>
-<span id="cb8-54"><a href="#cb8-54"></a>r3&lt;-<span class="st"> </span><span class="kw">remGRM</span>(<span class="op">~</span>pgrass, <span class="op">~</span><span class="dv">1</span>, <span class="op">~</span><span class="dv">1</span>, <span class="op">~</span><span class="dv">1</span>, <span class="dt">data=</span>emf)</span>
-<span id="cb8-55"><a href="#cb8-55"></a><span class="kw">summary</span>(r3)</span>
-<span id="cb8-56"><a href="#cb8-56"></a><span class="co">#&gt; Abundance (log-scale):</span></span>
-<span id="cb8-57"><a href="#cb8-57"></a><span class="co">#&gt;             Estimate    SE     z P(&gt;|z|)</span></span>
-<span id="cb8-58"><a href="#cb8-58"></a><span class="co">#&gt; (Intercept)   -0.265 0.148 -1.79  0.0729</span></span>
-<span id="cb8-59"><a href="#cb8-59"></a><span class="co">#&gt; pgrass         0.387 0.220  1.76  0.0787</span></span>
-<span id="cb8-60"><a href="#cb8-60"></a><span class="co">#&gt;   </span></span>
-<span id="cb8-61"><a href="#cb8-61"></a><span class="co">#&gt; Detection (logit-scale):</span></span>
-<span id="cb8-62"><a href="#cb8-62"></a><span class="co">#&gt;              Estimate     SE     z  P(&gt;|z|)</span></span>
-<span id="cb8-63"><a href="#cb8-63"></a><span class="co">#&gt; (Intercept)    -0.275 0.1633 -1.68 9.25e-02</span></span>
-<span id="cb8-64"><a href="#cb8-64"></a><span class="co">#&gt; (mIntercept)   -0.865 0.0913 -9.48 2.65e-21</span></span>
-<span id="cb8-65"><a href="#cb8-65"></a><span class="co">#&gt; </span></span>
-<span id="cb8-66"><a href="#cb8-66"></a>nr3&lt;-<span class="st"> </span><span class="kw">calcN</span>(r3)</span>
-<span id="cb8-67"><a href="#cb8-67"></a>nr3<span class="op">$</span>Nhat</span>
-<span id="cb8-68"><a href="#cb8-68"></a><span class="co">#&gt;          N  se  lcl   ucl</span></span>
-<span id="cb8-69"><a href="#cb8-69"></a><span class="co">#&gt; Total 95.3 7.1 82.4 110.4</span></span>
-<span id="cb8-70"><a href="#cb8-70"></a>nr3<span class="op">$</span>Nresid</span>
-<span id="cb8-71"><a href="#cb8-71"></a><span class="co">#&gt;             N  se  lcl  ucl</span></span>
-<span id="cb8-72"><a href="#cb8-72"></a><span class="co">#&gt; Residual 18.3 7.1 15.8 21.2</span></span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>rem<span class="ot">&lt;-</span> san_nic_rem<span class="sc">$</span>rem</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>ym<span class="ot">&lt;-</span> san_nic_rem<span class="sc">$</span>ym <span class="co"># detections from additional monitoring</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>nights<span class="ot">&lt;-</span> san_nic_rem<span class="sc">$</span>nights</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>traps<span class="ot">&lt;-</span> san_nic_rem<span class="sc">$</span>traps</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>traps_sf<span class="ot">&lt;-</span> <span class="fu">st_as_sf</span>(traps, <span class="at">coords=</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>), <span class="at">crs=</span><span class="fu">st_crs</span>(region))</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>traps_buff<span class="ot">&lt;-</span> <span class="fu">st_buffer</span>(traps_sf, <span class="at">dist=</span><span class="dv">500</span>)</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>pgrass<span class="ot">&lt;-</span> terra<span class="sc">::</span><span class="fu">extract</span>(habitat, <span class="fu">vect</span>(traps_buff), <span class="at">fun=</span>mean, <span class="at">na.rm=</span><span class="cn">TRUE</span>)</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(pgrass)<span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;id&quot;</span>,<span class="st">&quot;pgrass&quot;</span>)</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>site.data<span class="ot">&lt;-</span> <span class="fu">cbind</span>(pgrass, traps)</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Poisson abundance </span></span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>emf<span class="ot">&lt;-</span> <span class="fu">eFrameR</span>(rem, <span class="at">siteCovs =</span> site.data)</span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>r1<span class="ot">&lt;-</span> <span class="fu">remMN</span>(<span class="sc">~</span>pgrass, <span class="sc">~</span><span class="dv">1</span>, <span class="at">data=</span>emf)</span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(r1)</span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Abundance (log-scale):</span></span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;             Estimate    SE     z P(&gt;|z|)</span></span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; (Intercept)   -0.472 0.229 -2.06  0.0397</span></span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; pgrass         0.380 0.341  1.12  0.2647</span></span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   </span></span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Detection (logit-scale):</span></span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;             Estimate    SE     z P(&gt;|z|)</span></span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; (Intercept)   -0.268 0.161 -1.66  0.0961</span></span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a>nr1<span class="ot">&lt;-</span> <span class="fu">calcN</span>(r1)</span>
+<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a>nr1<span class="sc">$</span>Nhat</span>
+<span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;          N  se  lcl  ucl</span></span>
+<span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Total 77.3 8.8 61.8 96.5</span></span>
+<span id="cb8-29"><a href="#cb8-29" aria-hidden="true" tabindex="-1"></a>nr1<span class="sc">$</span>Nresid</span>
+<span id="cb8-30"><a href="#cb8-30" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;            N  se lcl ucl</span></span>
+<span id="cb8-31"><a href="#cb8-31" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Residual 0.3 8.8 0.2 0.3</span></span>
+<span id="cb8-32"><a href="#cb8-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-33"><a href="#cb8-33" aria-hidden="true" tabindex="-1"></a><span class="co"># Generalized Poisson</span></span>
+<span id="cb8-34"><a href="#cb8-34" aria-hidden="true" tabindex="-1"></a>emf<span class="ot">&lt;-</span> <span class="fu">eFrameGR</span>(rem, <span class="at">numPrimary=</span><span class="dv">1</span>, <span class="at">siteCovs =</span> site.data)</span>
+<span id="cb8-35"><a href="#cb8-35" aria-hidden="true" tabindex="-1"></a>r2<span class="ot">&lt;-</span> <span class="fu">remGR</span>(<span class="sc">~</span>pgrass, <span class="sc">~</span><span class="dv">1</span>, <span class="sc">~</span><span class="dv">1</span>, <span class="at">data=</span>emf)</span>
+<span id="cb8-36"><a href="#cb8-36" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(r2)</span>
+<span id="cb8-37"><a href="#cb8-37" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Abundance (log-scale):</span></span>
+<span id="cb8-38"><a href="#cb8-38" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;             Estimate    SE     z P(&gt;|z|)</span></span>
+<span id="cb8-39"><a href="#cb8-39" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; (Intercept)   -0.472 0.229 -2.06  0.0397</span></span>
+<span id="cb8-40"><a href="#cb8-40" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; pgrass         0.380 0.341  1.12  0.2647</span></span>
+<span id="cb8-41"><a href="#cb8-41" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   </span></span>
+<span id="cb8-42"><a href="#cb8-42" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Detection (logit-scale):</span></span>
+<span id="cb8-43"><a href="#cb8-43" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;             Estimate    SE     z P(&gt;|z|)</span></span>
+<span id="cb8-44"><a href="#cb8-44" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; (Intercept)   -0.268 0.161 -1.66  0.0961</span></span>
+<span id="cb8-45"><a href="#cb8-45" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb8-46"><a href="#cb8-46" aria-hidden="true" tabindex="-1"></a>nr2<span class="ot">&lt;-</span> <span class="fu">calcN</span>(r2)</span>
+<span id="cb8-47"><a href="#cb8-47" aria-hidden="true" tabindex="-1"></a>nr2<span class="sc">$</span>Nhat</span>
+<span id="cb8-48"><a href="#cb8-48" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;          N  se  lcl  ucl</span></span>
+<span id="cb8-49"><a href="#cb8-49" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Total 77.3 8.8 61.8 96.5</span></span>
+<span id="cb8-50"><a href="#cb8-50" aria-hidden="true" tabindex="-1"></a>nr2<span class="sc">$</span>Nresid</span>
+<span id="cb8-51"><a href="#cb8-51" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;            N  se lcl ucl</span></span>
+<span id="cb8-52"><a href="#cb8-52" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Residual 0.3 8.8 0.2 0.3</span></span>
+<span id="cb8-53"><a href="#cb8-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-54"><a href="#cb8-54" aria-hidden="true" tabindex="-1"></a><span class="co"># Including additional camera monitoring data in ym </span></span>
+<span id="cb8-55"><a href="#cb8-55" aria-hidden="true" tabindex="-1"></a>emf<span class="ot">&lt;-</span> <span class="fu">eFrameGRM</span>(rem, ym, <span class="at">numPrimary=</span><span class="dv">1</span>, <span class="at">siteCovs =</span> site.data)</span>
+<span id="cb8-56"><a href="#cb8-56" aria-hidden="true" tabindex="-1"></a>r3<span class="ot">&lt;-</span> <span class="fu">remGRM</span>(<span class="sc">~</span>pgrass, <span class="sc">~</span><span class="dv">1</span>, <span class="sc">~</span><span class="dv">1</span>, <span class="sc">~</span><span class="dv">1</span>, <span class="at">data=</span>emf)</span>
+<span id="cb8-57"><a href="#cb8-57" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(r3)</span>
+<span id="cb8-58"><a href="#cb8-58" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Abundance (log-scale):</span></span>
+<span id="cb8-59"><a href="#cb8-59" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;             Estimate    SE     z P(&gt;|z|)</span></span>
+<span id="cb8-60"><a href="#cb8-60" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; (Intercept)   -0.265 0.148 -1.79  0.0729</span></span>
+<span id="cb8-61"><a href="#cb8-61" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; pgrass         0.387 0.220  1.76  0.0787</span></span>
+<span id="cb8-62"><a href="#cb8-62" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   </span></span>
+<span id="cb8-63"><a href="#cb8-63" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Detection (logit-scale):</span></span>
+<span id="cb8-64"><a href="#cb8-64" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;              Estimate     SE     z  P(&gt;|z|)</span></span>
+<span id="cb8-65"><a href="#cb8-65" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; (Intercept)    -0.275 0.1633 -1.68 9.25e-02</span></span>
+<span id="cb8-66"><a href="#cb8-66" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; (mIntercept)   -0.865 0.0913 -9.48 2.65e-21</span></span>
+<span id="cb8-67"><a href="#cb8-67" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb8-68"><a href="#cb8-68" aria-hidden="true" tabindex="-1"></a>nr3<span class="ot">&lt;-</span> <span class="fu">calcN</span>(r3)</span>
+<span id="cb8-69"><a href="#cb8-69" aria-hidden="true" tabindex="-1"></a>nr3<span class="sc">$</span>Nhat</span>
+<span id="cb8-70"><a href="#cb8-70" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;          N  se  lcl   ucl</span></span>
+<span id="cb8-71"><a href="#cb8-71" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Total 95.3 7.1 82.4 110.4</span></span>
+<span id="cb8-72"><a href="#cb8-72" aria-hidden="true" tabindex="-1"></a>nr3<span class="sc">$</span>Nresid</span>
+<span id="cb8-73"><a href="#cb8-73" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;             N  se  lcl  ucl</span></span>
+<span id="cb8-74"><a href="#cb8-74" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Residual 18.3 7.1 15.8 21.2</span></span></code></pre></div>
 <p>Using data on extra detections has resulted in a higher estimate of the initial population size compared with the model without extra detections. This is due to the fact that cats were detected in a camera in the periods following the last capture of a cat in the leg-hold traps. The <code>calcN()</code> function also produces an estimate of the residual population remaining, which is simply the difference between the estimated initial population and the number removed. This indicates 18 cats are likely still extant using inference from the removal + extra detections model compared with nominal eradication using the removal only model. The estimate of 18 is somewhat higher than the true number of cats remaining (9), but this is better than the inference of complete eradication using the removal only models. Again, this highlights the advantages of using extra monitoring data for inference.</p>
 <p>Finally, <code>eradicate</code> also contains a function for estimating the pre-removal and residual population size for data collected from a single site. This might be applicable when the region of interest has no obvious spatial heterogeneity that can be modeled with covariate information using the other functions (i.e. toad eradication from a small lake or pond). This model <code>remGP()</code>, employs the catch-effort maximum likelihood model of Gould &amp; Pollock (1997). It can also make use of additional monitoring data for joint inference. We can run the <code>remGP()</code> model with the current data by pooling the captures and trapnight data from all traps.</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1"></a>catch&lt;-<span class="st"> </span><span class="kw">apply</span>(rem,<span class="dv">2</span>,sum)</span>
-<span id="cb9-2"><a href="#cb9-2"></a>effort&lt;-<span class="st"> </span><span class="kw">rep</span>(<span class="kw">nrow</span>(rem), <span class="kw">length</span>(catch))</span>
-<span id="cb9-3"><a href="#cb9-3"></a><span class="co"># extra monitoring/effort data</span></span>
-<span id="cb9-4"><a href="#cb9-4"></a>index&lt;-<span class="st"> </span><span class="kw">apply</span>(ym,<span class="dv">2</span>,sum)</span>
-<span id="cb9-5"><a href="#cb9-5"></a>ieffort&lt;-<span class="st"> </span><span class="kw">rep</span>(<span class="kw">nrow</span>(ym), <span class="kw">length</span>(index))</span>
-<span id="cb9-6"><a href="#cb9-6"></a></span>
-<span id="cb9-7"><a href="#cb9-7"></a>emf&lt;-<span class="st"> </span><span class="kw">eFrameGP</span>(catch, effort, index, ieffort)</span>
-<span id="cb9-8"><a href="#cb9-8"></a>mod&lt;-<span class="st"> </span><span class="kw">remGP</span>(emf)</span>
-<span id="cb9-9"><a href="#cb9-9"></a><span class="kw">summary</span>(mod)</span>
-<span id="cb9-10"><a href="#cb9-10"></a><span class="co">#&gt; Abundance (log-scale):</span></span>
-<span id="cb9-11"><a href="#cb9-11"></a><span class="co">#&gt;   Estimate     SE    z P(&gt;|z|)</span></span>
-<span id="cb9-12"><a href="#cb9-12"></a><span class="co">#&gt; 1      4.4 0.0926 47.5       0</span></span>
-<span id="cb9-13"><a href="#cb9-13"></a><span class="co">#&gt;   </span></span>
-<span id="cb9-14"><a href="#cb9-14"></a><span class="co">#&gt; catchability (logit-scale):</span></span>
-<span id="cb9-15"><a href="#cb9-15"></a><span class="co">#&gt;   Estimate    SE     z P(&gt;|z|)</span></span>
-<span id="cb9-16"><a href="#cb9-16"></a><span class="co">#&gt; 1    -5.17 0.123 -41.9       0</span></span>
-<span id="cb9-17"><a href="#cb9-17"></a><span class="co">#&gt;   </span></span>
-<span id="cb9-18"><a href="#cb9-18"></a><span class="co">#&gt; detection (log-scale):</span></span>
-<span id="cb9-19"><a href="#cb9-19"></a><span class="co">#&gt;   Estimate   SE     z  P(&gt;|z|)</span></span>
-<span id="cb9-20"><a href="#cb9-20"></a><span class="co">#&gt; 1     -5.6 1.07 -5.26 1.47e-07</span></span>
-<span id="cb9-21"><a href="#cb9-21"></a><span class="co">#&gt; </span></span>
-<span id="cb9-22"><a href="#cb9-22"></a>nce&lt;-<span class="st"> </span><span class="kw">calcN</span>(mod)</span>
-<span id="cb9-23"><a href="#cb9-23"></a>nce<span class="op">$</span>Nhat</span>
-<span id="cb9-24"><a href="#cb9-24"></a><span class="co">#&gt;        N  se lcl  ucl</span></span>
-<span id="cb9-25"><a href="#cb9-25"></a><span class="co">#&gt; Total 81 7.5  77 98.5</span></span>
-<span id="cb9-26"><a href="#cb9-26"></a>nce<span class="op">$</span>Nresid</span>
-<span id="cb9-27"><a href="#cb9-27"></a><span class="co">#&gt;          N  se lcl  ucl</span></span>
-<span id="cb9-28"><a href="#cb9-28"></a><span class="co">#&gt; Residual 4 7.5   0 21.5</span></span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>catch<span class="ot">&lt;-</span> <span class="fu">apply</span>(rem,<span class="dv">2</span>,sum)</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>effort<span class="ot">&lt;-</span> <span class="fu">rep</span>(<span class="fu">nrow</span>(rem), <span class="fu">length</span>(catch))</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="co"># extra monitoring/effort data</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>index<span class="ot">&lt;-</span> <span class="fu">apply</span>(ym,<span class="dv">2</span>,sum)</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>ieffort<span class="ot">&lt;-</span> <span class="fu">rep</span>(<span class="fu">nrow</span>(ym), <span class="fu">length</span>(index))</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>emf<span class="ot">&lt;-</span> <span class="fu">eFrameGP</span>(catch, effort, <span class="at">index=</span>index, <span class="at">ieffort=</span>ieffort)</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>mod<span class="ot">&lt;-</span> <span class="fu">remGP</span>(emf)</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(mod)</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Abundance (log-scale):</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;             Estimate     SE    z P(&gt;|z|)</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; (Intercept)      4.4 0.0926 47.5       0</span></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   </span></span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; catchability (logit-scale):</span></span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;          Estimate    SE     z P(&gt;|z|)</span></span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; cumcatch    -5.17 0.123 -41.9       0</span></span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   </span></span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; detection (log-scale):</span></span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;   Estimate   SE     z  P(&gt;|z|)</span></span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 1     -5.6 1.07 -5.26 1.46e-07</span></span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>nce<span class="ot">&lt;-</span> <span class="fu">calcN</span>(mod)</span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>nce<span class="sc">$</span>Nhat</span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;        N  se lcl  ucl</span></span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Total 81 7.5  77 98.5</span></span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a>nce<span class="sc">$</span>Nresid</span>
+<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;          N  se lcl  ucl</span></span>
+<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Residual 4 7.5   0 21.5</span></span></code></pre></div>
 <p>This model indicates that there might be four cats remaining following the eradication program.</p>
 </div>
 
