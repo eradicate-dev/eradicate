@@ -440,7 +440,7 @@ calcN.efitGP<- function(obj, CI.level=0.95, CI.calc = c("norm","lnorm","boot"), 
 #' @rdname calcN
 #' @export
 calcN.efitGPlist<- function(obj, CI.level=0.95, CI.calc = c("norm","lnorm","boot"), nboot=500, ...){
-  out<- lapply(obj, calcN.efitGP, CI.level=CI.level, CI.calc=CI.calc,nbot=nboot, ...)
+  out<- lapply(obj, calcN.efitGP, CI.level=CI.level, CI.calc=CI.calc, nboot=nboot, ...)
   out
 }
 
@@ -486,7 +486,7 @@ calcN.efitMS<- function(obj, newdata, off.set=NULL, CI.level=0.95, npost=500, ..
   lwr<- apply(pp.sum, 1, quantile, (1-CI.level)/2)
   upr<- apply(pp.sum, 1, quantile, 1-((1-CI.level)/2))
   df<- data.frame(Nhat = round(Nhat,2),se=round(seN,2),
-                       lwr=round(lwr,2), uprl=round(upr,2),.season = 1:T)
+                       lcl=round(lwr,2), ucl=round(upr,2),.season = 1:T)
   list(cellpreds=cellpreds, Nhat=df)
 }
 
@@ -558,15 +558,15 @@ calcN.efitMNO<- function(obj, newdata, off.set=NULL, CI.level=0.95, npost=500, .
   seR<- apply(pp.sum, 1, sd)
   lwr1<- apply(pp.sum, 1, quantile, (1-CI.level)/2)
   upr1<- apply(pp.sum, 1, quantile, 1-((1-CI.level)/2))
-  bigN<- data.frame(N=round(Nhat),se=round(seN,1), lwr=round(lwr), upr=round(upr))
-  littleN<- data.frame(N = round(Nr),se=round(seR,1), .season = 1:T, lwr=round(lwr1), uprl=round(upr1))
+  bigN<- data.frame(N=round(Nhat),se=round(seN,1), lcl=round(lwr), ucl=round(upr))
+  littleN<- data.frame(N = round(Nr),se=round(seR,1), .season = 1:T, lcl=round(lwr1), ucl=round(upr1))
 
   Nresid<- Nr[T] - num.removed[T]
   cv<- seR[T]/Nresid
   z <- exp(qnorm((1-CI.level)/2) * sqrt(log(1+cv^2)))
   lwr2<- Nresid*z
   upr2<- Nresid/z
-  residN <- data.frame(N=round(Nresid), se=round(seR[T],1), lwr=round(lwr2), upr=round(upr2))
+  residN <- data.frame(N=round(Nresid), se=round(seR[T],1), lcl=round(lwr2), ucl=round(upr2))
   row.names(bigN)<- "Initial"
   row.names(residN)<- "Residual"
   list(cellpreds=cellpreds, Nhat=bigN, Nseason=littleN, Nresid=residN)
@@ -654,7 +654,7 @@ calcN.efitMNS<- function(obj, newdata, off.set=NULL, CI.level=0.95, ...) {
   z <- exp(qnorm((1-CI.level)/2) * sqrt(log(1+cv^2)))
   lwr2<- Nresid*z
   upr2<- Nresid/z
-  residN <- data.frame(N=round(Nresid), se=round(seN,1), lwr=round(lwr2), upr=round(upr2))
+  residN <- data.frame(N=round(Nresid), se=round(seN,1), lcl=round(lwr2), ucl=round(upr2))
   row.names(residN)<- "Residual"
   names(bigN)<- c("Nhat",".season","se","lwr","upr")
   list(cellpreds=cellpreds, Nhat=bigN, Nresid=residN)
