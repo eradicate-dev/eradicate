@@ -119,6 +119,10 @@ getDesign.eFrameREST<- function(emf, lamformula, na.rm=TRUE) {
 
 getDesign.eFrameGR<- function(emf, lamformula, phiformula, detformula, na.rm = TRUE) {
 
+    detformula <- as.formula(detformula)
+    lamformula <- as.formula(lamformula)
+    phiformula <- as.formula(phiformula)
+
     M <- numSites(emf)
     T <- emf$numPrimary
     R <- numY(emf) # 2*T for double observer sampling
@@ -188,6 +192,11 @@ getDesign.eFrameGR<- function(emf, lamformula, phiformula, detformula, na.rm = T
 
 #------------------------
 getDesign.eFrameGRM<- function(emf, lamformula, phiformula, detformula, mdetformula, na.rm = TRUE) {
+
+  detformula <- as.formula(detformula)
+  lamformula <- as.formula(lamformula)
+  phiformula <- as.formula(phiformula)
+  mdetformula <- as.formula(mdetformula)
 
   M <- numSites(emf)
   T <- emf$numPrimary
@@ -264,6 +273,11 @@ getDesign.eFrameGRM<- function(emf, lamformula, phiformula, detformula, mdetform
 # Method for for occuMS
 getDesign.eFrameMS<- function(emf, lamformula, gamformula, epsformula, detformula, na.rm = TRUE) {
 
+    detformula <- as.formula(detformula)
+    lamformula <- as.formula(lamformula)
+    gamformula <- as.formula(gamformula)
+    epsformula <- as.formula(epsformula)
+
     M <- numSites(emf)
     R <- numY(emf)
     nY <- emf$numPrimary
@@ -336,6 +350,12 @@ getDesign.eFrameMS<- function(emf, lamformula, gamformula, epsformula, detformul
 # Multinomial open models
 getDesign.eFrameMNO <- function(emf, lamformula, gamformula, omformula, detformula,
                                 iotaformula, na.rm = TRUE) {
+
+  detformula <- as.formula(detformula)
+  lamformula <- as.formula(lamformula)
+  gamformula <- as.formula(gamformula)
+  omformula <- as.formula(omformula)
+  iotaformula <- as.formula(iotaformula)
 
   y <- emf$y
   M <- nrow(y)
@@ -457,6 +477,9 @@ getDesign.eFrameMNO <- function(emf, lamformula, gamformula, omformula, detformu
 
 getDesign.eFrameMNS<- function(emf, lamformula, detformula, na.rm = TRUE) {
 
+  detformula <- as.formula(detformula)
+  stateformula <- as.formula(lamformula)
+
   M <- numSites(emf)
   T <- emf$numPrimary
   R <- numY(emf) # 2*T for double observer sampling
@@ -490,9 +513,6 @@ getDesign.eFrameMNS<- function(emf, lamformula, detformula, na.rm = TRUE) {
   cnames <- c(colnames(obsCovs), colnames(seasCovs))
   obsCovs <- cbind(obsCovs, seasCovs[rep(1:(M*T), each = J),])
   colnames(obsCovs) <- cnames
-
-  detformula <- as.formula(detformula)
-  stateformula <- as.formula(lamformula)
 
    ## Compute design matrices
   X.mf <- model.frame(stateformula, seasCovs, na.action = NULL)

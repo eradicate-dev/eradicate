@@ -27,7 +27,7 @@ Since this is a simulated dataset, we know exactly what the population size was 
 ```{r setup, message=FALSE, warning=FALSE}
 library(eradicate)
 library(sf)
-library(raster)
+library(terra)
 ```
 
 ... and then read in the shapefile of the region and a raster of habitat values. The raster has a resolution (cell size) of 100 m indicating the presence of grassland or forest.
@@ -35,7 +35,7 @@ library(raster)
 ```{r}
 
 region<- read_sf(system.file("extdata", "shape/san_nic_region.shp", package="eradicate"))
-habitat<- raster(system.file("extdata", "san_nic_habitat.tif", package="eradicate"))
+habitat<- rast(system.file("extdata", "san_nic_habitat.tif", package="eradicate"))
 
 ```
 
@@ -58,9 +58,11 @@ The removal data `y` are organised in data frame with sites in rows and removals
 Since rabbits prefer grassland over forest, we extract that information for each trap from `habitat` for use in further modelling. Cells in the habitat raster took values of either 1 (grassland) or 0 (forest).  Rather than just extract the habitat value from the focal cell containing each trap location, we get the average of all cells within 500 m of the focal cell.
 
 ```{r}
-habvals<- extract(habitat, traps, buffer=500)
-pgrass<- sapply(habvals, function(x) mean(x, na.rm=T))
-site.data<- cbind(traps, pgrass)
+traps_sf<- st_as_sf(traps, coords=c(1,2), crs=st_crs(region))
+traps_buff<- st_buffer(traps_sf, dist=500)
+pgrass<- terra::extract(habitat, vect(traps_buff), fun=mean, na.rm=TRUE)
+names(pgrass)<- c("id","pgrass")
+site.data<- cbind(pgrass, traps)
 
 ```
 
