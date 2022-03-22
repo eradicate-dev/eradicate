@@ -5,8 +5,7 @@
 \title{eFrameMNO}
 \usage{
 eFrameMNO(
-  y,
-  numPrimary,
+  df,
   siteCovs = NULL,
   obsCovs = NULL,
   primaryCovs = NULL,
@@ -14,12 +13,12 @@ eFrameMNO(
 )
 }
 \arguments{
-\item{y}{An MxJxT matrix of the observed removal data, where M is the
-number of sites, J is the maximum number of removal (secondary) periods
-per site and T is the number of primary periods.}
+\item{df}{A \code{data.frame} of the observed removal data for each site
+in rows and secondary periods in columns, indexed by session (primary period).
+The \code{df} must contain a column \code{session} with at least two unique values.}
 
-\item{numPrimary}{the number of primary periods. For each primary period, the
-population is assumed to be closed.}
+\item{siteCovs}{A \code{data.frame} of covariates that vary at the
+site level. This should have M rows and one column per covariate}
 
 \item{obsCovs}{A list of matrices or data.frames of variables varying within sites.
 Each matrix or data.frame must be of dimension MxJ.}
@@ -29,9 +28,6 @@ site x primary period (M x T) level.}
 
 \item{primaryPeriod}{A MxT matrix of integers indicating the time gap between
 primary periods for each site}
-
-\item{SiteCovs}{A \code{data.frame} of covariates that vary at the
-site level. This should have M rows and one column per covariate}
 }
 \value{
 a \code{eFrameMNO} holding data containing the response and

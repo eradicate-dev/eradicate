@@ -4,25 +4,22 @@
 \alias{eFrameMNS}
 \title{eFrameMNS}
 \usage{
-eFrameMNS(y, numPrimary, siteCovs = NULL, obsCovs = NULL, delta = NULL)
+eFrameMNS(df, siteCovs = NULL, obsCovs = NULL, delta = NULL)
 }
 \arguments{
-\item{y}{An MxJxT matrix of the observed removal data, where M is the
-number of sites, J is the maximum number of removal (secondary) periods
-per site and T is the number of primary periods.}
+\item{df}{A \code{data.frame} of the observed removal data for each site
+in rows and secondary periods in columns, indexed by session (primary period).
+The \code{df} must contain a column \code{session} with at least two unique values.}
 
-\item{numPrimary}{the number of primary periods. For each primary period, the
-population is assumed to be closed.}
+\item{siteCovs}{A \code{data.frame} of covariates that vary at the
+site level. This should have M rows and one column per covariate}
 
 \item{obsCovs}{A list of matrices or data.frames of variables varying within sites.
 Each matrix or data.frame must be of dimension MxJ.}
 
-\item{delta}{A vector with T elements giving the time units between primary periods for each site
+\item{delta}{A vector with elements giving the time units between primary periods for each site
 beginning with 1 for the first primary period. A default value of 1 is used to
 indicate equal time intervals between primary periods.}
-
-\item{SiteCovs}{A \code{data.frame} of covariates that vary at the
-site level. This should have M rows and one column per covariate}
 }
 \value{
 a \code{eFrameMNS} holding stacked data for each primary period.

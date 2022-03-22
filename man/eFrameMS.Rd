@@ -4,12 +4,13 @@
 \alias{eFrameMS}
 \title{eFrameMS}
 \usage{
-eFrameMS(y, numPrimary, siteCovs = NULL, obsCovs = NULL)
+eFrameMS(df, siteCovs = NULL, obsCovs = NULL)
 }
 \arguments{
-\item{y}{An MxSJ matrix of the observed detection/non-detection data
-where M is the number of sites, S is the number of seasons and J is
-the maximum number of observations per season.}
+\item{df}{A \code{data.frame} of the observed detection/non-detection data for each site
+in rows and secondary periods in columns, indexed by session (primary period). values
+greater than 0 will be truncated to 1. The \code{df} must contain a column
+ \code{session} with at least two unique values.}
 
 \item{siteCovs}{A \code{data.frame} of covariates that vary at the
 site level. This should have M rows and one column per covariate}

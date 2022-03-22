@@ -266,9 +266,10 @@ eFrameGP<- function(catch, effort, session=NULL, index=NULL, ieffort=NULL) {
 #' occupancy models \code{occMS} where sampling occurs over a number of
 #' primary and secondary periods.
 #'
-#' @param y An MxSJ matrix of the observed detection/non-detection data
-#' where M is the number of sites, S is the number of seasons and J is
-#' the maximum number of observations per season.
+#' @param df A \code{data.frame} of the observed detection/non-detection data for each site
+#' in rows and secondary periods in columns, indexed by session (primary period). values
+#' greater than 0 will be truncated to 1. The \code{df} must contain a column
+#'  \code{session} with at least two unique values.
 #' @param obsPerSeason scalar of the maximum number of observations (replicates)
 #' per season.
 #' @param siteCovs A \code{data.frame} of covariates that vary at the
@@ -287,11 +288,13 @@ eFrameGP<- function(catch, effort, session=NULL, index=NULL, ieffort=NULL) {
 #'
 #' @export
 #'
-eFrameMS<- function(y, numPrimary, siteCovs = NULL, obsCovs =  NULL) {
+eFrameMS<- function(df, siteCovs = NULL, obsCovs =  NULL) {
+  yl<- unstack.data(df)
+  M <- yl$M; T <- yl$T; J <- yl$J
+  y<- yl$y
   y <- truncateToBinary(y)
   emf <- eFrame(y, siteCovs, obsCovs)
-  if(ncol(y)%%numPrimary > 0) stop("numPrimary does not match dimensions of y")
-  emf$numPrimary <- numPrimary
+  emf$numPrimary <- T
   class(emf) <- c("eFrameMS",class(emf))
   emf
 }
@@ -302,12 +305,10 @@ eFrameMS<- function(y, numPrimary, siteCovs = NULL, obsCovs =  NULL) {
 #' multinomial removal models using the robust design where sampling occurs over
 #' a number of primary and secondary periods.
 #'
-#' @param y An MxJxT matrix of the observed removal data, where M is the
-#'    number of sites, J is the maximum number of removal (secondary) periods
-#'    per site and T is the number of primary periods.
-#' @param numPrimary the number of primary periods. For each primary period, the
-#' population is assumed to be closed.
-#' @param SiteCovs A \code{data.frame} of covariates that vary at the
+#' @param df A \code{data.frame} of the observed removal data for each site
+#' in rows and secondary periods in columns, indexed by session (primary period).
+#' The \code{df} must contain a column \code{session} with at least two unique values.
+#' @param siteCovs A \code{data.frame} of covariates that vary at the
 #'    site level. This should have M rows and one column per covariate
 #' @param obsCovs A list of matrices or data.frames of variables varying within sites.
 #' Each matrix or data.frame must be of dimension MxJ.
@@ -327,11 +328,13 @@ eFrameMS<- function(y, numPrimary, siteCovs = NULL, obsCovs =  NULL) {
 #'
 #' @export
 #'
-eFrameMNO<- function(y, numPrimary, siteCovs = NULL, obsCovs = NULL, primaryCovs = NULL, primaryPeriod = NULL) {
+eFrameMNO<- function(df, siteCovs = NULL, obsCovs = NULL, primaryCovs = NULL, primaryPeriod = NULL) {
 
-  M <- nrow(y)
-  T <- numPrimary
-  J <- ncol(y) / T
+  yl<- unstack.data(df)
+  M <- yl$M
+  T <- yl$T
+  J <- yl$J
+  y<- yl$y
 
   if(is.null(primaryPeriod))
     primaryPeriod <- matrix(1:T, M, T, byrow=TRUE)
@@ -345,7 +348,7 @@ eFrameMNO<- function(y, numPrimary, siteCovs = NULL, obsCovs = NULL, primaryCovs
     mode(primaryPeriod) <- "integer"
     warning("primaryPeriod values have been converted to integers")
   }
-  if("data.frame" %in% class(y)) y <- as.matrix(y)
+
   ya <- array(y, c(M, J, T))
   yt.na <- apply(!is.na(ya), c(1,3), any)
   yt.na <- which(!yt.na)
@@ -360,11 +363,11 @@ eFrameMNO<- function(y, numPrimary, siteCovs = NULL, obsCovs = NULL, primaryCovs
   if(!all(apply(primaryPeriod, 1, increasing)))
     stop("primaryPeriod values must increase over time for each site")
   obsCovs <- covsToDF(obsCovs, "obsCovs", J*T, M)
-  primaryCovs <- covsToDF(primaryCovs, "primaryCovs", numPrimary, nrow(y))
+  primaryCovs <- covsToDF(primaryCovs, "primaryCovs", T, M)
   emf <- eFrame(y, siteCovs)
   emf$obsCovs<- obsCovs
   emf$piFun<- "removalPiFun"
-  emf$numPrimary <- numPrimary
+  emf$numPrimary <- T
   emf$primaryCovs <- primaryCovs
   emf$primaryPeriod <- primaryPeriod
   emf$num.removed<- num.removed
@@ -381,16 +384,14 @@ eFrameMNO<- function(y, numPrimary, siteCovs = NULL, obsCovs = NULL, primaryCovs
 #' then be analysed using closed population removal models to estimate the trend in abundance
 #' between primary periods.
 #'
-#' @param y An MxJxT matrix of the observed removal data, where M is the
-#'    number of sites, J is the maximum number of removal (secondary) periods
-#'    per site and T is the number of primary periods.
-#' @param numPrimary the number of primary periods. For each primary period, the
-#' population is assumed to be closed.
-#' @param SiteCovs A \code{data.frame} of covariates that vary at the
+#' @param df A \code{data.frame} of the observed removal data for each site
+#' in rows and secondary periods in columns, indexed by session (primary period).
+#' The \code{df} must contain a column \code{session} with at least two unique values.
+#' @param siteCovs A \code{data.frame} of covariates that vary at the
 #'    site level. This should have M rows and one column per covariate
 #' @param obsCovs A list of matrices or data.frames of variables varying within sites.
 #' Each matrix or data.frame must be of dimension MxJ.
-#' @param delta A vector with T elements giving the time units between primary periods for each site
+#' @param delta A vector with elements giving the time units between primary periods for each site
 #' beginning with 1 for the first primary period. A default value of 1 is used to
 #' indicate equal time intervals between primary periods.
 #' @return a \code{eFrameMNS} holding stacked data for each primary period.
@@ -404,13 +405,16 @@ eFrameMNO<- function(y, numPrimary, siteCovs = NULL, obsCovs = NULL, primaryCovs
 #'
 #' @export
 #'
-eFrameMNS<- function(y, numPrimary, siteCovs = NULL, obsCovs = NULL, delta = NULL) {
+eFrameMNS<- function(df, siteCovs = NULL, obsCovs = NULL, delta = NULL) {
 
-  J <- ncol(y) / numPrimary
-  if (J %% 1 != 0) stop("numPrimary leads to unequal number of secondary periods")
-  if (J < 2) stop("y contains less than 2 primary periods")
-  M <- nrow(y)
-  T <- numPrimary
+  yl<- unstack.data(df)
+  M <- yl$M
+  T <- yl$T
+  J <- yl$J
+  y<- yl$y
+
+  if (J %% 1 != 0) stop("Unequal number of secondary periods")
+  if (J < 2) stop("less than 2 primary periods present")
   if(missing(delta))
     delta <- rep(1.0, T)
   if(!is.vector(delta) || length(delta) != T)
@@ -424,7 +428,7 @@ eFrameMNS<- function(y, numPrimary, siteCovs = NULL, obsCovs = NULL, delta = NUL
   obsCovs <- covsToDF(obsCovs, "obsCovs", J*T, M)
   emf <- eFrame(y, siteCovs, obsCovs)
   emf$piFun<- "removalPiFun"
-  emf$numPrimary <- numPrimary
+  emf$numPrimary <- T
   emf$delta<- cumsum(delta)
   emf$num.removed <- num.removed
   class(emf) <- c("eFrameMNS",class(emf))

@@ -393,6 +393,20 @@ stack.data<- function(y, np) {
   do.call(rbind, ylist)
 }
 
+unstack.data<- function(df) {
+ # helper function to take multi-session df and produce one
+ # wide matrix with dimensions M x JT
+ # df must have a column 'session' with at least 2 unique values
+  tmplist<- split(df, ~factor(session))
+  tmplist<- lapply(tmplist, function(x) x[setdiff(names(x),"session")])
+  T<- length(tmplist)
+  M<- max(sapply(tmplist, nrow))
+  J<- max(sapply(tmplist, ncol))
+  y<- as.matrix(do.call(cbind, tmplist))
+  colnames(y)<- paste0(rep(seq_len(T),each=J),".",rep(seq_len(J),T))
+  list(y=y,M=M,J=J,T=T)
+}
+
 sd_trim<- function(x, trim=0.1, const=TRUE){
   # trimmed sd, where x is a matrix (column-wise)
   x <- as.matrix(x)
