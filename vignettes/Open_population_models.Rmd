@@ -14,15 +14,15 @@ knitr::opts_chunk$set(
 )
 ```
 
-### Dave Ramsey (4/11/2020)
+### Dave Ramsey (25/03/2022)
 
 Often eradication programs are implemented for populations over a period of time where it would be unreasonable to assume population 'closure'.  By closure, we mean that the population is demographically closed and hence, there are no births, deaths, immigration or emmigration.  Typically, standard removal type models assume demographic closure and hence, the only changes to the population occur from eradication (control) activities. This is reasonable if eradication is undertaken over a fairly short period of time (i.e. within a breeding season).  However, often eradication activities are undertaken over a longer period (i.e. several years or breeding seasons) and it may be unreasonable to assume that the the population does not change between bouts of control. In this case, we need to apply more sophisticated models to our removal data to account for the extent of potential population changes due to births, natural mortality or immigration that may be occurring during the eradication phase.
 
-Here we illustrate the use of 'open population models' in the `eradicate` package that can be applied to removal data to assess eradication progress for populations that might also be subject to demographic changes during the eradication phase.  Here we assume that eradication activities typically occur in bouts or 'sessions' of control separated by periods where no control occurs.  The length of time between control sessions can vary but must be known.  Control activities within a session must be intense enough to reduce population abundance during the session, as would typically be assumed for the equivalent closed population removal type models.  However, in between control sessions, the population may increase or decrease through other demographic processes.  Hence, open population models attempt to estimate the extent of these population changes between sessions.  Typically, this is undertaken by fitting a simple model for the dynamics of the population to the removal data.  These models typically have parameters for the rate of population change due to births/deaths/immigration/emmigration that could occur between each bout of control activities.  
+Here we illustrate the use of 'open population models' in the `eradicate` package that can be applied to removal data to assess eradication progress for populations that might also be subject to demographic changes during the eradication phase.  Here we assume that eradication activities typically occur in bouts or 'sessions' of control separated by periods where no control occurs.  The length of time between control sessions can vary but must be known.  Control activities within a session must be intense enough to reduce population abundance during the session, as would typically be assumed for the equivalent closed population removal type models.  However, in between control sessions, the population may increase or decrease through other demographic processes. Hence, open population models attempt to estimate the extent of these population changes between sessions. The most simple open population model considered here doesn't attempt to estimate the additions or losses between sessions, but accounts for the extent of these changes by fitting parameters for each session. More complex models are undertaken by fitting a simple model for the dynamics of the population to the removal data.  These models typically have parameters for the rate of population change due to births/deaths/immigration/emmigration that could occur between each bout of control activities.  
 
-We illustrate these models using an example of the eradication of a hypothetical population of rabbits from San Nicolas island, California. In this example, rabbits were removed over the course of two years (or two breeding seasons) using trapping.  Hence, during the eradication program, the population was also changing due to natural demographic processes of births and natural mortality.  There was also the possibility that rabbits could potentially move between trapping locations.
+We illustrate these models using an example of the eradication of a hypothetical population of rabbits from San Nicolas Island, California. In this example, rabbits were removed over the course of two years (or two breeding seasons) using trapping.  Hence, during the eradication program, the population was also changing due to natural demographic processes of births and natural mortality.  There was also the possibility that rabbits could potentially move between trapping locations.
 
-Since this is a simulated dataset, we know exactly what the population size was before the eradication program began (2500 rabbits).  Before we start we load various the packages necessary for our analysis ...
+Since this is a simulated dataset, we know exactly what the population size was before the eradication program began (676 rabbits).  Before we start we load various the packages necessary for our analysis ...
 
 ```{r setup, message=FALSE, warning=FALSE}
 library(eradicate)
@@ -41,7 +41,7 @@ habitat<- rast(system.file("extdata", "san_nic_habitat.tif", package="eradicate"
 
 ## Rabbit eradication
 
-We undertake a simulated eradication of rabbits using a grid of 100 traps set across the island. Traps were set a minimum of 500m apart, which was thought to be similar to the home range diameter of rabbits on the island.  Simulated trapping was undertaken every three months over three nights at each trapping location. A total of eight trapping sessions were undertaken over a two year period. Trap locations and associated removal data are located in the example dataset `san_nic_open`.
+We undertake a simulated eradication of rabbits using a grid of 100 traps set across the island. Traps were set a minimum of 500m apart, which was thought to be similar to the home range diameter of rabbits on the island.  Simulated trapping was undertaken every three months over four nights at each trapping location. A total of eight trapping sessions were undertaken over a two year period. Trap locations and associated removal data are located in the example dataset `san_nic_open`.
 
 ```{r,fig.height=5, fig.width=7}
 traps<- san_nic_open$traps
@@ -53,7 +53,7 @@ plot(st_geometry(region), add=TRUE)
 points(traps, pch=16)
 ```
 
-The removal data `y` are organised in data frame with sites in rows and removals for each session in columns.  Hence the first three columns contain the removal data for the first session, with removals for the second session contained in columns 4 - 6 and so on.  Each session _must_ have the same number of columns so the total number of columns should be `T` x `J` where `T` is the number of sessions and `J` is the maximum number of nights (or removal periods) that occurred in a session.  Since our data consisted trapping from 8 sessions with a maximum of 3 nights per session the total number of columns is 24.
+The removal data `y` are organised in a 'stacked' data frame with sites x sessions in rows and removals for each secondary period in columns.  The first column must be labelled `session` and contain a numeric session number for each observation.  The remaining columns contain the removal data for each of the removal (secondary) periods for each trap location.  Each session _must_ have the same number of rows so the total number of rows should be `T` x `M` where `T` is the number of sessions and `M` is the number of sites (trap locations). Rows where traps were missing  or out of action for a particular session should be `NA` (missing).  Since our data consisted of trapping from 8 sessions with a total of 100 traps the total number of rows is 800.
 
 Since rabbits prefer grassland over forest, we extract that information for each trap from `habitat` for use in further modelling. Cells in the habitat raster took values of either 1 (grassland) or 0 (forest).  Rather than just extract the habitat value from the focal cell containing each trap location, we get the average of all cells within 500 m of the focal cell.
 
@@ -66,42 +66,113 @@ site.data<- cbind(pgrass, traps)
 
 ```
 
-We are now ready to fit some models! The first step in the analysis is to collate the removal data and the associated covariate information (i.e. habitat) into a custom data class using `eFrameMNO()`. As part of this we also need to specify the number of trapping sessions using the `numPrimary` argument.  See `?eFrameMNO` for more info on organizing the data necessary to use the models in `eradicate`.
+We are now ready to fit some models! The first step in the analysis is to collate the removal data and the associated covariate information (i.e. habitat) into a custom data class using `eFrameMNS()`. See `?eFrameMNS` for more info on organizing the data necessary to use the models in `eradicate`.
 
 ```{r}
-emf<- eFrameMNO(y=y, numPrimary = 8, siteCovs = site.data)
+emf<- eFrameMNS(y, siteCovs = site.data)
 summary(emf)
 
 ```
 
-The analysis of removal data from open populations is accomplished with the function `remMNO()` (short for removal MultiNomial Open). The first four arguments of this function are used to specify the model.  The first argument `lamformula` is used for specifying the model for initial abundance `lambda`. The forth argument `detformula` is used for specifying the model for detection or capture.  In addition to these parameters, this model also has two parameters, `gamma` and `omega` for specifying the dynamics of the population, with models for these parameters specified with `gamformula` and `omformula`, respectively.   The parameter `gamma` governs the recruitment process (additions) while `omega` governs the survival process (losses). There are three possible models that use these parameters in different ways: `constant`, where recruitment and survival are constant (and independent) over time; `autoreg`, where recruitment at time `t` is dependent on the site abundance at time `t-1` and `trend`, which models the dynamics as an exponential trend model where `N[t] = gamma*N[t-1]`.  We start with the default model `constant` with initial abundance dependent on the covariate `pgrass` for the proportion of grassland at the site.
+The analysis of removal data from open populations is accomplished with the function `remMNS()` (short for removal MultiNomial Stacked). This model conducts an analysis of the removal data for each session by fitting a factor `.season` to the model for the abundance component, which results in a separate abundance parameter for each session, in addition to any other covariates. Alternatively, we can assume a linear trend for the (log) abundances by including the term `.trend` in the abundance component.  This might be useful if there are insufficient data for a particular session causing the model to fail. The model also allows the detection component to be estimated separately for each season or alternatively, a trend or constant detection probability can be assumed for each session. A trend or constant detection probability is probably more likely to result in reasonable estimates when data for any particular session is sparse.  We begin by fitting some models for the abundance component dependent on the covariate `pgrass` for the proportion of grassland at the site with either separate estimates for each session or a trend and include a constant or trend in detection probability among sessions.  We compare models using AIC.
 
 ```{r}
 
-fit <- remMNO(~pgrass, ~1, ~1, ~1, K=100, data=emf, dynamics="constant")
-summary(fit)
+fit1 <- remMNS(~pgrass + .season, ~1, data=emf)
+fit2 <- remMNS(~pgrass + .season, ~.trend, data=emf)
+fit3 <- remMNS(~pgrass + .trend, ~1, data=emf)
+fit4 <- remMNS(~pgrass + .trend, ~.trend, data=emf)
+
+AIC(fit1)
+AIC(fit2)
+AIC(fit3)
+AIC(fit4)
 
 ```
 
-The model summary indicates that all parameters are highly significant.  The parameter for the effect of `pgrass` on abundance indicates that rabbit abundance is around 6 times higher on grassland than forest habitat. The estimate of recruitment was `r round(exp(coef(fit, "gamma")),3)` rabbits per primary session and the estimate of apparent survival was `r round(plogis(coef(fit,"omega")),3)`.  Detection probability was `r round(plogis(coef(fit,"det")),3)` per sampling occasion.  Assuming that each trapping location is independent, we can get an estimate of the total initial population size over all the sampled sites using `calcN()`.
+The model AICs indicates that there is not much between these models which suggests that the model with the fewest parameters might be a sufficient.  Hence model 1 or 3 with season or trend in abundance and constant detection might be preferred. We take summaries of both
 
 ```{r}
 
-ests<- calcN(fit)
+summary(fit1)
+
+summary(fit3)
+
+```
+
+This indicates that parameters for both models are highly significant. The parameter for the effect of `pgrass` on abundance indicates that rabbit abundance is around 5 times higher on grassland than forest habitat. The estimate of detection probability was `r round(plogis(coef(fit1,"det")),3)` for model 1 and `r round(plogis(coef(fit3,"det")),3)` for model 3 per sampling occasion.  Assuming that each trapping location is independent, we can get an estimates of the population size for both models using `calcN()`.
+
+```{r}
+
+ests1<- calcN(fit1)
 #Initial population size
+ests1$Nhat
+
+ests3<- calcN(fit3)
+ests3$Nhat
+```
+
+Which indicates that the estimate for the initial number of rabbits for model 1 was `r ests1$Nhat$Nhat[1]` and for model 2 was `r ests3$Nhat$Nhat[1]`. The actual number of rabbits on the island was 676 so estimates from both models are reasonable. We can also get an estimate of the residual number of rabbits following the final removal period
+```{r}
+# Residual population size
+ests1$Nresid
+
+ests3$Nresid
+
+```
+
+which indicates there are likely around `r ests1$Nresid$N` or `r ests3$Nresid$N` rabbits remaining on the island with the lower confidence bound indicating a minimum of at least one rabbit.
+
+## Dynamic Occupancy Models
+
+A second type of open population model can be used for presence/absence data to estimate 'occupancy' (probability of occurrence).  This is a more complex model than the 'stacked' model considered earlier as it attempts to model the survival and recruitment process, in addition to the state process (occupancy), all while accounting for imperfect detection. Here we analyse the same rabbit dataset as above using the dynamic occupancy model of McKenzie et al. (2003).  This model has parameters for the rate of colonisation of un-occupied sites between sessions (`gamma`) as well as the extinction rate of occupied sites between sessions (`epsilon`). This model can be fitted using the `occMS` function in the `eradicate` package.  We fit a simple dynamic occupancy model to the rabbit dataset that only considers the effect of `pgrass` on the occupancy probability, with constant parameters for the colonisation, extinction and detection rates.  We also fit some alternatives that include separate estimates of the colonisation and extinction rates for each session and compare models with AIC.  Note that we can use the same count data used previously as `occMS` will truncate the counts to 0/1 and give a warning.
+
+```{r}
+
+emf <- eFrameMS(y, siteCovs=site.data)
+
+# order of terms is lamformula (occupancy), gamformula (colonisation), epsformula (extinction)
+# and detformula (detection)
+
+occ1 <- occMS(~pgrass, ~1, ~1, ~1, emf)  
+occ2 <- occMS(~pgrass, ~.season, ~1, ~1, emf)
+occ3 <- occMS(~pgrass, ~1, ~.season, ~1, emf)
+occ4 <- occMS(~pgrass, ~.season, ~.season, ~1, emf)
+
+AIC(occ1)
+AIC(occ2)
+AIC(occ3)
+AIC(occ4)
+
+```
+
+Analysis has revealed that model 4, including colonisation and extinction parameters varying by session was the most supported model, based on AIC. we can get parameter estimates with `summary()`.
+
+```{r}
+
+summary(occ4)
+
+```
+
+The parameter estimates for this model do show that there was some issues with the fit with estimates for the colonisation rate for session 6 having very large standard errors.  None of the other colonisation parameters appear significant, based on the Wald tests.  Hence, despite having the lowest AIC, it may be prudent to consider a simpler model, such as model 3, with constant colonisation rate.  A model summary for this model shows no issues. 
+
+```{r}
+summary(occ3)
+
+```
+
+We can now get estimates of the occupancy probability for model 3 for each season using `calcN`
+
+```{r}
+ests<- calcN(occ3)
+
 ests$Nhat
 
 ```
 
-Which indicates that there were around 2500 rabbits on the island before the eradication program.  To get an estimate of the residual population size following trapping, we can't simply subtract the number of rabbits removed from the initial population estimate like we do with closed population removal methods.  This is because the population is subject to recruitment and survival processes between trapping sessions in addition to the removals due to trapping.  Hence we must recreate the population trajectory for each site from the estimates of initial population size, recruitment and survival and then subtract the removals from trapping.  This is accomplished in `eradicate` using empirical Bayesian methods, to estimate the posterior predictive distributions of the parameters, which are then used to simulate population trajectories accounting for all sources of additions and losses to the population.  Fortunately, this is all taken care of with `calcN()`.  
+The estimates of the occupancy probability for model 3 indicate high, almost perfect occupancy initially, declining to `r ests$Nhat$N[8]` by the final session.  As the lower confidence bound is greater than zero, we can conclude that rabbits still remain on the island.
 
-```{r}
-# Population size at the start of each session (.season)
-ests$Nseason
 
-# Residual population size
-ests$Nresid
 
-```
 
-which indicates there are around 17 rabbits remaining at the start of the last trapping session (i.e. season 8). Since 7 rabbits were subsequently removed during the last session, the residual population of rabbits remaining was 10.
+

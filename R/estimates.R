@@ -42,6 +42,18 @@ coef.efit<- function(obj, type, ...){
   obj$estimates[[type]]$estimates
 }
 
+#' AIC
+#'
+#' @description extracts the Akaike Information Criterion from efit model objects.
+#'
+#' @param obj A fitted model object.
+#'
+#' @export
+#'
+AIC.efit <- function(obj){
+  # method generic
+  return(obj$AIC)
+}
 
 #' vcov
 #'

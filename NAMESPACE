@@ -3,6 +3,7 @@
 S3method("[",eFrame)
 S3method("[",eFrameMNO)
 S3method("[",eFrameMS)
+S3method(AIC,efit)
 S3method(blup,raneffects)
 S3method(bootN,efitMNO)
 S3method(bootN,efitMS)

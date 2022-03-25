@@ -33,28 +33,76 @@ site.data<- cbind(pgrass, traps)
 
 
 ## -----------------------------------------------------------------------------
-emf<- eFrameMNO(y=y, numPrimary = 8, siteCovs = site.data)
+emf<- eFrameMNS(y, siteCovs = site.data)
 summary(emf)
 
 
 ## -----------------------------------------------------------------------------
 
-fit <- remMNO(~pgrass, ~1, ~1, ~1, K=100, data=emf, dynamics="constant")
-summary(fit)
+fit1 <- remMNS(~pgrass + .season, ~1, data=emf)
+fit2 <- remMNS(~pgrass + .season, ~.trend, data=emf)
+fit3 <- remMNS(~pgrass + .trend, ~1, data=emf)
+fit4 <- remMNS(~pgrass + .trend, ~.trend, data=emf)
+
+AIC(fit1)
+AIC(fit2)
+AIC(fit3)
+AIC(fit4)
 
 
 ## -----------------------------------------------------------------------------
 
-ests<- calcN(fit)
+summary(fit1)
+
+summary(fit3)
+
+
+## -----------------------------------------------------------------------------
+
+ests1<- calcN(fit1)
 #Initial population size
-ests$Nhat
+ests1$Nhat
+
+ests3<- calcN(fit3)
+ests3$Nhat
+
+## -----------------------------------------------------------------------------
+# Residual population size
+ests1$Nresid
+
+ests3$Nresid
 
 
 ## -----------------------------------------------------------------------------
-# Population size at the start of each session (.season)
-ests$Nseason
 
-# Residual population size
-ests$Nresid
+emf <- eFrameMS(y, siteCovs=site.data)
+
+# order of terms is lamformula (occupancy), gamformula (colonisation), epsformula (extinction)
+# and detformula (detection)
+
+occ1 <- occMS(~pgrass, ~1, ~1, ~1, emf)  
+occ2 <- occMS(~pgrass, ~.season, ~1, ~1, emf)
+occ3 <- occMS(~pgrass, ~1, ~.season, ~1, emf)
+occ4 <- occMS(~pgrass, ~.season, ~.season, ~1, emf)
+
+AIC(occ1)
+AIC(occ2)
+AIC(occ3)
+AIC(occ4)
+
+
+## -----------------------------------------------------------------------------
+
+summary(occ4)
+
+
+## -----------------------------------------------------------------------------
+summary(occ3)
+
+
+## -----------------------------------------------------------------------------
+ests<- calcN(occ3)
+
+ests$Nhat
 
 
