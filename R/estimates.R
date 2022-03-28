@@ -668,7 +668,7 @@ calcN.efitMNS<- function(obj, newdata, off.set=NULL, CI.level=0.95, ...) {
   upr2<- Nresid/z
   residN <- data.frame(N=round(Nresid), se=round(seN,1), lcl=round(lwr2), ucl=round(upr2))
   row.names(residN)<- "Residual"
-  names(bigN)<- c("Nhat",".season","se","lwr","upr")
+  names(bigN)<- c("N",".season","se","lcl","ucl")
   list(cellpreds=cellpreds, Nhat=bigN, Nresid=residN)
 }
 
