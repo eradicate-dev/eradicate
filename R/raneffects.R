@@ -326,6 +326,61 @@ raneffects.efitMNO <- function(obj, ...){
   return(post)
 }
 
+#-----------------------------------------
+#' @rdname raneffects
+#' @export
+raneffects.efitMNS<- function(obj, K, ...) {
+  data<- obj$data
+  D<- getDesign(data, obj$lamformula, obj$detformula)
+  y <- obj$data$y
+  srm <- obj$sitesRemoved
+  if(length(srm) > 0)
+    y <- y[-obj$sitesRemoved,]
+  if(missing(K)) {
+    warning("K was set to max(y)+50 by default")
+    K <- max(y, na.rm=TRUE)+50
+  }
+  M <- nrow(y)
+  T <- data$numPrimary
+  J <- ncol(y) / T
+  ya<- array(t(y), c(J,T,M))
+  ya<- aperm(ya, c(3, 1, 2))
+
+  preds<- calcN(obj)
+  lam <- preds$cellpreds$N
+  lam <- matrix(lam, M)
+
+  cp <- calcP(obj)
+  cp <- cbind(cp, 1-rowSums(cp))
+  cp<- array(t(cp), c(J+1, T, M))
+  cp <- aperm(cp, c(3, 1, 2))
+
+  N <- 0:K
+  post <- array(0, c(M, K+1, T))
+  colnames(post) <- N
+  for(i in 1:M) {
+    for(t in 1:T) {
+      f <- dpois(N, lam[i,t])
+      g <- rep(1, K+1)
+      if(any(is.na(ya[i,,t])) | any(is.na(cp[i,,t])))
+      next
+    for(k in 1:(K+1)) {
+      yi <- ya[i,,t]
+      ydot <- N[k] - sum(yi)
+      if(ydot<0) {
+        g[k] <- 0
+        next
+      }
+      yi <- c(yi, ydot)
+      g[k] <- g[k] * dmultinom(yi, size=N[k], prob=cp[i,,t])
+    }
+    ml <- f*g
+    post[i,,t] <- ml / sum(ml)
+    }
+  }
+  class(post)<- c("raneffects",class(post))
+  return(post)
+}
 
 #-----------------------------------
 #' @rdname postSamples

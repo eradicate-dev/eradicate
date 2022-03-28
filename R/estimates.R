@@ -689,7 +689,7 @@ calcP.efitR<- function(obj, na.rm = TRUE) {
   detformula <- as.formula(obj$detformula)
   lamformula <- as.formula(obj$lamformula)
   emf <- obj$data
-  designMats <- getDesign.eFrame(emf, lamformula, detformula, na.rm = na.rm)
+  designMats <- getDesign(emf, lamformula, detformula, na.rm = na.rm)
   y <- designMats$y
   V <- designMats$V
   V.offset <- designMats$V.offset
@@ -761,6 +761,28 @@ calcP.efitMS<- function(obj, na.rm = TRUE) {
   p <- matrix(p, nrow=M)
   return(p)
 }
+
+#' @rdname calcP
+#' @export
+calcP.efitMNS<- function(obj, na.rm = TRUE) {
+  detformula <- as.formula(obj$detformula)
+  lamformula <- as.formula(obj$lamformula)
+  emf <- obj$data
+  designMats <- getDesign(emf, lamformula, detformula, na.rm = na.rm)
+  y <- designMats$y
+  V <- designMats$V
+  V.offset <- designMats$V.offset
+  if (is.null(V.offset))
+    V.offset <- rep(0, nrow(V))
+  M <- nrow(y)
+  J <- ncol(y)
+  pars <- coef(obj, type = "det")
+  p <- plogis(V %*% pars + V.offset)
+  p <- matrix(p, M, J, byrow = TRUE)
+  pi <- do.call(removalPiFun, list(p = p))
+  return(pi)
+}
+
 #-------------------------------------------------------
 # update methods
 #-------------------------------------------------------

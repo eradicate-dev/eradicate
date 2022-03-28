@@ -6,6 +6,7 @@
 \alias{calcP.efitGP}
 \alias{calcP.efitMNO}
 \alias{calcP.efitMS}
+\alias{calcP.efitMNS}
 \title{calcP}
 \usage{
 calcP(obj, ...)
@@ -17,6 +18,8 @@ calcP(obj, ...)
 \method{calcP}{efitMNO}(obj, na.rm = TRUE)
 
 \method{calcP}{efitMS}(obj, na.rm = TRUE)
+
+\method{calcP}{efitMNS}(obj, na.rm = TRUE)
 }
 \arguments{
 \item{obj}{A fitted model object.}
