@@ -3,6 +3,8 @@
 \name{raneffects}
 \alias{raneffects}
 \alias{raneffects.efitR}
+\alias{raneffects.efitGR}
+\alias{raneffects.efitGRM}
 \alias{raneffects.efitMS}
 \alias{raneffects.efitMNO}
 \alias{raneffects.efitMNS}
@@ -11,6 +13,10 @@
 raneffects(obj, ...)
 
 \method{raneffects}{efitR}(obj, K, ...)
+
+\method{raneffects}{efitGR}(obj, K, ...)
+
+\method{raneffects}{efitGRM}(obj, K, ...)
 
 \method{raneffects}{efitMS}(obj, ...)
 

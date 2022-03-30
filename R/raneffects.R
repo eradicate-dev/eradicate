@@ -69,10 +69,15 @@ raneffects.efitR<- function(obj, K, ...) {
   cp <- calcP(obj)
   cp <- cbind(cp, 1-rowSums(cp))
   N <- 0:K
+  mix <- obj$mixture
+  if(identical(mix, "NB"))
+    alpha <- exp(coef(obj, type="alpha"))
   post <- array(0, c(R, K+1, 1))
   colnames(post) <- N
   for(i in 1:R) {
-    f <- dpois(N, lam[i])
+    switch(mix,
+           P  = f <- dpois(N, lam[i]),
+           NB = f <- dnbinom(N, mu=lam[i], size=alpha))
     g <- rep(1, K+1)
     if(any(is.na(y[i,])) | any(is.na(cp[i,])))
       next
@@ -88,6 +93,204 @@ raneffects.efitR<- function(obj, K, ...) {
     }
     ml <- f*g
     post[i,,1] <- ml / sum(ml)
+  }
+  class(post)<- c("raneffects",class(post))
+  return(post)
+}
+#------------------------------------------------
+#' @rdname raneffects
+#' @export
+raneffects.efitGR<- function(obj, K, ...) {
+
+  detformula <- as.formula(obj$detformula)
+  phiformula <- as.formula(obj$phiformula)
+  lamformula <- as.formula(obj$lamformula)
+  data <- obj$data
+  D <- getDesign(data, lamformula, phiformula, detformula)
+
+  Xlam <- D$Xlam
+  Xphi <- D$Xphi
+  y <- D$y
+
+  if(missing(K)) {
+    K <- obj$K
+  }
+
+  Xlam.offset <- D$Xlam.offset
+  Xphi.offset <- D$Xphi.offset
+
+  if(is.null(Xlam.offset)) Xlam.offset <- rep(0, nrow(Xlam))
+  if(is.null(Xphi.offset)) Xphi.offset <- rep(0, nrow(Xphi))
+
+  beta.lam <- coef(obj, type="state")
+  beta.phi <- coef(obj, type="phi")
+
+  lambda <- exp(Xlam %*% beta.lam + Xlam.offset)
+  if(is.null(beta.phi))
+    phi <- rep(1, nrow(Xphi))
+  else
+    phi <- plogis(Xphi %*% beta.phi + Xphi.offset)
+
+  cp<- calcP(obj)
+  cp[is.na(y)] <- NA
+
+  N <- 0:K
+
+  M <- nrow(y)
+  T <- data$numPrimary # Should be 1
+  R <- ncol(y)
+  J <- ncol(y) / T
+
+  phi <- matrix(phi, M, byrow=TRUE)
+  cpa <- array(cp, c(M,R,T))
+  ya <- array(y, c(M,R,T))
+
+  post <- array(0, c(M, K+1, 1))
+  colnames(post) <- N
+  mix <- obj$mixture
+
+  if(identical(mix, "NB"))
+    alpha <- exp(coef(obj, type="alpha"))
+  for(i in 1:M) {
+    switch(mix,
+           P  = f <- dpois(N, lambda[i]),
+           NB = f <- dnbinom(N, mu=lambda[i], size=alpha))
+    g <- rep(1, K+1) # outside t loop
+
+    for(t in 1:T) {
+      if(all(is.na(ya[i,,t])) | is.na(phi[i,t]))
+        next
+      for(k in 1:(K+1)) {
+        y.it <- ya[i,,t]
+        ydot <- N[k] - sum(y.it, na.rm=TRUE)
+        y.it <- c(y.it, ydot)
+
+        if(ydot < 0) {
+          g[k] <- 0
+          next
+        }
+        cp.it <- cpa[i,,t]*phi[i,t]
+        cp.it <- c(cp.it, 1-sum(cp.it, na.rm=TRUE))
+        na.it <- is.na(cp.it)
+        y.it[na.it] <- NA
+        g[k] <- g[k]*dmultinom(y.it[!na.it], N[k], cp.it[!na.it])
+      }
+    }
+    ml <- f*g
+    post[i,,1] <- ml/sum(ml)
+  }
+  class(post)<- c("raneffects",class(post))
+  return(post)
+}
+
+#------------------------------------------------
+#' @rdname raneffects
+#' @export
+raneffects.efitGRM<- function(obj, K, ...) {
+
+  detformula <- as.formula(obj$detformula)
+  phiformula <- as.formula(obj$phiformula)
+  lamformula <- as.formula(obj$lamformula)
+  mdetformula<- as.formula(obj$mdetformula)
+  data <- obj$data
+  D <- getDesign(data, lamformula, phiformula, detformula, mdetformula)
+
+  Xlam <- D$Xlam
+  Xphi <- D$Xphi
+  y <- D$y
+  ym <- D$ym
+
+  if(missing(K)) {
+    K <- obj$K
+  }
+
+  Xlam.offset <- D$Xlam.offset
+  Xphi.offset <- D$Xphi.offset
+
+  if(is.null(Xlam.offset)) Xlam.offset <- rep(0, nrow(Xlam))
+  if(is.null(Xphi.offset)) Xphi.offset <- rep(0, nrow(Xphi))
+
+  beta.lam <- coef(obj, type="state")
+  beta.phi <- coef(obj, type="phi")
+
+  lambda <- exp(Xlam %*% beta.lam + Xlam.offset)
+  if(is.null(beta.phi))
+    phi <- rep(1, nrow(Xphi))
+  else
+    phi <- plogis(Xphi %*% beta.phi + Xphi.offset)
+
+  allp<- calcP(obj)
+  cp <- allp$cp
+  cp[is.na(y)] <- NA
+
+  cpm <- allp$cpm
+  cpm[is.na(y)]<- NA
+
+  N <- 0:K
+
+  M <- nrow(y)
+  T <- data$numPrimary # Should be 1
+  R <- ncol(y)
+  J <- ncol(y) / T
+
+  phi <- matrix(phi, M, byrow=TRUE)
+  cpa <- array(cp, c(M,R,T))
+  cpma<- array(cpm, c(M,R,T))
+  ya <- array(y, c(M,R,T))
+  yma<- array(ym, c(M,R,T))
+
+  cumy<- array(NA_real_, c(M,R,T))
+  for(i in 1:M){
+    for(t in 1:T) {
+      if(all(is.na(ya[i,,t])))
+        cumy[i,,t]<- NA
+      else {
+        for(r in 1:R){
+          cumy[i,r,t]<- sum(ya[i,1:r,t], na.rm=TRUE) - ya[i,r,t]
+        }
+      }
+    }
+  }
+
+  post <- array(0, c(M, K+1, 1))
+  colnames(post) <- N
+  mix <- obj$mixture
+
+  if(identical(mix, "NB"))
+    alpha <- exp(coef(obj, type="alpha"))
+  for(i in 1:M) {
+    switch(mix,
+           P  = f <- dpois(N, lambda[i]),
+           NB = f <- dnbinom(N, mu=lambda[i], size=alpha))
+    g <- rep(1, K+1) # outside t loop
+    h <- rep(1, K+1)
+    for(t in 1:T) {
+      if(all(is.na(ya[i,,t])) | all(is.na(yma[i,,t])) | is.na(phi[i,t]))
+        next
+      for(k in 1:(K+1)) {
+        y.it <- ya[i,,t]
+        ym.it <- yma[i,,t]
+        ydot <- N[k] - sum(y.it, na.rm=TRUE)
+        y.it <- c(y.it, ydot)
+        Nr <- N[k] - cumy[i,,t]
+        if(ydot < 0 | any(Nr < 0)) {
+          g[k] <- 0
+          h[k] <- 0
+          next
+        }
+        cp.it <- cpa[i,,t]*phi[i,t]
+        cp.it <- c(cp.it, 1-sum(cp.it, na.rm=TRUE))
+        na.it <- is.na(cp.it)
+        y.it[na.it] <- NA
+        g[k] <- g[k]*dmultinom(y.it[!na.it], N[k], cp.it[!na.it])
+
+        cpm.it<- cpma[i,,t]
+        nam.it<- is.na(cpm.it)
+        h[k]<- h[k]*exp(sum(dpois(ym.it[!nam.it], Nr*cpm.it[!nam.it], log=TRUE)))
+      }
+    }
+    ml <- f*g*h
+    post[i,,1] <- ml/sum(ml)
   }
   class(post)<- c("raneffects",class(post))
   return(post)

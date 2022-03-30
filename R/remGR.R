@@ -195,7 +195,7 @@ remGR <- function(lamformula, phiformula, detformula, data, mixture=c('P', 'NB')
                phiformula=phiformula, estimates=estimates, sitesRemoved = D$removed.sites,
                AIC = fmAIC, opt = fm, negLogLike = fm$value, nllFun = nll,
                mixture=mixture, K=K, data = data)
-  class(efit) <- c('efitR','efit','list')
+  class(efit) <- c('efitGR','efitR','efit','list')
 
   return(efit)
 }

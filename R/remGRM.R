@@ -98,8 +98,6 @@ remGRM <- function(lamformula, phiformula, detformula, mdetformula, data, mixtur
   lamParms <- colnames(Xlam)
   detParms <- colnames(Xdet)
   detmParms<- colnames(Xdetm)
-  detmParms[1]<- "(mIntercept)"
-  detParms<- c(detParms,detmParms)
 
   nLP <- ncol(Xlam)
   if(T==1) {
@@ -215,9 +213,9 @@ remGRM <- function(lamformula, phiformula, detformula, mdetformula, data, mixtur
   fmAIC <- 2 * fm$value + 2 * nP
 
   if(identical(mixture,"NB"))
-    names(ests)<- c(lamParms,phiParms,detParms,"alpha")
+    names(ests)<- c(lamParms,phiParms,detParms,detmParms,"alpha")
   else
-    names(ests)<- c(lamParms,phiParms,detParms)
+    names(ests)<- c(lamParms,phiParms,detParms,detmParms)
 
 
   stateEstimates <- list(name = "Abundance", short.name = "lambda",
@@ -226,12 +224,19 @@ remGRM <- function(lamformula, phiformula, detformula, mdetformula, data, mixtur
                          invlinkGrad = "exp")
 
   detEstimates <- list(name = "Detection", short.name = "p",
-                       estimates = ests[(nLP+nPP+1):(nLP+nPP+nDP+nDPM)],
-                       covMat = as.matrix(covMat[(nLP+nPP+1):(nLP+nPP+nDP+nDPM),(nLP+nPP+1):(nLP+nPP+nDP+nDPM)]),
+                       estimates = ests[(nLP+nPP+1):(nLP+nPP+nDP)],
+                       covMat = as.matrix(covMat[(nLP+nPP+1):(nLP+nPP+nDP),(nLP+nPP+1):(nLP+nPP+nDP)]),
                        invlink = "logistic",
                        invlinkGrad = "logictic.grad")
 
-  estimates<- list(state=stateEstimates, det=detEstimates)
+  mdetEstimates <- list(name = "mDetection", short.name = "pm",
+                       estimates = ests[(nLP+nPP+nDP+1):(nLP+nPP+nDP+nDPM)],
+                       covMat = as.matrix(covMat[(nLP+nPP+nDP+1):(nLP+nPP+nDP+nDPM),
+                                                 (nLP+nPP+nDP+1):(nLP+nPP+nDP+nDPM)]),
+                       invlink = "exp",
+                       invlinkGrad = "exp")
+
+  estimates<- list(state=stateEstimates, det=detEstimates, detm=mdetEstimates)
 
   if(identical(mixture,"NB")) {
     dispEstimates <- list(name = "Dispersion", short.name = "disp",
@@ -252,11 +257,12 @@ remGRM <- function(lamformula, phiformula, detformula, mdetformula, data, mixtur
   }
 
   efit <- list(fitType = "generalised removal",
-               call = match.call(), lamformula = lamformula, detformula=detformula,
-               phiformula=phiformula, estimates=estimates, sitesRemoved = D$removed.sites,
+               call = match.call(), lamformula = lamformula, phiformula=phiformula,
+               detformula=detformula, mdetformula=mdetformula,
+                estimates=estimates, sitesRemoved = D$removed.sites,
                AIC = fmAIC, opt = fm, negLogLike = fm$value, nllFun = nll,
                mixture=mixture, K=K, data = data)
-  class(efit) <- c('efitR','efit','list')
+  class(efit) <- c('efitGRM','efitR','efit','list')
 
   return(efit)
 }

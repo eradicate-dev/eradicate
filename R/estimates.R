@@ -706,6 +706,83 @@ calcP.efitR<- function(obj, na.rm = TRUE) {
 
 #' @rdname calcP
 #' @export
+calcP.efitGR<- function(obj, na.rm = TRUE) {
+  detformula <- as.formula(obj$detformula)
+  phiformula <- as.formula(obj$phiformula)
+  lamformula <- as.formula(obj$lamformula)
+  emf <- obj$data
+  designMats <- getDesign(emf, lamformula, phiformula, detformula, na.rm = na.rm)
+  y <- designMats$y
+  Xdet <- designMats$Xdet
+  Xdet.offset <- designMats$Xdet.offset
+  if (is.null(Xdet.offset))
+    Xdet.offset <- rep(0, nrow(Xdet))
+
+  M <- nrow(y)
+  T <- emf$numPrimary
+  J <- ncol(y) / T
+  R <- ncol(y)
+
+  pars <- coef(obj, type = "det")
+  p <- plogis(Xdet %*% pars + Xdet.offset)
+  p <- matrix(p, nrow=M, byrow = TRUE)
+  p <- array(p, c(M, J, T))
+  p <- aperm(p, c(1,3,2))
+
+  cp <- array(NA_real_, c(M, T, J))
+  for(t in 1:T) cp[,t,] <- do.call(removalPiFun, list(p[,t,]))
+  cp <- aperm(cp, c(1,3,2))
+  cp <- matrix(cp, nrow=M, ncol=R)
+
+  return(cp)
+}
+
+#' @rdname calcP
+#' @export
+calcP.efitGRM<- function(obj, na.rm = TRUE) {
+  detformula <- as.formula(obj$detformula)
+  phiformula <- as.formula(obj$phiformula)
+  lamformula <- as.formula(obj$lamformula)
+  mdetformula<- as.formula(obj$mdetformula)
+  emf <- obj$data
+  designMats <- getDesign(emf, lamformula, phiformula, detformula, mdetformula, na.rm = na.rm)
+  y <- designMats$y
+  Xdet <- designMats$Xdet
+  Xdet.offset <- designMats$Xdet.offset
+  if (is.null(Xdet.offset))
+    Xdet.offset <- rep(0, nrow(Xdet))
+  Xdetm <- designMats$Xdetm
+  Xdetm.offset <- designMats$Xdetm.offset
+  if (is.null(Xdetm.offset))
+    Xdetm.offset <- rep(0, nrow(Xdetm))
+  M <- nrow(y)
+  T <- emf$numPrimary
+  J <- ncol(y) / T
+  R <- ncol(y)
+
+  pars <- coef(obj, type = "det")
+  p <- plogis(Xdet %*% pars + Xdet.offset)
+  p <- matrix(p, nrow=M, byrow = TRUE)
+  p <- array(p, c(M, J, T))
+  p <- aperm(p, c(1,3,2))
+
+  cp <- array(NA_real_, c(M, T, J))
+  for(t in 1:T) cp[,t,] <- do.call(removalPiFun, list(p[,t,]))
+  cp <- aperm(cp, c(1,3,2))
+  cp <- matrix(cp, nrow=M, ncol=R)
+
+  mpars <- coef(obj, type = "detm")
+  pm <- exp(Xdetm %*% mpars + Xdetm.offset)
+  pm <- matrix(pm, nrow=M, byrow = TRUE)
+  pm <- array(pm, c(M, J, T))
+  pm <- aperm(pm, c(1,3,2))
+  cpm <- matrix(pm, nrow=M, ncol=R)
+
+  return(list(cp=cp, cpm=cpm))
+}
+
+#' @rdname calcP
+#' @export
 calcP.efitGP<- function(obj, na.rm = TRUE) {
   emf<- obj$data
   eff<- emf$effort
