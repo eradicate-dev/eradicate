@@ -6,7 +6,6 @@
 \alias{raneffects.efitGR}
 \alias{raneffects.efitGRM}
 \alias{raneffects.efitMS}
-\alias{raneffects.efitMNO}
 \alias{raneffects.efitMNS}
 \title{raneffects}
 \usage{
@@ -19,8 +18,6 @@ raneffects(obj, ...)
 \method{raneffects}{efitGRM}(obj, K, ...)
 
 \method{raneffects}{efitMS}(obj, ...)
-
-\method{raneffects}{efitMNO}(obj, ...)
 
 \method{raneffects}{efitMNS}(obj, K, ...)
 }

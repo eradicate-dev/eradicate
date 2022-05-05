@@ -3,14 +3,11 @@
 \name{traject}
 \alias{traject}
 \alias{traject.efitMS}
-\alias{traject.efitMNO}
 \title{traject}
 \usage{
 traject(obj, ...)
 
 \method{traject}{efitMS}(obj, mean = TRUE, ...)
-
-\method{traject}{efitMNO}(obj, na.rm = FALSE)
 }
 \arguments{
 \item{obj}{A fitted model object.}

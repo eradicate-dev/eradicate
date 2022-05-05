@@ -1,18 +1,17 @@
 Package: eradicate
 Type: Package
 Title: Functions to support the "eradication tools" shiny app
-Version: 0.3.0
+Version: 0.4.0
 Author: Dave Ramsey
 Maintainer: Dave Ramsey <david.ramsey@delwp.vic.gov.au>
 Imports: 
-    Rcpp (>= 0.8.0),
     Distance
 Description: A package for the analysis of animal abundance using data from common surveys methods. Most functions are a port of models in the 'unmarked' package with some new additions.
 License: GPL (>=3)
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.1.2
-LinkingTo: Rcpp, RcppArmadillo 
+LinkingTo: 
 Suggests: 
     knitr,
     rmarkdown,
