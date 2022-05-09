@@ -52,7 +52,7 @@ remGP<- function (data, starts, K, method="Nelder-Mead", se = TRUE, ...){
 
 
 GPest<- function(x, starts, K, method, se) {
-  if(missing(K) || is.null(K)) K <- sum(x$catch) + 100
+  if(missing(K) || is.null(K)) K <- sum(x$catch) + 1000
   k <- 0:K
   if(missing(starts)) {
     cf <- coef(lm(cpue ~ cumcatch, data = x))
