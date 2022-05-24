@@ -20,9 +20,11 @@
 #' @return a \code{efit} model object.
 #'
 #' @examples
-#'  rem<- san_nic_rem$rem
-#'  emf <- eFrameR(y=rem)
-#'  mod <- remPois(~1, ~1, data=emf)
+#'  y<- san_nic_rem$rem
+#'  catch<- apply(y,2,sum)
+#'  effort<- rep(nrow(y), length(catch))
+#'  emf <- eFrameGP(catch, effort)
+#'  mod <- remGP(emf)
 #'  Nhat<- calcN(mod)
 #'
 #' @export
@@ -30,7 +32,9 @@
 remGP<- function (data, starts, K, method="Nelder-Mead", se = TRUE, ...){
   if(!is(data, "eFrameGP"))
     stop("Data is not a eFrameGP")
-  rr<- data$counts
+  dd<- remove_NA(data$counts)
+  rr<- dd$x
+  if(length(dd$narm) > 0) warning(paste0("a total of ",length(dd$narm)," rows with missing values removed"))
   rlist<- split(rr, rr$session)
   names(rlist)<- paste0("S",names(rlist))
   nP<- length(rlist)
@@ -132,4 +136,17 @@ GPest<- function(x, starts, K, method, se) {
 }
 
 
+remove_NA<- function(x){
+  # Remove missing values from eFrameGP data
+  c_na<- which(is.na(x$catch))
+  e_na<- which(is.na(x$effort))
+  inds<- c(c_na, e_na)
+  if(length(inds) > 0) {
+    x_narm<- x[-inds, ]
+  }
+  else {
+    x_narm<- x
+  }
+  list(x=x_narm, narm=inds)
+}
 
