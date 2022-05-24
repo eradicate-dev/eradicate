@@ -28,9 +28,11 @@ are required to fit this model.  Additionally, the model also accepts index (cou
 data collected in conjunction with the removal data.
 }
 \examples{
- rem<- san_nic_rem$rem
- emf <- eFrameR(y=rem)
- mod <- remPois(~1, ~1, data=emf)
+ y<- san_nic_rem$rem
+ catch<- apply(y,2,sum)
+ effort<- rep(nrow(y), length(catch))
+ emf <- eFrameGP(catch, effort)
+ mod <- remGP(emf)
  Nhat<- calcN(mod)
 
 }
