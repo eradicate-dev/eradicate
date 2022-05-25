@@ -137,14 +137,10 @@ eFrameR <- function(y, siteCovs = NULL, obsCovs = NULL) {
 #'    number of sites and J is the maximum number of removal (primary)
 #'    periods per site. Each primary period can consist of k secondary
 #'    periods but this is not used here.
-#' @param numPrimary the number of primary periods. For each primary period, the
-#' population is assumed to be closed.
 #' @param siteCovs A \code{data.frame} of covariates that vary at the
 #'    site level. This should have M rows and one column per covariate.
 #' @param obsCovs A list of matrices or data.frames of variables varying within sites.
 #' Each matrix or data.frame must be of dimension MxJ.
-#' @param primaryCovs A \code{data.frame} of covariates that vary at the
-#'    site x primary period level.
 #' @return a \code{eFrameGR} holding data containing the response and
 #'  covariates required for removal models
 #'
@@ -159,11 +155,9 @@ eFrameR <- function(y, siteCovs = NULL, obsCovs = NULL) {
 #'
 #' @export
 #'
-eFrameGR<- function(y, numPrimary, siteCovs = NULL, obsCovs = NULL, primaryCovs = NULL) {
+eFrameGR<- function(y, siteCovs = NULL, obsCovs = NULL) {
   emf <- eFrame(y, siteCovs, obsCovs)
   emf$piFun<- "removalPiFun"
-  emf$numPrimary <- numPrimary
-  emf$primaryCovs <- covsToDF(primaryCovs, "primaryCovs", numPrimary, nrow(y))
   class(emf) <- c("eFrameGR",class(emf))
   emf
 }
@@ -183,14 +177,10 @@ eFrameGR<- function(y, numPrimary, siteCovs = NULL, obsCovs = NULL, primaryCovs 
 #'    periods per site. Each primary period can consist of k secondary
 #'    periods but this is not used here.
 #' @param ym An MxJ matrix of the additional monitoring (index) data.
-#' @param numPrimary the number of primary periods. For each primary period, the
-#' population is assumed to be closed.
 #' @param SiteCovs A \code{data.frame} of covariates that vary at the
 #'    site level. This should have M rows and one column per covariate
 #' @param obsCovs A list of matrices or data.frames of variables varying within sites.
 #' Each matrix or data.frame must be of dimension MxJ.
-#' @param primaryCovs A \code{data.frame} of covariates that vary at the
-#'    site x primary period level.
 #' @return a \code{eFrameGRM} holding data containing the response and
 #'  covariates required for removal models
 #'
@@ -198,17 +188,16 @@ eFrameGR<- function(y, numPrimary, siteCovs = NULL, obsCovs = NULL, primaryCovs 
 #'  rem<- san_nic_rem$rem
 #'  ym<- san_nic_rem$ym # detections from additional monitoring
 #'
-#'  emf<-eFrameGRM(rem, ym, numPrimary=1, type="removal")
+#'  emf<-eFrameGRM(rem, ym, type="removal")
 #'  summary(emf)
 #'
 #' @export
 #'
-eFrameGRM<- function(y, ym, numPrimary, siteCovs = NULL, obsCovs = NULL, primaryCovs = NULL) {
+eFrameGRM<- function(y, ym, siteCovs = NULL, obsCovs = NULL) {
   emf <- eFrame(y, siteCovs, obsCovs)
+  if((ncol(ym) != ncol(y)) | (nrow(ym) != nrow(y))) stop("ym has different dimensions to y")
   emf$ym<- ym
   emf$piFun<- "removalPiFun"
-  emf$numPrimary <- numPrimary
-  emf$primaryCovs <- covsToDF(primaryCovs, "primaryCovs", numPrimary, nrow(y))
   class(emf) <- c("eFrameGRM",class(emf))
   emf
 }
