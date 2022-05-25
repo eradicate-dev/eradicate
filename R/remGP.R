@@ -63,7 +63,7 @@ GPest<- function(x, starts, K, method, se) {
     cstart<- log(-cf[2])
     nstart<- log(-cf[1]/cf[2])
     if(!is.null(x$index)) {
-      istart<- -log(max(x$ieffort))
+      istart<- -log(max(x$ieffort, na.rm=TRUE))
       starts<- c(nstart, cstart, istart)
     }
     else {
@@ -88,7 +88,7 @@ GPest<- function(x, starts, K, method, se) {
       pm <- exp(parm[3]) * x$ieffort
       for(i in 1:lk) {
         Nr <- (R+k[i]) - x$cumcatch
-        fin[i]<- sum(dpois(x$index, Nr*pm))
+        fin[i]<- sum(dpois(x$index, Nr*pm), na.rm=TRUE)
       }
       lli<- log(sum(fin*f))
     }
