@@ -4,10 +4,13 @@
 \alias{remMNS}
 \title{remMNS}
 \usage{
-remMN(lamformula, detformula, data, starts, method="BFGS", se=TRUE, ...)
+remMNS(lamformula, detformula, data, starts, method="BFGS", se=TRUE, ...)
 }
 \arguments{
-\item{lamformula}{formula for the latent abundance component.}
+\item{lamformula}{formula for the latent abundance component. For stacked data representing
+multiple primary periods, the reserved terms \code{.season} or \code{.trend} can be added
+to the formula to model abundance for each primary period as a factor (\code{.season}) or
+numeric trend (\code{.trend})}
 
 \item{detformula}{formula for the removal detection component.  Only
 site-level covariates are allowed for the removal detection component.

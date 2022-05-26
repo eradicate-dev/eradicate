@@ -9,6 +9,7 @@
 \alias{calcN.efitGPlist}
 \alias{calcN.efitMS}
 \alias{calcN.efitMNS}
+\alias{calcN.efitGRMS}
 \title{calcN}
 \usage{
 calcN(obj, ...)
@@ -38,6 +39,8 @@ calcN(obj, ...)
 \method{calcN}{efitMS}(obj, newdata, off.set = NULL, CI.level = 0.95, npost = 500, ...)
 
 \method{calcN}{efitMNS}(obj, newdata, off.set = NULL, CI.level = 0.95, ...)
+
+\method{calcN}{efitGRMS}(obj, newdata, off.set = NULL, CI.level = 0.95, ...)
 }
 \arguments{
 \item{obj}{A fitted model object.}

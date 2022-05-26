@@ -310,10 +310,9 @@ eFrameMS<- function(df, siteCovs = NULL, obsCovs =  NULL) {
 #' @return a \code{eFrameMNS} holding stacked data for each primary period.
 #'
 #' @examples
-#'  rem<- san_nic_rem$rem
-#'  ym<- san_nic_rem$ym # detections from additional monitoring
+#'  rem<- san_nic_open$removals
 #'
-#'  emf<-eFrameMNO(rem, numPrimary=1)
+#'  emf<-eFrameMNS(rem)
 #'  summary(emf)
 #'
 #' @export
@@ -345,6 +344,75 @@ eFrameMNS<- function(df, siteCovs = NULL, obsCovs = NULL, delta = NULL) {
   emf$delta<- cumsum(delta)
   emf$num.removed <- num.removed
   class(emf) <- c("eFrameMNS",class(emf))
+  emf
+}
+
+#' eFrameGRMS
+#'
+#' \code{eFrameGRMS} creates an eFrameGRMS 'stacked' data object for use with closed population
+#' generalized removal models + index data using the robust design where sampling occurs over
+#' a number of primary and secondary periods. Data for each primary period is 'stacked'
+#' into rows with an indicator variable added to identify each primary period. The data can
+#' then be analysed using closed population removal models to estimate the trend in abundance
+#' between primary periods.
+#'
+#' @param rem A \code{data.frame} of the observed removal data for each site
+#' in rows and secondary periods in columns, indexed by session (primary period).
+#' The \code{data.frame} must contain a column \code{session} with at least two unique values.
+#' @param idx A \code{data.frame} of the observed index data for each site
+#' in rows and secondary periods in columns, indexed by session (primary period).
+#' The \code{data.frame} must contain a column \code{session} with at least two unique values.
+#' @param siteCovs A \code{data.frame} of covariates that vary at the
+#'    site level. This should have M rows and one column per covariate
+#' @param obsCovs A list of matrices or data.frames of variables varying within sites.
+#' Each matrix or data.frame must be of dimension MxJ.
+#' @param delta A vector with elements giving the time units between primary periods for each site
+#' beginning with 1 for the first primary period. A default value of 1 is used to
+#' indicate equal time intervals between primary periods.
+#' @return a \code{eFrameGRMS} holding stacked data for each primary period.
+#'
+#' @examples
+#'  rem<- san_nic_open$removals
+#'  ym<- san_nic_open$index # detections from additional monitoring
+#'
+#'  emf<-eFrameGRMS(rem, index)
+#'  summary(emf)
+#'
+#' @export
+#'
+eFrameGRMS<- function(rem, idx, siteCovs = NULL, obsCovs = NULL, delta = NULL) {
+
+  yl<- unstack.data(rem)
+  M <- yl$M
+  T <- yl$T
+  J <- yl$J
+  y<- yl$y
+  yi<- unstack.data(idx)
+  ym<- yi$y
+
+  if(M != yi$M) stop("index data has different number of sites to removal data")
+  if(T != yi$T) stop("index data has different number of sessions to removal data")
+  if(J != yi$J) stop("index data has different number of secondary periods to removal data")
+  if (J %% 1 != 0) stop("Unequal number of secondary periods")
+  if (J < 2) stop("less than 2 primary periods present")
+  if(missing(delta))
+    delta <- rep(1.0, T)
+  if(!is.vector(delta) || length(delta) != T)
+    stop("delta should be a vector of length T")
+  if(any(delta < 0, na.rm=TRUE))
+    stop("Negative delta values are not allowed.")
+  if(any(is.na(delta)))
+    stop("Missing values are not allowed in delta.")
+  ya <- array(y, c(M, J, T))
+  num.removed <- apply(ya, 3, sum, na.rm=TRUE)
+  obsCovs <- covsToDF(obsCovs, "obsCovs", J*T, M)
+  emf <- eFrame(y, siteCovs, obsCovs)
+  emf$ym<- ym
+  emf$piFun<- "removalPiFun"
+  emf$numPrimary <- T
+  emf$delta<- cumsum(delta)
+  emf$num.removed <- num.removed
+  class(emf) <- c("eFrameGRMS",class(emf))
   emf
 }
 
@@ -686,6 +754,93 @@ print.eFrameGRM<- function(object,...) {
 #' @export
 #'
 summary.eFrameGRM<- function(object,...) {
+  #S3 method for eFrame
+  cat("eFrameGRM Object\n\n")
+  cat("Number of primary periods:",object$numPrimary,"\n\n")
+  cat("Maximum number of secondary periods:",numY(object)/object$numPrimary,"\n\n")
+  cat("Number of removals per period:","\n")
+  print(data.frame(Period=1:numY(object),Removed=colSums(object$y,na.rm=TRUE)))
+  cat("\n")
+  cat("Total removed:",sum(object$y,na.rm=TRUE),"\n\n")
+  cat("Sites with at least one detection:",
+      sum(apply(getY(object), 1, function(x) any(x > 0, na.rm=TRUE))),
+      "\n\n")
+  cat("Tabulation of y observations:")
+  print(table(object$y, exclude=NULL))
+  cat("\n")
+  cat(nrow(object$y1), "monitoring sites\n")
+  cat("Tabulation of monitoring observations:")
+  print(table(object$y1, exclude=NULL))
+  if(!is.null(object$siteCovs)) {
+    cat("\nSite-level covariates:\n")
+    print(summary(object$siteCovs))
+  }
+  if(!is.null(object$obsCovs)) {
+    cat("\nObservation-level covariates:\n")
+    print(summary(object$obsCovs))
+  }
+}
+
+#-----------------------------------------
+#' print.eFrameGRMS
+#'
+#' \code{print} method for eFrameGRMS objects. Basically the same as \code{summary.eFrame}
+#'
+#' @param object An \code{eFrameGRMS} object.
+#'
+#' @return a \code{list} containing various summaries of the data
+#'
+#' @examples
+#'  ## uses san_nic_rem
+#'  emf <- eFrameRM(y=rem, y1=y1, cells=cells, Z=nights)
+#'  summary(emf)
+#'
+#' @export
+#'
+print.eFrameGRMS<- function(object,...) {
+  #S3 method for eFrame
+  cat("eFrameGRMS Object\n\n")
+  cat(nrow(object$y), " removal sites\n")
+  cat("Number of primary periods:",object$numPrimary,"\n\n")
+  cat("Maximum number of secondary periods:",numY(object)/object$numPrimary,"\n\n")
+  cat("Number of removals per period:","\n")
+  print(data.frame(Period=1:numY(object),Removed=colSums(object$y, na.rm=TRUE)))
+  cat("\n")
+  cat("Total removed:",sum(object$y, na.rm=TRUE),"\n\n")
+  cat("Sites with at least one detection:",
+      sum(apply(getY(object), 1, function(x) any(x > 0, na.rm=TRUE))),
+      "\n\n")
+  cat("Tabulation of y observations:")
+  print(table(object$y, exclude=NULL))
+  cat("\n")
+  cat(nrow(object$ym), "Additional monitoring sites\n")
+  cat("Tabulation of additional monitoring observations:")
+  print(table(object$ym, exclude=NULL))
+  if(!is.null(object$siteCovs)) {
+    cat("\nSite-level covariates:\n")
+    print(summary(object$siteCovs))
+  }
+  if(!is.null(object$obsCovs)) {
+    cat("\nObservation-level covariates:\n")
+    print(summary(object$obsCovs))
+  }
+}
+#' summary.eFrameGRMS
+#'
+#' \code{summary} method for eFrameGRM objects.
+#'
+#' @param object An \code{eFrameRM} object.
+#'
+#' @return a \code{list} containing various summaries of the data
+#'
+#' @examples
+#'  ## uses san_nic_rem
+#'  emf <- eFrameRM(y=rem, y1=y1, cells=cells, Z=nights)
+#'  summary(emf)
+#'
+#' @export
+#'
+summary.eFrameGRMS<- function(object,...) {
   #S3 method for eFrame
   cat("eFrameGRM Object\n\n")
   cat("Number of primary periods:",object$numPrimary,"\n\n")

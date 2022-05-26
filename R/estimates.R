@@ -320,11 +320,12 @@ calcN.efitR<- function(obj, newdata, off.set=NULL, CI.level=0.95, ...) {
       newdata <- siteCovs(origdata)
     }
   }
-  tot.rem<- sum(obj$data$y, na.rm=TRUE)
+  site_rems<- rowSums(obj$data$y, na.rm=TRUE)
   design <- getDesign(obj, newdata)
   X<- design$X
   M<- nrow(X) # for stacked data
   sites<- design$retained.sites
+  tot.rem<- sum(site_rems[sites])
   mixture<- obj$mixture
   invlink = obj$estimates$state$invlink
   invlinkGrad = obj$estimates$state$invlinkGrad
@@ -564,6 +565,77 @@ calcN.efitMNS<- function(obj, newdata, off.set=NULL, CI.level=0.95, ...) {
     v<- (grad * off.set)^2 * vc
     cellpreds<- data.frame(N = ests * off.set, se = sqrt(v), site = sites, .season = season)
   }
+  # overall estimate
+  bigN<- matrix(NA, nrow=T, ncol=5)
+  for(i in 1:T) {
+    off.seas<- off.set
+    off.seas[which(season != i)]<- 0
+    Nhat<- off.seas %*% ests
+    gradN<- off.seas %*% (grad * X)
+    varN<- gradN %*% covMat %*% t(gradN)
+    seN<- sqrt(varN)
+    cv<- sqrt(varN)/Nhat
+    z <- exp(qnorm((1-CI.level)/2) * sqrt(log(1+cv^2)))
+    lwr<- Nhat*z
+    upr<- Nhat/z
+    bigN[i, ]<- c(round(Nhat), i, round(seN,1), round(lwr), round(upr))
+  }
+  bigN<- as.data.frame(bigN)
+  Nresid<- Nhat - num.removed[T]
+  cv<- seN/Nresid
+  z <- exp(qnorm((1-CI.level)/2) * sqrt(log(1+cv^2)))
+  lwr2<- Nresid*z
+  upr2<- Nresid/z
+  residN <- data.frame(N=round(Nresid), se=round(seN,1), lcl=round(lwr2), ucl=round(upr2))
+  row.names(residN)<- "Residual"
+  names(bigN)<- c("N",".season","se","lcl","ucl")
+  list(cellpreds=cellpreds, Nhat=bigN, Nresid=residN)
+}
+
+#' @rdname calcN
+#' @export
+calcN.efitGRMS<- function(obj, newdata, off.set=NULL, CI.level=0.95, ...) {
+  # get original data
+  origdata <- obj$data
+  T <- origdata$numPrimary
+  delta <- origdata$delta
+  if(missing(newdata) || is.null(newdata)) {
+    M <- numSites(origdata)
+    season <- data.frame(.season = as.factor(rep(1:T, each = M)))
+    trend<- data.frame(.trend = rep(delta, each = M))
+    if(is.null(siteCovs(origdata))) {
+      scovs <- data.frame(Intercept = rep(1, M))
+    } else {
+      scovs <- siteCovs(origdata)
+    }
+    newdata <- cbind(season, trend, scovs[rep(1:M, T),,drop=FALSE])
+  } else {
+    M<- nrow(newdata)
+    season <- data.frame(.season = as.factor(rep(1:T, each = M)))
+    trend<- data.frame(.trend = rep(delta, each = M))
+    newdata <- cbind(season, trend, newdata[rep(1:M, T),,drop=FALSE])
+  }
+
+  design <- getDesign(obj, newdata)
+  X<- design$X
+  M<- nrow(X)
+  num.removed <- obj$data$num.removed
+  sites<- design$retained.sites
+  mixture<- obj$mixture
+  invlink = obj$estimates$state$invlink
+  invlinkGrad = obj$estimates$state$invlinkGrad
+  estimates<- coef(obj, "state")
+  covMat<- vcov(obj, "state")
+  if(ncol(X) != length(estimates)) stop("error - wrong number of covariates")
+  if (is.null(off.set)) off.set <- rep(1, M)
+  else if(length(off.set) == 1) off.set<- rep(off.set, M)
+  # cellwise estimates
+  eta <- as.vector(X %*% estimates)
+  vc <- rowSums((X %*% covMat) * X) # equivalent to diag(X %*% covMat %*% t(X))
+  ests<- do.call(invlink,list(eta))
+  grad <- do.call(invlinkGrad,list(eta))
+  v<- (grad * off.set)^2 * vc
+  cellpreds<- data.frame(N = ests * off.set, se = sqrt(v), site = sites, .season = season)
   # overall estimate
   bigN<- matrix(NA, nrow=T, ncol=5)
   for(i in 1:T) {

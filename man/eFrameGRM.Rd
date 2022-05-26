@@ -4,14 +4,7 @@
 \alias{eFrameGRM}
 \title{eFrameGRM}
 \usage{
-eFrameGRM(
-  y,
-  ym,
-  numPrimary,
-  siteCovs = NULL,
-  obsCovs = NULL,
-  primaryCovs = NULL
-)
+eFrameGRM(y, ym, siteCovs = NULL, obsCovs = NULL)
 }
 \arguments{
 \item{y}{An MxJ matrix of the observed removal data, where M is the
@@ -21,14 +14,8 @@ periods but this is not used here.}
 
 \item{ym}{An MxJ matrix of the additional monitoring (index) data.}
 
-\item{numPrimary}{the number of primary periods. For each primary period, the
-population is assumed to be closed.}
-
 \item{obsCovs}{A list of matrices or data.frames of variables varying within sites.
 Each matrix or data.frame must be of dimension MxJ.}
-
-\item{primaryCovs}{A \code{data.frame} of covariates that vary at the
-site x primary period level.}
 
 \item{SiteCovs}{A \code{data.frame} of covariates that vary at the
 site level. This should have M rows and one column per covariate}
@@ -49,7 +36,7 @@ combined removal + index/removal method (Chen, Pollock & Hoenig (1998) Biometric
  rem<- san_nic_rem$rem
  ym<- san_nic_rem$ym # detections from additional monitoring
 
- emf<-eFrameGRM(rem, ym, numPrimary=1, type="removal")
+ emf<-eFrameGRM(rem, ym, type="removal")
  summary(emf)
 
 }
