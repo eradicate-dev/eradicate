@@ -1,15 +1,16 @@
 
-#' remGRM
+#' remGRMS
 #'
-#' @name remGRM
+#' @name remGRMS
 #'
 #' @description
-#' \code{remGRM} fits the generalized removal model to data collected from
+#' \code{remGRMS} fits the generalized removal model to 'stacked' data collected from
 #' repeated removal episodes from M sites over T primary periods with each primary consisting of J
 #' secondary periods. The model also facilitates the analysis of index (count) data collected
-#' in conjunction with the removal data to make joint inference on abundance.
+#' in conjunction with the removal data to make joint inference on abundance.  Currently
+#' supported models include the Poisson and Negative Binomial
 #'
-#' @usage remGRM(lamformula, phiformula, detformula, mdetformula, data, mixture = c("P", "NB"), K,
+#' @usage remGRMS(lamformula, detformula, mdetformula, data, mixture = c("P", "NB"), K,
 #'                   starts, method="BFGS", se=TRUE, ...)
 #'
 #' @param lamformula formula for the latent abundance component.
@@ -24,22 +25,22 @@
 #' @param method Optimisation method
 #' @param se flag to return the standard error (hessian).
 #'
-#' @return a \code{efitGRM} model object.
+#' @return a \code{efitGRMS} model object.
 #'
 #' @examples
-#'  rem<- san_nic_rem$rem
-#'  ym<- san_nic_rem$ym
-#'  emf <- eFrameGRM(rem, ym, numPrimary=1)
-#'  mod <- remGRM(~1, ~1, ~1, ~1, data=emf)
+#'  rem<- san_nic_open$removal
+#'  ym<- san_nic_open$index
+#'  emf <- eFrameGRMS(rem, ym)
+#'  mod <- remGRMS(~1, ~1, ~1, data=emf)
 #'  Nhat<- calcN(mod)
 #'
 #' @export
 #'
-remGRM <- function(lamformula, detformula, mdetformula, data, mixture=c('P', 'NB'),
+remGRMS <- function(lamformula, detformula, mdetformula, data, mixture=c('P', 'NB'),
                   K, starts, method = "BFGS", se = TRUE, ...)
 {
-  if(!is(data, "eFrameGRM"))
-    stop("Data is not a eFrameGRM.")
+  if(!is(data, "eFrameGRMS"))
+    stop("Data is not a eFrameGRMS.")
 
   mixture <- match.arg(mixture)
 
@@ -211,7 +212,7 @@ remGRM <- function(lamformula, detformula, mdetformula, data, mixture=c('P', 'NB
                 estimates=estimates, sitesRemoved = D$removed.sites,
                AIC = fmAIC, opt = fm, negLogLike = fm$value, nllFun = nll,
                mixture=mixture, K=K, data = data)
-  class(efit) <- c('efitGRM','efitR','efit','list')
+  class(efit) <- c('efitGRMS','efitR','efit','list')
 
   return(efit)
 }

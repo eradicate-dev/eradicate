@@ -4,7 +4,7 @@
 \alias{eFrameGR}
 \title{eFrameGR}
 \usage{
-eFrameGR(y, numPrimary, siteCovs = NULL, obsCovs = NULL, primaryCovs = NULL)
+eFrameGR(y, siteCovs = NULL, obsCovs = NULL)
 }
 \arguments{
 \item{y}{An MxJ matrix of the observed removal data, where M is the
@@ -12,17 +12,11 @@ number of sites and J is the maximum number of removal (primary)
 periods per site. Each primary period can consist of k secondary
 periods but this is not used here.}
 
-\item{numPrimary}{the number of primary periods. For each primary period, the
-population is assumed to be closed.}
-
 \item{siteCovs}{A \code{data.frame} of covariates that vary at the
 site level. This should have M rows and one column per covariate.}
 
 \item{obsCovs}{A list of matrices or data.frames of variables varying within sites.
 Each matrix or data.frame must be of dimension MxJ.}
-
-\item{primaryCovs}{A \code{data.frame} of covariates that vary at the
-site x primary period level.}
 }
 \value{
 a \code{eFrameGR} holding data containing the response and

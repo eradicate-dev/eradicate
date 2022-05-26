@@ -9,9 +9,12 @@
 #' secondary periods. Currently supported models include the Poisson, Negative binomial and
 #' zero-inflated Poisson (ZIP).
 #'
-#' @usage remMN(lamformula, detformula, data, starts, method="BFGS", se=TRUE, ...)
+#' @usage remMNS(lamformula, detformula, data, starts, method="BFGS", se=TRUE, ...)
 #'
-#' @param lamformula formula for the latent abundance component.
+#' @param lamformula formula for the latent abundance component. For stacked data representing
+#' multiple primary periods, the reserved terms \code{.season} or \code{.trend} can be added
+#' to the formula to model abundance for each primary period as a factor (\code{.season}) or
+#' numeric trend (\code{.trend})
 #' @param detformula formula for the removal detection component.  Only
 #'  site-level covariates are allowed for the removal detection component.
 #'  This differs from the similar model in \code{unmarked}.

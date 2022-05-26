@@ -4,13 +4,11 @@
 \alias{remGR}
 \title{remGR}
 \usage{
-remGR(lamformula, phiformula, detformula, data, mixture = c("P", "NB"), K,
+remGR(lamformula, detformula, data, mixture = c("P", "NB"), K,
                   starts, method="BFGS", se=TRUE, ...)
 }
 \arguments{
 \item{lamformula}{formula for the latent abundance component.}
-
-\item{phiformula}{formula for availability}
 
 \item{detformula}{formula for the removal detection component.  Only
 site-level covariates are allowed for the removal detection component.
@@ -35,13 +33,13 @@ a \code{efit} model object.
 }
 \description{
 \code{remGR} fits the generalized removal model to data collected from
-repeated removal episodes from M sites over T primary periods with each primary consisting of J
+repeated removal episodes from M sites each consisting of J
 secondary periods.
 }
 \examples{
  rem<- san_nic_rem$rem
- emf <- eFrameGR(y=rem, numPrimary=1)
- mod <- remPois(~1, ~1, ~1, data=emf)
+ emf <- eFrameGR(y=rem)
+ mod <- remGR(~1, ~1, K=100, data=emf)
  Nhat<- calcN(mod)
 
 }

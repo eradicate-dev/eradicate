@@ -117,34 +117,13 @@ getDesign.eFrameREST<- function(emf, lamformula, na.rm=TRUE) {
 #---------------------------------------------------------
 # DM for generalized removal estimator
 
-getDesign.eFrameGR<- function(emf, lamformula, phiformula, detformula, na.rm = TRUE) {
+getDesign.eFrameGR<- function(emf, lamformula, detformula, na.rm = TRUE) {
 
     detformula <- as.formula(detformula)
     lamformula <- as.formula(lamformula)
-    phiformula <- as.formula(phiformula)
 
     M <- numSites(emf)
-    T <- emf$numPrimary
-    R <- numY(emf) # 2*T for double observer sampling
-    # 1*T for distance sampling
-    # nPasses*T for removal sampling
-
-    ## Compute phi design matrices
-    if(is.null(emf$primaryCovs)) {
-      primaryCovs <- data.frame(placeHolder = rep(1, M*T))
-    } else primaryCovs <- emf$primaryCovs
-
-
-    # add siteCovs in so they can be used as well
-    if(!is.null(emf$siteCovs)) {
-      sC <- emf$siteCovs[rep(1:M, each = T),,drop=FALSE]
-      primaryCovs <- cbind(primaryCovs, sC)
-    }
-
-    Xphi.mf <- model.frame(phiformula, primaryCovs, na.action = NULL)
-    Xphi <- model.matrix(phiformula, Xphi.mf)
-    Xphi.offset <- as.vector(model.offset(Xphi.mf))
-    if(!is.null(Xphi.offset)) Xphi.offset[is.na(Xphi.offset)] <- 0
+    R <- numY(emf)
 
     # Compute site-level design matrix for lambda
     if(is.null(siteCovs(emf))) {
@@ -164,9 +143,9 @@ getDesign.eFrameGR<- function(emf, lamformula, phiformula, detformula, na.rm = T
       obsCovs <- cbind(obsCovs, obsNum = as.factor(rep(1:R, M)))
     }
 
-    # add site and yearlysite covariates, which contain siteCovs
-    cnames <- c(colnames(obsCovs), colnames(primaryCovs))
-    obsCovs <- cbind(obsCovs, primaryCovs[rep(1:(M*T), each = R/T),])
+    # add sitecovs to obscovs
+    cnames <- c(colnames(obsCovs), colnames(siteCovs))
+    obsCovs <- cbind(obsCovs, siteCovs[rep(1:M, each = R),])
     colnames(obsCovs) <- cnames
 
     Xdet.mf <- model.frame(detformula, obsCovs, na.action = NULL)
@@ -175,50 +154,28 @@ getDesign.eFrameGR<- function(emf, lamformula, phiformula, detformula, na.rm = T
     if(!is.null(Xdet.offset)) Xdet.offset[is.na(Xdet.offset)] <- 0
 
     if(na.rm)
-      out <- handleNA(emf, Xlam, Xlam.offset, Xphi, Xphi.offset, Xdet,
-                      Xdet.offset)
+      out <- handleNA(emf, Xlam, Xlam.offset, Xdet, Xdet.offset)
     else
       out <- list(y=getY(emf), Xlam=Xlam, Xlam.offset = Xlam.offset,
-                  Xphi=Xphi, Xphi.offset = Xphi.offset, Xdet=Xdet,
+                  Xdet=Xdet, Xdet.offset =Xdet.offset,
                   removed.sites=integer(0))
 
-    return(list(y = out$y, Xlam = out$Xlam, Xphi = out$Xphi,
+    return(list(y = out$y, Xlam = out$Xlam,
                 Xdet = out$Xdet,
                 Xlam.offset = out$Xlam.offset,
-                Xphi.offset = out$Xphi.offset,
                 Xdet.offset = out$Xdet.offset,
                 removed.sites = out$removed.sites))
   }
 
 #------------------------
-getDesign.eFrameGRM<- function(emf, lamformula, phiformula, detformula, mdetformula, na.rm = TRUE) {
+getDesign.eFrameGRM<- function(emf, lamformula, detformula, mdetformula, na.rm = TRUE) {
 
   detformula <- as.formula(detformula)
   lamformula <- as.formula(lamformula)
-  phiformula <- as.formula(phiformula)
   mdetformula <- as.formula(mdetformula)
 
   M <- numSites(emf)
-  T <- emf$numPrimary
-  R <- numY(emf) # 2*T for double observer sampling
-  # 1*T for distance sampling
-  # nPasses*T for removal sampling
-
-  ## Compute phi design matrices
-  if(is.null(emf$primaryCovs)) {
-    primaryCovs <- data.frame(placeHolder = rep(1, M*T))
-  } else primaryCovs <- emf$primaryCovs
-
-  # add siteCovs in so they can be used as well
-  if(!is.null(emf$siteCovs)) {
-    sC <- emf$siteCovs[rep(1:M, each = T),,drop=FALSE]
-    primaryCovs <- cbind(primaryCovs, sC)
-  }
-
-  Xphi.mf <- model.frame(phiformula, primaryCovs, na.action = NULL)
-  Xphi <- model.matrix(phiformula, Xphi.mf)
-  Xphi.offset <- as.vector(model.offset(Xphi.mf))
-  if(!is.null(Xphi.offset)) Xphi.offset[is.na(Xphi.offset)] <- 0
+  R <- numY(emf)
 
   # Compute site-level design matrix for lambda
   if(is.null(siteCovs(emf))) {
@@ -237,9 +194,9 @@ getDesign.eFrameGRM<- function(emf, lamformula, phiformula, detformula, mdetform
     obsCovs <- cbind(obsCovs, obsNum = as.factor(rep(1:R, M)))
   }
 
-  # add site and yearlysite covariates, which contain siteCovs
-  cnames <- c(colnames(obsCovs), colnames(primaryCovs))
-  obsCovs <- cbind(obsCovs, primaryCovs[rep(1:(M*T), each = R/T),])
+  # add sitecovs to obscovs
+  cnames <- c(colnames(obsCovs), colnames(siteCovs))
+  obsCovs <- cbind(obsCovs, siteCovs[rep(1:M, each = R),])
   colnames(obsCovs) <- cnames
 
   Xdet.mf <- model.frame(detformula, obsCovs, na.action = NULL)
@@ -254,21 +211,21 @@ getDesign.eFrameGRM<- function(emf, lamformula, phiformula, detformula, mdetform
 
 
   if(na.rm)
-    out <- handleNA(emf, Xlam, Xlam.offset, Xphi, Xphi.offset, Xdet,
+    out <- handleNA(emf, Xlam, Xlam.offset, Xdet,
                     Xdet.offset, Xdetm, Xdetm.offset)
   else
     out <- list(y=emf$y, ym=emf$ym, Xlam=Xlam, Xlam.offset = Xlam.offset,
-                Xphi=Xphi, Xphi.offset = Xphi.offset, Xdet=Xdet, Xdetm=Xdetm,
-                Xdetm.offset = Xdetm.offset, removed.sites=integer(0))
+                Xdet=Xdet, Xdetm=Xdetm, Xdetm.offset = Xdetm.offset,
+                removed.sites=integer(0))
 
-  return(list(y = out$y, ym=out$ym, Xlam = out$Xlam, Xphi = out$Xphi,
+  return(list(y = out$y, ym=out$ym, Xlam = out$Xlam,
               Xdet = out$Xdet, Xdetm=out$Xdetm,
               Xlam.offset = out$Xlam.offset,
-              Xphi.offset = out$Xphi.offset,
               Xdet.offset = out$Xdet.offset,
               Xdetm.offset = out$Xdetm.offset,
               removed.sites = out$removed.sites))
 }
+
 #---------------------------------------------
 # Method for for occuMS
 getDesign.eFrameMS<- function(emf, lamformula, gamformula, epsformula, detformula, na.rm = TRUE) {
@@ -419,7 +376,90 @@ getDesign.eFrameMNS<- function(emf, lamformula, detformula, na.rm = TRUE) {
               V.offset = V.offset, removed.sites = removed.sites))
 }
 
+#------------------------
 
+getDesign.eFrameGRMS<- function(emf, lamformula, detformula, mdetformula, na.rm = TRUE) {
+
+  detformula <- as.formula(detformula)
+  lamformula <- as.formula(lamformula)
+  mdetformula <- as.formula(mdetformula)
+
+  M <- numSites(emf)
+  T <- emf$numPrimary
+  R <- numY(emf) # 2*T for double observer sampling
+  J <- R/T
+  delta<- emf$delta
+  y <- stack.data(emf$y, T)
+  ym <- stack.data(emf$ym, T)
+
+  ## Compute default design matrix for seasonal strata and numeric trend
+  season <- data.frame(.season = as.factor(rep(1:T, each = M)))
+  trend<- data.frame(.trend = rep(delta, each = M))
+
+
+  # site-level covariates
+  if(is.null(siteCovs(emf))) {
+    siteCovs <- data.frame(placeHolder = rep(1, M))
+  } else siteCovs <- siteCovs(emf)
+
+  # Combine above
+  seasCovs <- cbind(season, trend, siteCovs[rep(1:M, T),,drop=FALSE])
+
+  ## Compute detection design matrix
+  if(is.null(obsCovs(emf))) {
+    obsCovs <- data.frame(obsNum = as.factor(rep(1:J, M*T)))
+  } else {
+    obsCovs <- obsCovs(emf)
+    obsCovs <- cbind(obsCovs, obsNum = as.factor(rep(1:J, M*T)))
+  }
+
+  ## add site and season covariates, which contain siteCovs
+  cnames <- c(colnames(obsCovs), colnames(seasCovs))
+  obsCovs <- cbind(obsCovs, seasCovs[rep(1:(M*T), each = J),])
+  colnames(obsCovs) <- cnames
+
+
+  Xlam.mf <- model.frame(lamformula, seasCovs, na.action = NULL)
+  Xlam <- model.matrix(lamformula, Xlam.mf)
+  Xlam.offset <- as.vector(model.offset(Xlam.mf))
+  if(!is.null(Xlam.offset)) Xlam.offset[is.na(Xlam.offset)] <- 0
+
+
+  Xdet.mf <- model.frame(detformula, obsCovs, na.action = NULL)
+  Xdet <- model.matrix(detformula, Xdet.mf)
+  Xdet.offset <- as.vector(model.offset(Xdet.mf))
+  if(!is.null(Xdet.offset)) Xdet.offset[is.na(Xdet.offset)] <- 0
+
+  Xdetm.mf <- model.frame(mdetformula, obsCovs, na.action = NULL)
+  Xdetm <- model.matrix(mdetformula, Xdetm.mf)
+  Xdetm.offset <- as.vector(model.offset(Xdetm.mf))
+  if(!is.null(Xdetm.offset)) Xdetm.offset[is.na(Xdetm.offset)] <- 0
+
+
+  if(na.rm){
+      out <- handleNA(emf, Xlam, Xlam.offset, Xdet,
+                    Xdet.offset, Xdetm, Xdetm.offset)
+      y <- out$y
+      ym <- out$ym
+      Xlam <- out$Xlam
+      Xdet <- out$Xdet
+      Xdetm <- out$Xdetm
+      Xlam.offset <- out$Xlam.offset
+      Xdet.offset <- out$Xdet.offset
+      Xdetm.offset <- out$Xdetm.offset
+      removed.sites <- out$removed.sites
+    }
+  else {
+    removed.sites=integer(0)
+  }
+
+  return(list(y = y, ym=ym, Xlam = Xlam,
+              Xdet = Xdet, Xdetm=Xdetm,
+              Xlam.offset = Xlam.offset,
+              Xdet.offset = Xdet.offset,
+              Xdetm.offset = Xdetm.offset,
+              removed.sites = removed.sites))
+}
 #---------------------------------------------
 # Method for prediction
 getDesign.efit<- function(obj, siteCovs, na.rm=TRUE) {
@@ -498,37 +538,21 @@ handleNA.eFrame<- function(emf, X, X.offset, V, V.offset) {
 }
 
 #-------------------------------------
-handleNA.eFrameGR<- function(emf, Xlam, Xlam.offset, Xphi, Xphi.offset, Xdet, Xdet.offset) {
+handleNA.eFrameGR<- function(emf, X, X.offset, V, V.offset) {
 
+  J <- numY(emf)
   M <- numSites(emf)
-  T <- emf$numPrimary
-  R <- numY(emf)
-  J <- R/T
 
-  obsToY <- diag(J)
-  obsToY[upper.tri(obsToY)] <- 1
-  obsToY <- kronecker(diag(T), obsToY)
+  X.long <- X[rep(1:M, each = J),]
+  X.long.na <- is.na(X.long)
 
-  # treat Xphi and Xlam together
-  X <- cbind(Xphi, Xlam[rep(1:M, each = T), ])
-
-  X.na <- is.na(X)
-  X.long.na <- X.na[rep(1:(M*T), each = J),]
-
-  Xdet.long.na <- apply(Xdet, 2, function(x) {
-    x.mat <- matrix(x, M, R, byrow = TRUE)
-    x.mat <- is.na(x.mat)
-    x.mat <- x.mat %*% obsToY
-    x.long <- as.vector(t(x.mat))
-    x.long > 0
-  })
-
-  Xdet.long.na <- apply(Xdet.long.na, 1, any)
+  V.long <- V[rep(1:M, each = J),]
+  V.long.na <- is.na(V.long)
 
   y.long <- as.vector(t(getY(emf)))
   y.long.na <- is.na(y.long)
 
-  covs.na <- apply(cbind(X.long.na, Xdet.long.na), 1, any)
+  covs.na <- apply(cbind(X.long.na, V.long.na), 1, any)
 
   ## are any NA in covs not in y already?
   y.new.na <- covs.na & !y.long.na
@@ -536,74 +560,48 @@ handleNA.eFrameGR<- function(emf, Xlam, Xlam.offset, Xphi, Xphi.offset, Xdet, Xd
   if(sum(y.new.na) > 0) {
     y.long[y.new.na] <- NA
     warning("Some observations have been discarded because
-            correspoding covariates were missing.", call. = FALSE)
+                corresponding covariates were missing.", call. = FALSE)
   }
 
-  y <- matrix(y.long, M, numY(emf), byrow = TRUE)
+  y <- matrix(y.long, M, J, byrow = TRUE)
   sites.to.remove <- apply(y, 1, function(x) all(is.na(x)))
 
   num.to.remove <- sum(sites.to.remove)
   if(num.to.remove > 0) {
-    y <- y[!sites.to.remove,, drop = FALSE]
-    Xlam <- Xlam[!sites.to.remove,, drop = FALSE]
-    Xlam.offset <- Xlam.offset[!sites.to.remove]
-    Xphi <- Xphi[!sites.to.remove[rep(1:M, each = T)],, drop = FALSE]
-    Xphi.offset <- Xphi.offset[!sites.to.remove[rep(1:M, each = T)]]
-    Xdet <- Xdet[!sites.to.remove[rep(1:M, each = R)],,
-                 drop=FALSE]
-    Xdet.offset <- Xdet.offset[!sites.to.remove[rep(1:M, each=R)]]
-    warning(paste(num.to.remove,
-                  "sites have been discarded because of missing data."), call.=FALSE)
+    y <- y[!sites.to.remove, ,drop = FALSE]
+    X <- X[!sites.to.remove, ,drop = FALSE]
+    X.offset <- X.offset[!sites.to.remove]
+    V <- V[!sites.to.remove, ,drop = FALSE]
+    V.offset <- V.offset[!sites.to.remove]
+    warning(paste(num.to.remove,"sites have been discarded because of missing data."), call. = FALSE)
   }
-  list(y = y, Xlam = Xlam, Xlam.offset = Xlam.offset, Xphi = Xphi,
-       Xphi.offset = Xphi.offset, Xdet = Xdet, Xdet.offset = Xdet.offset,
+
+  list(y = y, Xlam = X, Xlam.offset = X.offset, Xdet = V, Xdet.offset = V.offset,
        removed.sites = which(sites.to.remove))
 }
 
 #-------------------------------------
-handleNA.eFrameGRM<- function(emf, Xlam, Xlam.offset, Xphi, Xphi.offset, Xdet, Xdet.offset,
+handleNA.eFrameGRM<- function(emf, Xlam, Xlam.offset, Xdet, Xdet.offset,
                               Xdetm, Xdetm.offset) {
 
+  J <- numY(emf)
   M <- numSites(emf)
-  T <- emf$numPrimary
-  R <- numY(emf)
-  J <- R/T
 
-  obsToY <- diag(J)
-  obsToY[upper.tri(obsToY)] <- 1
-  obsToY <- kronecker(diag(T), obsToY)
+  X.long <- Xlam[rep(1:M, each = J),]
+  X.long.na <- is.na(X.long)
 
-  # treat Xphi and Xlam together
-  X <- cbind(Xphi, Xlam[rep(1:M, each = T), ])
+  V.long <- Xdet[rep(1:M, each = J),]
+  V.long.na <- is.na(V.long)
 
-  X.na <- is.na(X)
-  X.long.na <- X.na[rep(1:(M*T), each = J),]
+  W.long <- Xdetm[rep(1:M, each = J),]
+  W.long.na <- is.na(W.long)
 
-  Xdet.long.na <- apply(Xdet, 2, function(x) {
-    x.mat <- matrix(x, M, R, byrow = TRUE)
-    x.mat <- is.na(x.mat)
-    x.mat <- x.mat %*% obsToY
-    x.long <- as.vector(t(x.mat))
-    x.long > 0
-  })
-
-  Xdetm.long.na <- apply(Xdetm, 2, function(x) {
-    x.mat <- matrix(x, M, R, byrow = TRUE)
-    x.mat <- is.na(x.mat)
-    x.mat <- x.mat %*% obsToY
-    x.long <- as.vector(t(x.mat))
-    x.long > 0
-  })
-
-  Xdet.long.na <- apply(Xdet.long.na, 1, any)
-  Xdetm.long.na <- apply(Xdetm.long.na, 1, any)
+  covs.na <- apply(cbind(X.long.na, V.long.na, W.long.na), 1, any)
 
   y.long <- as.vector(t(emf$y))
   y.long.na <- is.na(y.long)
 
   ym.long <- as.vector(t(emf$ym))
-
-  covs.na <- apply(cbind(X.long.na, Xdet.long.na, Xdetm.long.na), 1, any)
 
   ## are any NA in covs not in y already?
   y.new.na <- covs.na & !y.long.na
@@ -611,13 +609,12 @@ handleNA.eFrameGRM<- function(emf, Xlam, Xlam.offset, Xphi, Xphi.offset, Xdet, X
   if(sum(y.new.na) > 0) {
     y.long[y.new.na] <- NA
     ym.long[y.new.na]<- NA
-    warning("Some observations have been discarded because correspoding
-            covariates were missing.", call. = FALSE)
+    warning("Some observations have been discarded because
+                corresponding covariates were missing.", call. = FALSE)
   }
 
-  y <- matrix(y.long, M, numY(emf), byrow = TRUE)
-  ym<- matrix(ym.long, M, numY(emf), byrow=TRUE)
-
+  y <- matrix(y.long, M, J, byrow = TRUE)
+  ym <- matrix(ym.long, M, J, byrow = TRUE)
   sites.to.remove <- apply(y, 1, function(x) all(is.na(x)))
 
   num.to.remove <- sum(sites.to.remove)
@@ -626,21 +623,20 @@ handleNA.eFrameGRM<- function(emf, Xlam, Xlam.offset, Xphi, Xphi.offset, Xdet, X
     ym<- ym[!sites.to.remove,, drop = FALSE]
     Xlam <- Xlam[!sites.to.remove,, drop = FALSE]
     Xlam.offset <- Xlam.offset[!sites.to.remove]
-    Xphi <- Xphi[!sites.to.remove[rep(1:M, each = T)],, drop = FALSE]
-    Xphi.offset <- Xphi.offset[!sites.to.remove[rep(1:M, each = T)]]
-    Xdet <- Xdet[!sites.to.remove[rep(1:M, each = R)],,
+    Xdet <- Xdet[!sites.to.remove[rep(1:M, each = J)],,
                  drop=FALSE]
-    Xdet.offset <- Xdet.offset[!sites.to.remove[rep(1:M, each=R)]]
-    Xdetm <- Xdetm[!sites.to.remove[rep(1:M, each = R)],,
+    Xdet.offset <- Xdet.offset[!sites.to.remove[rep(1:M, each=J)]]
+    Xdetm <- Xdetm[!sites.to.remove[rep(1:M, each = J)],,
                  drop=FALSE]
-    Xdetm.offset <- Xdetm.offset[!sites.to.remove[rep(1:M, each=R)]]
+    Xdetm.offset <- Xdetm.offset[!sites.to.remove[rep(1:M, each=J)]]
     warning(paste(num.to.remove,
                   "sites have been discarded because of missing data."), call.=FALSE)
   }
-  list(y = y, ym=ym, Xlam = Xlam, Xlam.offset = Xlam.offset, Xphi = Xphi,
-       Xphi.offset = Xphi.offset, Xdet = Xdet, Xdet.offset = Xdet.offset,
+  list(y = y, ym=ym, Xlam = Xlam, Xlam.offset = Xlam.offset,
+       Xdet = Xdet, Xdet.offset = Xdet.offset,
        Xdetm = Xdetm, Xdetm.offset = Xdetm.offset, removed.sites = which(sites.to.remove))
 }
+
 
 #-------------------------
 handleNA.eFrameREST<- function(emf, X, X.offset) {
@@ -751,7 +747,8 @@ handleNA.eFrameMS<- function(emf, W, X.gam, X.eps, V) {
 }
 
 #--------
-# Stacked multinomial
+# Stacked multinomial models
+
 handleNA.eFrameMNS<- function(emf, X, X.offset, V, V.offset) {
 
   T <- emf$numPrimary
@@ -796,3 +793,62 @@ handleNA.eFrameMNS<- function(emf, X, X.offset, V, V.offset) {
        removed.sites = which(sites.to.remove))
 }
 
+#-------------------------------------
+handleNA.eFrameGRMS<- function(emf, Xlam, Xlam.offset, Xdet, Xdet.offset,
+                               Xdetm, Xdetm.offset) {
+
+  T <- emf$numPrimary
+  y <- stack.data(emf$y, T)
+  ym <- stack.data(emf$ym, T)
+  J <- ncol(y)
+  M <- nrow(y)
+
+  X.long <- Xlam[rep(1:M, each = J),]
+  X.long.na <- is.na(X.long)
+
+  V.long <- Xdet[rep(1:M, each = J),]
+  V.long.na <- is.na(V.long)
+
+  W.long <- Xdetm[rep(1:M, each = J),]
+  W.long.na <- is.na(W.long)
+
+  covs.na <- apply(cbind(X.long.na, V.long.na, W.long.na), 1, any)
+
+  y.long <- as.vector(t(y))
+  y.long.na <- is.na(y.long)
+
+  ym.long <- as.vector(t(ym))
+
+  ## are any NA in covs not in y already?
+  y.new.na <- covs.na & !y.long.na
+
+  if(sum(y.new.na) > 0) {
+    y.long[y.new.na] <- NA
+    ym.long[y.new.na]<- NA
+    warning("Some observations have been discarded because
+                corresponding covariates were missing.", call. = FALSE)
+  }
+
+  y <- matrix(y.long, M, J, byrow = TRUE)
+  ym <- matrix(ym.long, M, J, byrow = TRUE)
+  sites.to.remove <- apply(y, 1, function(x) all(is.na(x)))
+
+  num.to.remove <- sum(sites.to.remove)
+  if(num.to.remove > 0) {
+    y <- y[!sites.to.remove,, drop = FALSE]
+    ym<- ym[!sites.to.remove,, drop = FALSE]
+    Xlam <- Xlam[!sites.to.remove,, drop = FALSE]
+    Xlam.offset <- Xlam.offset[!sites.to.remove]
+    Xdet <- Xdet[!sites.to.remove[rep(1:M, each = J)],,
+                 drop=FALSE]
+    Xdet.offset <- Xdet.offset[!sites.to.remove[rep(1:M, each=J)]]
+    Xdetm <- Xdetm[!sites.to.remove[rep(1:M, each = J)],,
+                   drop=FALSE]
+    Xdetm.offset <- Xdetm.offset[!sites.to.remove[rep(1:M, each=J)]]
+    warning(paste(num.to.remove,
+                  "sites have been discarded because of missing data."), call.=FALSE)
+  }
+  list(y = y, ym=ym, Xlam = Xlam, Xlam.offset = Xlam.offset,
+       Xdet = Xdet, Xdet.offset = Xdet.offset,
+       Xdetm = Xdetm, Xdetm.offset = Xdetm.offset, removed.sites = which(sites.to.remove))
+}
