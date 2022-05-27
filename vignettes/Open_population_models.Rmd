@@ -14,7 +14,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-### Dave Ramsey (25/03/2022)
+### Dave Ramsey (27/05/2022)
 
 Often eradication programs are implemented for populations over a period of time where it would be unreasonable to assume population 'closure'.  By closure, we mean that the population is demographically closed and hence, there are no births, deaths, immigration or emmigration.  Typically, standard removal type models assume demographic closure and hence, the only changes to the population occur from eradication (control) activities. This is reasonable if eradication is undertaken over a fairly short period of time (i.e. within a breeding season).  However, often eradication activities are undertaken over a longer period (i.e. several years or breeding seasons) and it may be unreasonable to assume that the the population does not change between bouts of control. In this case, we need to apply more sophisticated models to our removal data to account for the extent of potential population changes due to births, natural mortality or immigration that may be occurring during the eradication phase.
 
@@ -22,7 +22,7 @@ Here we illustrate the use of 'open population models' in the `eradicate` packag
 
 We illustrate these models using an example of the eradication of a hypothetical population of rabbits from San Nicolas Island, California. In this example, rabbits were removed over the course of two years (or two breeding seasons) using trapping.  Hence, during the eradication program, the population was also changing due to natural demographic processes of births and natural mortality.  There was also the possibility that rabbits could potentially move between trapping locations.
 
-Since this is a simulated dataset, we know exactly what the population size was before the eradication program began (676 rabbits).  Before we start we load various the packages necessary for our analysis ...
+Since this is a simulated dataset, we know exactly what the population size was before the eradication program began (1791 rabbits).  Before we start we load various the packages necessary for our analysis ...
 
 ```{r setup, message=FALSE, warning=FALSE}
 library(eradicate)
@@ -112,7 +112,7 @@ ests3<- calcN(fit3)
 ests3$Nhat
 ```
 
-Which indicates that the estimate for the initial number of rabbits for model 1 was `r ests1$Nhat$Nhat[1]` and for model 2 was `r ests3$Nhat$Nhat[1]`. The actual number of rabbits on the island was 676 so estimates from both models are reasonable. We can also get an estimate of the residual number of rabbits following the final removal period
+Which indicates that the estimate for the initial number of rabbits for model 1 was `r ests1$Nhat$Nhat[1]` and for model 2 was `r ests3$Nhat$Nhat[1]`. The actual number of rabbits on the island was 1791 so estimates from both models are reasonable. We can also get an estimate of the residual number of rabbits following the final removal period
 ```{r}
 # Residual population size
 ests1$Nresid
@@ -122,6 +122,44 @@ ests3$Nresid
 ```
 
 which indicates there are likely around `r ests1$Nresid$N` or `r ests3$Nresid$N` rabbits remaining on the island with the lower confidence bound indicating a minimum of at least one rabbit.
+
+## Including additional Index data
+
+In some instances, an alternative monitoring method may also be employed in addition to the removal method.  Monitoring of this sort is not designed to remove individuals but is used instead as an 'index' of abundance.  Such index data may be useful in situations where the removal method is no longer detecting individuals and may provide evidence that individuals are avoiding the removal method.  If index monitoring is employed at the same general locations as the removals then we can jointly analyse both the removal data and the index data to infer population abundance.  As we are now analysing two monitoring methods simultaneously, we might expect the resulting population estimate to be more precise than when only a single monitoring method is analysed.  
+
+For our rabbit eradication, managers also deployed camera traps in the same general locations as the traps to generate an index of rabbit abundance. In general, any monitoring data that we might use to generate a population index would be suitable to use as the index data, as long as we can assume that it is linearly related to abundance.  We load the camera index data here
+
+```{r}
+
+idx<- san_nic_open$index
+head(idx)
+
+```
+
+Note that the index data is the same dimensions as the removal data analysed earlier.  If some removal locations do not have associated index data then the corresponding entries should be left blank and will be treated as missing values.
+
+Joint analysis of both the removal and index data for open populations (multiple primary sessions) is accomplished with the model `remGRMS`.  We analyse both removal and index data using a similar model that was used for the removal only analysis.  
+
+```{r}
+
+emf<- eFrameGRMS(y, idx, siteCovs = site.data)
+mod<- remGRMS(~pgrass + .season, ~1, ~1, data=emf)
+summary(mod)
+
+```
+
+Of note is that the formula now contains an extra term compared with the `remMNS` model.  This is to model the detection probability of the index data.  Here we just assume constant detection for this term.  The estimates of abundance for each session are again calculated from the fitted model using `calcN`.
+
+```{r}
+
+ests<- calcN(mod)
+
+ests$Nhat
+
+ests$Nresid
+```
+
+
 
 ## Dynamic Occupancy Models
 
