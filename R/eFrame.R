@@ -340,8 +340,8 @@ eFrameMNS<- function(rem, siteCovs = NULL, obsCovs = NULL, delta = NULL) {
   if(!is.null(obsCovs)) {
     obsCovs <- covsToDF(obsCovs, "obsCovs", J, M)
   }
-  ya <- array(y, c(M, J, T))
-  num.removed <- apply(ya, 3, sum, na.rm=TRUE)
+  ya <- array(y, c(M, T, J))
+  num.removed <- apply(ya, 2, sum, na.rm=TRUE)
   emf <- list(y=y, siteCovs=siteCovs, obsCovs=obsCovs)
   emf$ya<- ya
   emf$piFun<- "removalPiFun"
@@ -410,8 +410,8 @@ eFrameGRMS<- function(rem, idx, siteCovs = NULL, obsCovs = NULL, delta = NULL) {
     stop("Negative delta values are not allowed.")
   if(any(is.na(delta)))
     stop("Missing values are not allowed in delta.")
-  ya <- array(y, c(M, J, T))
-  num.removed <- apply(ya, 3, sum, na.rm=TRUE)
+  ya <- array(y, c(M, T, J))
+  num.removed <- apply(ya, 2, sum, na.rm=TRUE)
   obsCovs <- covsToDF(obsCovs, "obsCovs", J*T, M)
   emf <- list(y=y, siteCovs=siteCovs, obsCovs=obsCovs)
   emf$ym<- ym
@@ -819,9 +819,6 @@ print.eFrameMNS<- function(object,...) {
   cat("Tabulation of y observations:")
   print(table(object$y, exclude=NULL))
   cat("\n")
-  cat(object$numSites, "Additional monitoring sites\n")
-  cat("Tabulation of additional monitoring observations:")
-  print(table(object$ym, exclude=NULL))
   if(!is.null(object$siteCovs)) {
     cat("\nSite-level covariates:\n")
     print(summary(object$siteCovs))
@@ -862,9 +859,6 @@ summary.eFrameMNS<- function(object,...) {
   cat("Tabulation of y observations:")
   print(table(object$y, exclude=NULL))
   cat("\n")
-  cat(object$numSites, "Additional monitoring sites\n")
-  cat("Tabulation of additional monitoring observations:")
-  print(table(object$ym, exclude=NULL))
   if(!is.null(object$siteCovs)) {
     cat("\nSite-level covariates:\n")
     print(summary(object$siteCovs))

@@ -112,7 +112,7 @@ ests3<- calcN(fit3)
 ests3$Nhat
 ```
 
-Which indicates that the estimate for the initial number of rabbits for model 1 was `r ests1$Nhat$Nhat[1]` and for model 2 was `r ests3$Nhat$Nhat[1]`. The actual number of rabbits on the island was 1791 so estimates from both models are reasonable. We can also get an estimate of the residual number of rabbits following the final removal period
+Which indicates that the estimate for the initial number of rabbits for model 1 was `r ests1$Nhat$N[1]` and for model 2 was `r ests3$Nhat$N[1]`. The actual number of rabbits on the island was 1791 so estimates from both models are reasonable. We can also get an estimate of the residual number of rabbits following the final removal period
 ```{r}
 # Residual population size
 ests1$Nresid
@@ -123,7 +123,7 @@ ests3$Nresid
 
 which indicates there are likely around `r ests1$Nresid$N` or `r ests3$Nresid$N` rabbits remaining on the island with the lower confidence bound indicating a minimum of at least one rabbit.
 
-## Including additional Index data
+## Including additional index data
 
 In some instances, an alternative monitoring method may also be employed in addition to the removal method.  Monitoring of this sort is not designed to remove individuals but is used instead as an 'index' of abundance.  Such index data may be useful in situations where the removal method is no longer detecting individuals and may provide evidence that individuals are avoiding the removal method.  If index monitoring is employed at the same general locations as the removals then we can jointly analyse both the removal data and the index data to infer population abundance.  As we are now analysing two monitoring methods simultaneously, we might expect the resulting population estimate to be more precise than when only a single monitoring method is analysed.  
 
@@ -136,9 +136,9 @@ head(idx)
 
 ```
 
-Note that the index data is the same dimensions as the removal data analysed earlier.  If some removal locations do not have associated index data then the corresponding entries should be left blank and will be treated as missing values.
+Note that the index data has the same dimensions as the removal data analysed earlier.  If some removal locations do not have associated index data then the corresponding entries should be left blank and will be treated as missing values.
 
-Joint analysis of both the removal and index data for open populations (multiple primary sessions) is accomplished with the model `remGRMS`.  We analyse both removal and index data using a similar model that was used for the removal only analysis.  
+Joint analysis of both the removal and index data for open populations with multiple primary sessions is accomplished with the model `remGRMS()`.  We analyse both removal and index data using a similar model that was used for the removal only analysis.  
 
 ```{r}
 
@@ -148,7 +148,7 @@ summary(mod)
 
 ```
 
-Of note is that the formula now contains an extra term compared with the `remMNS` model.  This is to model the detection probability of the index data.  Here we just assume constant detection for this term.  The estimates of abundance for each session are again calculated from the fitted model using `calcN`.
+Of note is that the formula now contains an extra term compared with the `remMNS` model.  This is to model the detection probability of the index data, given here as `mDetection`.  Here we just assume constant detection for this term.  The estimates of abundance for each session are again calculated from the fitted model using `calcN`.
 
 ```{r}
 
@@ -159,6 +159,7 @@ ests$Nhat
 ests$Nresid
 ```
 
+This gives an estimate quite close to the true abundance of 1791.  Also note that the abundance estimates for each session have lower standard errors compared with the removal only model.
 
 
 ## Dynamic Occupancy Models
@@ -208,7 +209,7 @@ ests$Nhat
 
 ```
 
-The estimates of the occupancy probability for model 3 indicate high, almost perfect occupancy initially, declining to `r ests$Nhat$N[8]` by the final session.  As the lower confidence bound is greater than zero, we can conclude that rabbits still remain on the island.
+The estimates of the occupancy probability for model 3 indicate high, almost perfect occupancy initially, declining to `r ests$Nhat$N[5]` by the final session.  As the lower confidence bound is greater than zero, we can conclude that rabbits still remain on the island.
 
 
 
