@@ -311,12 +311,11 @@ getDesign.eFrameMNS<- function(emf, lamformula, detformula, na.rm = TRUE) {
   detformula <- as.formula(detformula)
   stateformula <- as.formula(lamformula)
 
-  M <- numSites(emf)
+  M <- emf$numSites
   T <- emf$numPrimary
-  R <- numY(emf) # 2*T for double observer sampling
-  J <- R/T
+  J <- emf$numSecondary
   delta<- emf$delta
-  y <- stack.data(emf$y, T)
+  y <- emf$y
 
   ## Compute default design matrix for seasonal strata and numeric trend
   season <- data.frame(.season = as.factor(rep(1:T, each = M)))
@@ -384,13 +383,12 @@ getDesign.eFrameGRMS<- function(emf, lamformula, detformula, mdetformula, na.rm 
   lamformula <- as.formula(lamformula)
   mdetformula <- as.formula(mdetformula)
 
-  M <- numSites(emf)
+  M <- emf$numSites
   T <- emf$numPrimary
-  R <- numY(emf) # 2*T for double observer sampling
-  J <- R/T
+  J <- emf$numSecondary
   delta<- emf$delta
-  y <- stack.data(emf$y, T)
-  ym <- stack.data(emf$ym, T)
+  y <- emf$y
+  ym <- emf$ym
 
   ## Compute default design matrix for seasonal strata and numeric trend
   season <- data.frame(.season = as.factor(rep(1:T, each = M)))
@@ -751,15 +749,15 @@ handleNA.eFrameMS<- function(emf, W, X.gam, X.eps, V) {
 
 handleNA.eFrameMNS<- function(emf, X, X.offset, V, V.offset) {
 
+  M <- emf$numSites
   T <- emf$numPrimary
-  y <- stack.data(emf$y, T)
-  J <- ncol(y)
-  M <- nrow(y)
+  J <- emf$numSecondary
+  y <- emf$y
 
-  X.long <- X[rep(1:M, each = J),]
+  X.long <- X[rep(1:(M*T), each = J),]
   X.long.na <- is.na(X.long)
 
-  V.long <- V[rep(1:M, each = J),]
+  V.long <- V[rep(1:(M*T), each = J),]
   V.long.na <- is.na(V.long)
 
   y.long <- as.vector(t(y))
@@ -776,7 +774,7 @@ handleNA.eFrameMNS<- function(emf, X, X.offset, V, V.offset) {
                 corresponding covariates were missing.", call. = FALSE)
   }
 
-  y <- matrix(y.long, M, J, byrow = TRUE)
+  y <- matrix(y.long, (M*T), J, byrow = TRUE)
   sites.to.remove <- apply(y, 1, function(x) all(is.na(x)))
 
   num.to.remove <- sum(sites.to.remove)
@@ -797,19 +795,19 @@ handleNA.eFrameMNS<- function(emf, X, X.offset, V, V.offset) {
 handleNA.eFrameGRMS<- function(emf, Xlam, Xlam.offset, Xdet, Xdet.offset,
                                Xdetm, Xdetm.offset) {
 
+  M <- emf$numSites
   T <- emf$numPrimary
-  y <- stack.data(emf$y, T)
-  ym <- stack.data(emf$ym, T)
-  J <- ncol(y)
-  M <- nrow(y)
+  J <- emf$numSecondary
+  y <- emf$y
+  ym<- emf$ym
 
-  X.long <- Xlam[rep(1:M, each = J),]
+  X.long <- Xlam[rep(1:(M*T), each = J),]
   X.long.na <- is.na(X.long)
 
-  V.long <- Xdet[rep(1:M, each = J),]
+  V.long <- Xdet[rep(1:(M*T), each = J),]
   V.long.na <- is.na(V.long)
 
-  W.long <- Xdetm[rep(1:M, each = J),]
+  W.long <- Xdetm[rep(1:(M*T), each = J),]
   W.long.na <- is.na(W.long)
 
   covs.na <- apply(cbind(X.long.na, V.long.na, W.long.na), 1, any)
@@ -829,8 +827,8 @@ handleNA.eFrameGRMS<- function(emf, Xlam, Xlam.offset, Xdet, Xdet.offset,
                 corresponding covariates were missing.", call. = FALSE)
   }
 
-  y <- matrix(y.long, M, J, byrow = TRUE)
-  ym <- matrix(ym.long, M, J, byrow = TRUE)
+  y <- matrix(y.long, (M*T), J, byrow = TRUE)
+  ym <- matrix(ym.long, (M*T), J, byrow = TRUE)
   sites.to.remove <- apply(y, 1, function(x) all(is.na(x)))
 
   num.to.remove <- sum(sites.to.remove)

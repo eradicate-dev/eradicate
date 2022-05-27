@@ -75,6 +75,27 @@ ests3$Nresid
 
 ## -----------------------------------------------------------------------------
 
+idx<- san_nic_open$index
+head(idx)
+
+
+## -----------------------------------------------------------------------------
+
+emf<- eFrameGRMS(y, idx, siteCovs = site.data)
+mod<- remGRMS(~pgrass + .season, ~1, ~1, data=emf)
+summary(mod)
+
+
+## -----------------------------------------------------------------------------
+
+ests<- calcN(mod)
+
+ests$Nhat
+
+ests$Nresid
+
+## -----------------------------------------------------------------------------
+
 emf <- eFrameMS(y, siteCovs=site.data)
 
 # order of terms is lamformula (occupancy), gamformula (colonisation), epsformula (extinction)

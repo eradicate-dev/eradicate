@@ -16,8 +16,9 @@ a \code{list} containing various summaries of the data
 \code{print} method for eFrameGRMS objects. Basically the same as \code{summary.eFrame}
 }
 \examples{
- ## uses san_nic_rem
- emf <- eFrameRM(y=rem, y1=y1, cells=cells, Z=nights)
- summary(emf)
+ rem<- san_nic_open$removals
+ idx<- san_nic_open$index
+ emf <- eFrameGRMS(rem, idx)
+ print(emf)
 
 }

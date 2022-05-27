@@ -4,12 +4,12 @@
 \alias{eFrameMNS}
 \title{eFrameMNS}
 \usage{
-eFrameMNS(df, siteCovs = NULL, obsCovs = NULL, delta = NULL)
+eFrameMNS(rem, siteCovs = NULL, obsCovs = NULL, delta = NULL)
 }
 \arguments{
-\item{df}{A \code{data.frame} of the observed removal data for each site
+\item{rem}{A \code{data.frame} of the observed removal data for each site
 in rows and secondary periods in columns, indexed by session (primary period).
-The \code{df} must contain a column \code{session} with at least two unique values.}
+The data.frame \code{rem} must contain a column \code{session} with at least two unique values.}
 
 \item{siteCovs}{A \code{data.frame} of covariates that vary at the
 site level. This should have M rows and one column per covariate}

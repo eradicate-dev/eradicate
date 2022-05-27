@@ -7,17 +7,18 @@
 \method{summary}{eFrameGRMS}(object, ...)
 }
 \arguments{
-\item{object}{An \code{eFrameRM} object.}
+\item{object}{An \code{eFrameGRMS} object.}
 }
 \value{
 a \code{list} containing various summaries of the data
 }
 \description{
-\code{summary} method for eFrameGRM objects.
+\code{summary} method for eFrameGRMS objects.
 }
 \examples{
- ## uses san_nic_rem
- emf <- eFrameRM(y=rem, y1=y1, cells=cells, Z=nights)
+ rem<- san_nic_open$removals
+ idx<- san_nic_open$index
+ emf <- eFrameGRMS(rem, idx)
  summary(emf)
 
 }

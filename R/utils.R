@@ -268,7 +268,7 @@ make_encounters<- function(sites, events){
   ymat
 }
 
-
+# The following used for multi-session data
 
 stack.data<- function(y, np) {
 # helper function to create 'stacked' data for remMNS models
@@ -295,6 +295,20 @@ unstack.data<- function(df) {
   J<- max(sapply(tmplist, ncol))
   y<- as.matrix(do.call(cbind, tmplist))
   colnames(y)<- paste0(rep(seq_len(T),each=J),".",rep(seq_len(J),T))
+  list(y=y,M=M,J=J,T=T)
+}
+
+get.dims.data<- function(df) {
+  # function to get critical dimensions of stacked mult-session
+  # data suitable for input into mult-session models
+  # df must have a column 'session' with at least 2 unique values
+  tmplist<- split(df, ~factor(session))
+  tmplist<- lapply(tmplist, function(x) x[setdiff(names(x),"session")])
+  T<- length(tmplist)
+  M<- max(sapply(tmplist, nrow))
+  J<- max(sapply(tmplist, ncol))
+  y<- as.matrix(do.call(rbind, tmplist))
+  colnames(y)<- paste0("P.",seq_len(J))
   list(y=y,M=M,J=J,T=T)
 }
 
