@@ -297,9 +297,9 @@ eFrameMS<- function(df, siteCovs = NULL, obsCovs =  NULL) {
 #' then be analysed using closed population removal models to estimate the trend in abundance
 #' between primary periods.
 #'
-#' @param df A \code{data.frame} of the observed removal data for each site
+#' @param rem A \code{data.frame} of the observed removal data for each site
 #' in rows and secondary periods in columns, indexed by session (primary period).
-#' The \code{df} must contain a column \code{session} with at least two unique values.
+#' The data.frame \code{rem} must contain a column \code{session} with at least two unique values.
 #' @param siteCovs A \code{data.frame} of covariates that vary at the
 #'    site level. This should have M rows and one column per covariate
 #' @param obsCovs A list of matrices or data.frames of variables varying within sites.
@@ -317,13 +317,13 @@ eFrameMS<- function(df, siteCovs = NULL, obsCovs =  NULL) {
 #'
 #' @export
 #'
-eFrameMNS<- function(df, siteCovs = NULL, obsCovs = NULL, delta = NULL) {
+eFrameMNS<- function(rem, siteCovs = NULL, obsCovs = NULL, delta = NULL) {
 
-  yl<- unstack.data(df)
-  M <- yl$M
-  T <- yl$T
-  J <- yl$J
-  y<- yl$y
+  rd<- get.dims.data(rem)
+  M <- rd$M
+  T <- rd$T
+  J <- rd$J
+  y<- rd$y
 
   if (J %% 1 != 0) stop("Unequal number of secondary periods")
   if (J < 2) stop("less than 2 primary periods present")
@@ -335,15 +335,22 @@ eFrameMNS<- function(df, siteCovs = NULL, obsCovs = NULL, delta = NULL) {
     stop("Negative delta values are not allowed.")
   if(any(is.na(delta)))
     stop("Missing values are not allowed in delta.")
+  if(!is.null(siteCovs))
+    if(nrow(siteCovs) != M) stop("siteCov Data does not have same size number of sites as y")
+  if(!is.null(obsCovs)) {
+    obsCovs <- covsToDF(obsCovs, "obsCovs", J, M)
+  }
   ya <- array(y, c(M, J, T))
   num.removed <- apply(ya, 3, sum, na.rm=TRUE)
-  obsCovs <- covsToDF(obsCovs, "obsCovs", J*T, M)
-  emf <- eFrame(y, siteCovs, obsCovs)
+  emf <- list(y=y, siteCovs=siteCovs, obsCovs=obsCovs)
+  emf$ya<- ya
   emf$piFun<- "removalPiFun"
+  emf$numSites<- M
   emf$numPrimary <- T
+  emf$numSecondary<- J
   emf$delta<- cumsum(delta)
   emf$num.removed <- num.removed
-  class(emf) <- c("eFrameMNS",class(emf))
+  class(emf) <- c('eFrameMNS','eFrame','list')
   emf
 }
 
@@ -382,17 +389,17 @@ eFrameMNS<- function(df, siteCovs = NULL, obsCovs = NULL, delta = NULL) {
 #'
 eFrameGRMS<- function(rem, idx, siteCovs = NULL, obsCovs = NULL, delta = NULL) {
 
-  yl<- unstack.data(rem)
-  M <- yl$M
-  T <- yl$T
-  J <- yl$J
-  y<- yl$y
-  yi<- unstack.data(idx)
-  ym<- yi$y
+  rd<- get.dims.data(rem)
+  M <- rd$M
+  T <- rd$T
+  J <- rd$J
+  y<- rd$y
+  ri<- get.dims.data(idx)
+  ym<- ri$y
 
-  if(M != yi$M) stop("index data has different number of sites to removal data")
-  if(T != yi$T) stop("index data has different number of sessions to removal data")
-  if(J != yi$J) stop("index data has different number of secondary periods to removal data")
+  if(M != ri$M) stop("index data has different number of sites to removal data")
+  if(T != ri$T) stop("index data has different number of sessions to removal data")
+  if(J != ri$J) stop("index data has different number of secondary periods to removal data")
   if (J %% 1 != 0) stop("Unequal number of secondary periods")
   if (J < 2) stop("less than 2 primary periods present")
   if(missing(delta))
@@ -406,13 +413,16 @@ eFrameGRMS<- function(rem, idx, siteCovs = NULL, obsCovs = NULL, delta = NULL) {
   ya <- array(y, c(M, J, T))
   num.removed <- apply(ya, 3, sum, na.rm=TRUE)
   obsCovs <- covsToDF(obsCovs, "obsCovs", J*T, M)
-  emf <- eFrame(y, siteCovs, obsCovs)
+  emf <- list(y=y, siteCovs=siteCovs, obsCovs=obsCovs)
   emf$ym<- ym
+  emf$ya<- ya
   emf$piFun<- "removalPiFun"
+  emf$numSites<- M
   emf$numPrimary <- T
+  emf$numSecondary<- J
   emf$delta<- cumsum(delta)
   emf$num.removed <- num.removed
-  class(emf) <- c("eFrameGRMS",class(emf))
+  class(emf) <- c("eFrameGRMS",'eFrame','list')
   emf
 }
 
@@ -632,8 +642,7 @@ print.eFrameGR<- function(object,...) {
   #S3 method for eFrame
   cat("eFrameGR Object\n\n")
   cat(nrow(object$y), " removal sites\n\n")
-  cat("Number of primary periods:",object$numPrimary,"\n\n")
-  cat("Maximum number of secondary periods:",numY(object)/object$numPrimary,"\n\n")
+  cat("Maximum number of secondary periods:",numY(object),"\n\n")
   cat("Number of removals per period:","\n")
   print(data.frame(Period=1:numY(object),Removed=colSums(object$y, na.rm=TRUE)))
   cat("\n")
@@ -672,8 +681,7 @@ summary.eFrameGR<- function(object,...) {
   #S3 method for eFrame
   cat("eFrameGR Object\n\n")
   cat(nrow(object$y), " removal sites\n\n")
-  cat("Number of primary periods:",object$numPrimary,"\n\n")
-  cat("Maximum number of secondary periods:",numY(object)/object$numPrimary,"\n\n")
+  cat("Maximum number of secondary periods:",numY(object),"\n\n")
   cat("Number of removals per period:","\n")
   print(data.frame(Period=1:numY(object),Removed=colSums(object$y, na.rm=TRUE)))
   cat("\n")
@@ -714,8 +722,7 @@ print.eFrameGRM<- function(object,...) {
   #S3 method for eFrame
   cat("eFrameGRM Object\n\n")
   cat(nrow(object$y), " removal sites\n")
-  cat("Number of primary periods:",object$numPrimary,"\n\n")
-  cat("Maximum number of secondary periods:",numY(object)/object$numPrimary,"\n\n")
+  cat("Maximum number of secondary periods:",numY(object),"\n\n")
   cat("Number of removals per period:","\n")
   print(data.frame(Period=1:numY(object),Removed=colSums(object$y, na.rm=TRUE)))
   cat("\n")
@@ -756,8 +763,7 @@ print.eFrameGRM<- function(object,...) {
 summary.eFrameGRM<- function(object,...) {
   #S3 method for eFrame
   cat("eFrameGRM Object\n\n")
-  cat("Number of primary periods:",object$numPrimary,"\n\n")
-  cat("Maximum number of secondary periods:",numY(object)/object$numPrimary,"\n\n")
+  cat("Maximum number of secondary periods:",numY(object),"\n\n")
   cat("Number of removals per period:","\n")
   print(data.frame(Period=1:numY(object),Removed=colSums(object$y,na.rm=TRUE)))
   cat("\n")
@@ -782,6 +788,94 @@ summary.eFrameGRM<- function(object,...) {
 }
 
 #-----------------------------------------
+#' print.eFrameMNS
+#'
+#' \code{print} method for eFrameMNS objects. Basically the same as \code{summary.eFrame}
+#'
+#' @param object An \code{eFrameMNS} object.
+#'
+#' @return a \code{list} containing various summaries of the data
+#'
+#' @examples
+#'  rem<- san_nic_open$removals
+#'  emf <- eFrameMNS(rem)
+#'  print(emf)
+#'
+#' @export
+#'
+print.eFrameMNS<- function(object,...) {
+  #S3 method for eFrame
+  cat("eFrameMNS Object\n\n")
+  cat(object$numSites, " removal sites\n")
+  cat("Number of primary periods:",object$numPrimary,"\n\n")
+  cat("Maximum number of secondary periods:",object$numSecondary,"\n\n")
+  cat("Number of removals per session:","\n")
+  print(data.frame(Session=1:object$numPrimary,Removed=object$num.removed))
+  cat("\n")
+  cat("Total removed:",sum(object$y, na.rm=TRUE),"\n\n")
+  cat("Sites with at least one detection:",
+      sum(apply(object$ya, 1, function(x) any(x > 0, na.rm=TRUE))),
+      "\n\n")
+  cat("Tabulation of y observations:")
+  print(table(object$y, exclude=NULL))
+  cat("\n")
+  cat(object$numSites, "Additional monitoring sites\n")
+  cat("Tabulation of additional monitoring observations:")
+  print(table(object$ym, exclude=NULL))
+  if(!is.null(object$siteCovs)) {
+    cat("\nSite-level covariates:\n")
+    print(summary(object$siteCovs))
+  }
+  if(!is.null(object$obsCovs)) {
+    cat("\nObservation-level covariates:\n")
+    print(summary(object$obsCovs))
+  }
+}
+#' summary.eFrameMNS
+#'
+#' \code{summary} method for eFrameMNS objects.
+#'
+#' @param object An \code{eFrameMNS} object.
+#'
+#' @return a \code{list} containing various summaries of the data
+#'
+#' @examples
+#'  rem<- san_nic_open$removals
+#'  emf <- eFrameMNS(rem)
+#'  summary(emf)
+#'
+#' @export
+#'
+summary.eFrameMNS<- function(object,...) {
+  #S3 method for eFrame
+  cat("eFrameMNS Object\n\n")
+  cat(object$numSites, " removal sites\n")
+  cat("Number of primary periods:",object$numPrimary,"\n\n")
+  cat("Maximum number of secondary periods:",object$numSecondary,"\n\n")
+  cat("Number of removals per session:","\n")
+  print(data.frame(Session=1:object$numPrimary,Removed=object$num.removed))
+  cat("\n")
+  cat("Total removed:",sum(object$y, na.rm=TRUE),"\n\n")
+  cat("Sites with at least one detection:",
+      sum(apply(object$ya, 1, function(x) any(x > 0, na.rm=TRUE))),
+      "\n\n")
+  cat("Tabulation of y observations:")
+  print(table(object$y, exclude=NULL))
+  cat("\n")
+  cat(object$numSites, "Additional monitoring sites\n")
+  cat("Tabulation of additional monitoring observations:")
+  print(table(object$ym, exclude=NULL))
+  if(!is.null(object$siteCovs)) {
+    cat("\nSite-level covariates:\n")
+    print(summary(object$siteCovs))
+  }
+  if(!is.null(object$obsCovs)) {
+    cat("\nObservation-level covariates:\n")
+    print(summary(object$obsCovs))
+  }
+}
+
+#-----------------------------------------
 #' print.eFrameGRMS
 #'
 #' \code{print} method for eFrameGRMS objects. Basically the same as \code{summary.eFrame}
@@ -791,29 +885,30 @@ summary.eFrameGRM<- function(object,...) {
 #' @return a \code{list} containing various summaries of the data
 #'
 #' @examples
-#'  ## uses san_nic_rem
-#'  emf <- eFrameRM(y=rem, y1=y1, cells=cells, Z=nights)
-#'  summary(emf)
+#'  rem<- san_nic_open$removals
+#'  idx<- san_nic_open$index
+#'  emf <- eFrameGRMS(rem, idx)
+#'  print(emf)
 #'
 #' @export
 #'
 print.eFrameGRMS<- function(object,...) {
   #S3 method for eFrame
   cat("eFrameGRMS Object\n\n")
-  cat(nrow(object$y), " removal sites\n")
+  cat(object$numSites, " removal sites\n")
   cat("Number of primary periods:",object$numPrimary,"\n\n")
-  cat("Maximum number of secondary periods:",numY(object)/object$numPrimary,"\n\n")
-  cat("Number of removals per period:","\n")
-  print(data.frame(Period=1:numY(object),Removed=colSums(object$y, na.rm=TRUE)))
+  cat("Maximum number of secondary periods:",object$numSecondary,"\n\n")
+  cat("Number of removals per session:","\n")
+  print(data.frame(Session=1:object$numPrimary,Removed=object$num.removed))
   cat("\n")
   cat("Total removed:",sum(object$y, na.rm=TRUE),"\n\n")
   cat("Sites with at least one detection:",
-      sum(apply(getY(object), 1, function(x) any(x > 0, na.rm=TRUE))),
+      sum(apply(object$ya, 1, function(x) any(x > 0, na.rm=TRUE))),
       "\n\n")
   cat("Tabulation of y observations:")
   print(table(object$y, exclude=NULL))
   cat("\n")
-  cat(nrow(object$ym), "Additional monitoring sites\n")
+  cat(object$numSites, "Additional monitoring sites\n")
   cat("Tabulation of additional monitoring observations:")
   print(table(object$ym, exclude=NULL))
   if(!is.null(object$siteCovs)) {
@@ -827,37 +922,39 @@ print.eFrameGRMS<- function(object,...) {
 }
 #' summary.eFrameGRMS
 #'
-#' \code{summary} method for eFrameGRM objects.
+#' \code{summary} method for eFrameGRMS objects.
 #'
-#' @param object An \code{eFrameRM} object.
+#' @param object An \code{eFrameGRMS} object.
 #'
 #' @return a \code{list} containing various summaries of the data
 #'
 #' @examples
-#'  ## uses san_nic_rem
-#'  emf <- eFrameRM(y=rem, y1=y1, cells=cells, Z=nights)
+#'  rem<- san_nic_open$removals
+#'  idx<- san_nic_open$index
+#'  emf <- eFrameGRMS(rem, idx)
 #'  summary(emf)
 #'
 #' @export
 #'
 summary.eFrameGRMS<- function(object,...) {
   #S3 method for eFrame
-  cat("eFrameGRM Object\n\n")
+  cat("eFrameGRMS Object\n\n")
+  cat(object$numSites, " removal sites\n")
   cat("Number of primary periods:",object$numPrimary,"\n\n")
-  cat("Maximum number of secondary periods:",numY(object)/object$numPrimary,"\n\n")
-  cat("Number of removals per period:","\n")
-  print(data.frame(Period=1:numY(object),Removed=colSums(object$y,na.rm=TRUE)))
+  cat("Maximum number of secondary periods:",object$numSecondary,"\n\n")
+  cat("Number of removals per session:","\n")
+  print(data.frame(Session=1:object$numPrimary,Removed=object$num.removed))
   cat("\n")
-  cat("Total removed:",sum(object$y,na.rm=TRUE),"\n\n")
+  cat("Total removed:",sum(object$y, na.rm=TRUE),"\n\n")
   cat("Sites with at least one detection:",
-      sum(apply(getY(object), 1, function(x) any(x > 0, na.rm=TRUE))),
+      sum(apply(object$ya, 1, function(x) any(x > 0, na.rm=TRUE))),
       "\n\n")
   cat("Tabulation of y observations:")
   print(table(object$y, exclude=NULL))
   cat("\n")
-  cat(nrow(object$y1), "monitoring sites\n")
-  cat("Tabulation of monitoring observations:")
-  print(table(object$y1, exclude=NULL))
+  cat(object$numSites, "Additional monitoring sites\n")
+  cat("Tabulation of additional monitoring observations:")
+  print(table(object$ym, exclude=NULL))
   if(!is.null(object$siteCovs)) {
     cat("\nSite-level covariates:\n")
     print(summary(object$siteCovs))
@@ -965,9 +1062,10 @@ obsCovs<- function(object, matrices=FALSE) {
   return(value)
 }
 
-primaryCovs<- function(object) return(object$primaryCovs)
-
-numSites<- function(object) nrow(object$y)
+numSites<- function(object) {
+  if(!is.null(object$numSites)) return(object$numSites)
+  else return(nrow(object$y))
+}
 
 numY<- function(object) ncol(object$y)
 
