@@ -3,6 +3,7 @@
 \name{calcN}
 \alias{calcN}
 \alias{calcN.efit}
+\alias{calcN.efitS}
 \alias{calcN.efitM}
 \alias{calcN.efitR}
 \alias{calcN.efitGP}
@@ -15,6 +16,8 @@
 calcN(obj, ...)
 
 \method{calcN}{efit}(obj, newdata, off.set = NULL, CI.level = 0.95, ...)
+
+\method{calcN}{efitS}(obj, newdata, off.set = NULL, CI.level = 0.95, ...)
 
 \method{calcN}{efitM}(obj, newdata, off.set = NULL, CI.level = 0.95, ...)
 

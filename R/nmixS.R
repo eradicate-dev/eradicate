@@ -1,21 +1,24 @@
 
-#' nmix
+#' nmixS
 #'
-#' @name nmix
+#' @name nmixS
 #'
 #' @description
-#' \code{nmix} fits the N-mixture model of Royle et al (2004)
+#' \code{nmixS} fits the N-mixture model of Royle et al (2004) to 'stacked' data
+#' from \code{M} sites over \code{T} primary periods (sessions) with each primary period
+#' consisting of \code{J} secondary periods. Currently supported models include
+#' the Poisson and Negative binomial
 #'
-#' @usage nmix(lamformula, detformula, data, K, mixture=c("P", "NB"),
+#' @usage nmixS(lamformula, detformula, data, K, mixture=c("P", "NB"),
 #' starts, method="BFGS", se=TRUE, ...)
 #'
 #' @param lamformula formula for the latent abundance component.
 #' @param detformula formula for the detection component.  Only
 #'  site-level covariates are allowed for the detection component.
 #'  This differs from the similar model in \code{unmarked}.
-#' @param data A \code{eFrame} object containing the response (counts)
-#'  and site-level covariates. see \code{\link{eFrame}} for how to format
-#'  the required data.
+#' @param data A \code{eFrameS} object containing the response (counts)
+#'  for each site, indexed by primary period (sessions) and site-level covariates.
+#'  see \code{\link{eFrameS}} for how to format the required data.
 #' @param K Integer upper index of integration for abundance. This should be
 #'  set high enough so that it does not affect the parameter estimates. Note
 #'  that computation time will increase with K
@@ -28,14 +31,14 @@
 #' @return a \code{efit} model object.
 #'
 #' @examples
-#'  counts<- san_nic_pre$counts
-#'  emf <- eFrame(y=counts)
-#'  mod <- nmix(~1, ~1, data=emf)
+#'  counts<- san_nic_open$counts
+#'  emf <- eFrameS(y=counts)
+#'  mod <- nmixS(~.season, ~1, data=emf)
 #'  Nhat<- calcN(mod)
 #'
 #' @export
 #'
-nmix <- function(lamformula, detformula, data, K, mixture = c("P", "NB"), starts,
+nmixS <- function(lamformula, detformula, data, K, mixture = c("P", "NB"), starts,
                    method = "BFGS", se = TRUE, ...)
 {
     mixture <- match.arg(mixture, c("P", "NB"))
@@ -139,11 +142,11 @@ nmix <- function(lamformula, detformula, data, K, mixture = c("P", "NB"), starts
         estimates$disp<- dispEstimates
     }
 
-    efit <- list(fitType="nmix", call=match.call(), lamformula = lamformula,
+    efit <- list(fitType="nmixS", call=match.call(), lamformula = lamformula,
                  detformula=detformula, estimates=estimates,
                  sitesRemoved = designMats$removed.sites, AIC = fmAIC,
                  opt = fm, negLogLike = fm$value, nllFun = nll,
                  K = K, mixture = mixture, data = data)
-    class(efit) <- c('efit','list')
+    class(efit) <- c('efitS','efit','list')
     return(efit)
 }

@@ -28,10 +28,10 @@
 #' @return a \code{efitGRMS} model object.
 #'
 #' @examples
-#'  rem<- san_nic_open$removal
+#'  rem<- san_nic_open$removals
 #'  ym<- san_nic_open$index
 #'  emf <- eFrameGRMS(rem, ym)
-#'  mod <- remGRMS(~1, ~1, ~1, data=emf)
+#'  mod <- remGRMS(~.season, ~1, ~1, data=emf)
 #'  Nhat<- calcN(mod)
 #'
 #' @export

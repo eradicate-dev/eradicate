@@ -18,8 +18,8 @@
 #' @param detformula formula for the removal detection component.  Only
 #'  site-level covariates are allowed for the removal detection component.
 #'  This differs from the similar model in \code{unmarked}.
-#' @param data A \code{eFrameR} object containing the response (counts)
-#'  and site-level covariates. see \code{\link{eFrameR}} for how to format
+#' @param data A \code{eFrameMNS} object containing the response (counts) for each site,
+#' indexed by sessions as well as site-level covariates. see \code{\link{eFrameMNS}} for how to format
 #'  the required data.
 #' @param mixture model for the latent abundance, either Poisson (\code{P}), negative binomial
 #' (\code{NB}) or zero-inflated Poisson (\code{ZIP}).
@@ -30,9 +30,9 @@
 #' @return a \code{efit} model object.
 #'
 #' @examples
-#'  rem<- san_nic_rem$rem
-#'  emf <- eFrameR(y=rem)
-#'  mod <- remMN(~1, ~1, data=emf)
+#'  rem<- san_nic_open$rem
+#'  emf <- eFrameMNS(y=rem)
+#'  mod <- remMNS(~.season, ~1, data=emf)
 #'  Nhat<- calcN(mod)
 #'
 #' @export

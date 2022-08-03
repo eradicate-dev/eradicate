@@ -299,7 +299,7 @@ unstack.data<- function(df) {
 }
 
 get.dims.data<- function(df) {
-  # function to get critical dimensions of stacked mult-session
+  # function to get critical dimensions of stacked multi-session
   # data suitable for input into mult-session models
   # df must have a column 'session' with at least 2 unique values
   tmplist<- split(df, ~factor(session))

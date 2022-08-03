@@ -38,6 +38,68 @@ eFrame <- function(y, siteCovs = NULL, obsCovs = NULL) {
     return(emf)
 }
 
+#' eFrameS
+#'
+#' \code{eFrameS} creates an eFrameS 'stacked' data object for use with closed population
+#' n-mixture or single season occupancy models using the robust design where sampling occurs over
+#' a number of primary and secondary periods. Data for each primary period is 'stacked'
+#' into rows with an indicator variable added to identify each primary period. The data can
+#' then be analysed using closed population models to estimate the trend in abundance
+#' between primary periods.
+#'
+#' @param ys A \code{data.frame} of the observed data for each site \code{M}
+#' in rows and secondary periods \code{J} in columns, indexed by session (primary period).
+#' The data.frame \code{ys} must contain a column \code{session} with at least two unique values.
+#' @param siteCovs A \code{data.frame} of covariates that vary at the
+#'    site level. This should have M rows and one column per covariate
+#' @param obsCovs A list of matrices or data.frames of variables varying within sites.
+#' Each matrix or data.frame must be of dimension MxJ.
+#' @param delta A vector with elements giving the time units between primary periods for each site
+#' beginning with 1 for the first primary period. A default value of 1 is used to
+#' indicate equal time intervals between primary periods.
+#' @return a \code{eFrameS} holding stacked data for each primary period.
+#'
+#' @examples
+#'  ys<- san_nic_open$counts
+#'
+#'  emf<-eFrameS(ys)
+#'  summary(emf)
+#'
+#' @export
+#'
+eFrameS<- function(ys, siteCovs = NULL, obsCovs = NULL, delta = NULL) {
+
+  rd<- get.dims.data(ys)
+  M <- rd$M
+  T <- rd$T
+  J <- rd$J
+  y<- rd$y
+
+  if (J %% 1 != 0) stop("Unequal number of secondary periods")
+  if (J < 2) stop("less than 2 primary periods present")
+  if(missing(delta))
+    delta <- rep(1.0, T)
+  if(!is.vector(delta) || length(delta) != T)
+    stop("delta should be a vector of length T")
+  if(any(delta < 0, na.rm=TRUE))
+    stop("Negative delta values are not allowed.")
+  if(any(is.na(delta)))
+    stop("Missing values are not allowed in delta.")
+  if(!is.null(siteCovs))
+    if(nrow(siteCovs) != M) stop("siteCov Data does not have same size number of sites as ys")
+  if(!is.null(obsCovs)) {
+    obsCovs <- covsToDF(obsCovs, "obsCovs", J, M)
+  }
+
+  emf <- list(y=y, siteCovs=siteCovs, obsCovs=obsCovs)
+  emf$numSites<- M
+  emf$numPrimary <- T
+  emf$numSecondary<- J
+  emf$delta<- cumsum(delta)
+  class(emf) <- c('eFrameS','eFrame','list')
+  emf
+}
+
 #-------------------------------
 #' eFrameREST
 #'
