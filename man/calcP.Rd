@@ -8,6 +8,7 @@
 \alias{calcP.efitGP}
 \alias{calcP.efitMS}
 \alias{calcP.efitMNS}
+\alias{calcP.efitGRMS}
 \title{calcP}
 \usage{
 calcP(obj, ...)
@@ -23,6 +24,8 @@ calcP(obj, ...)
 \method{calcP}{efitMS}(obj, na.rm = TRUE)
 
 \method{calcP}{efitMNS}(obj, na.rm = TRUE)
+
+\method{calcP}{efitGRMS}(obj, na.rm = TRUE)
 }
 \arguments{
 \item{obj}{A fitted model object.}

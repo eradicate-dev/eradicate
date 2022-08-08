@@ -3,23 +3,23 @@
 \name{raneffects}
 \alias{raneffects}
 \alias{raneffects.efitR}
-\alias{raneffects.efitGR}
 \alias{raneffects.efitGRM}
-\alias{raneffects.efitMS}
 \alias{raneffects.efitMNS}
+\alias{raneffects.efitGRMS}
+\alias{raneffects.efitMS}
 \title{raneffects}
 \usage{
 raneffects(obj, ...)
 
 \method{raneffects}{efitR}(obj, K, ...)
 
-\method{raneffects}{efitGR}(obj, K, ...)
-
 \method{raneffects}{efitGRM}(obj, K, ...)
 
-\method{raneffects}{efitMS}(obj, ...)
-
 \method{raneffects}{efitMNS}(obj, K, ...)
+
+\method{raneffects}{efitGRMS}(obj, K, ...)
+
+\method{raneffects}{efitMS}(obj, ...)
 }
 \arguments{
 \item{obj}{A fitted model object.}

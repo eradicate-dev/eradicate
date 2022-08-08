@@ -473,11 +473,13 @@ eFrameGRMS<- function(rem, idx, siteCovs = NULL, obsCovs = NULL, delta = NULL) {
   if(any(is.na(delta)))
     stop("Missing values are not allowed in delta.")
   ya <- array(y, c(M, T, J))
+  yma <- array(ym, c(M, T, J))
   num.removed <- apply(ya, 2, sum, na.rm=TRUE)
   obsCovs <- covsToDF(obsCovs, "obsCovs", J*T, M)
   emf <- list(y=y, siteCovs=siteCovs, obsCovs=obsCovs)
   emf$ym<- ym
   emf$ya<- ya
+  emf$yma<- yma
   emf$piFun<- "removalPiFun"
   emf$numSites<- M
   emf$numPrimary <- T
