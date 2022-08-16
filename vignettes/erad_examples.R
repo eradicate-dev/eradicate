@@ -94,16 +94,16 @@ nr1$Nhat
 nr1$Nresid
 
 # Generalized Poisson
-emf<- eFrameGR(rem, numPrimary=1, siteCovs = site.data)
-r2<- remGR(~pgrass, ~1, ~1, data=emf)
+emf<- eFrameGR(rem, siteCovs = site.data)
+r2<- remGR(~pgrass, ~1, data=emf)
 summary(r2)
 nr2<- calcN(r2)
 nr2$Nhat
 nr2$Nresid
 
 # Including additional camera monitoring data in ym 
-emf<- eFrameGRM(rem, ym, numPrimary=1, siteCovs = site.data)
-r3<- remGRM(~pgrass, ~1, ~1, ~1, data=emf)
+emf<- eFrameGRM(rem, ym, siteCovs = site.data)
+r3<- remGRM(~pgrass, ~1, ~1, data=emf)
 summary(r3)
 nr3<- calcN(r3)
 nr3$Nhat
