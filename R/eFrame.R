@@ -48,12 +48,14 @@ eFrame <- function(y, siteCovs = NULL, obsCovs = NULL) {
 #' between primary periods.
 #'
 #' @param ys A \code{data.frame} of the observed data for each site \code{M}
-#' in rows and secondary periods \code{J} in columns, indexed by session (primary period).
+#' in rows and secondary periods \code{J} in columns, indexed by session (primary period)
+#' \code{T}.
 #' The data.frame \code{ys} must contain a column \code{session} with at least two unique values.
+#' The dimensions of \code{ys} are thus \code{MT} rows and \code{J+1} columns
 #' @param siteCovs A \code{data.frame} of covariates that vary at the
 #'    site level. This should have M rows and one column per covariate
 #' @param obsCovs A list of matrices or data.frames of variables varying within sites.
-#' Each matrix or data.frame must be of dimension MxJ.
+#' Each matrix or data.frame must be of dimension \code{MT x J}.
 #' @param delta A vector with elements giving the time units between primary periods for each site
 #' beginning with 1 for the first primary period. A default value of 1 is used to
 #' indicate equal time intervals between primary periods.
@@ -88,7 +90,7 @@ eFrameS<- function(ys, siteCovs = NULL, obsCovs = NULL, delta = NULL) {
   if(!is.null(siteCovs))
     if(nrow(siteCovs) != M) stop("siteCov Data does not have same size number of sites as ys")
   if(!is.null(obsCovs)) {
-    obsCovs <- covsToDF(obsCovs, "obsCovs", J, M)
+    obsCovs <- covsToDF(obsCovs, "obsCovs", J, M*T)
   }
 
   emf <- list(y=y, siteCovs=siteCovs, obsCovs=obsCovs)
@@ -318,15 +320,13 @@ eFrameGP<- function(catch, effort, session=NULL, index=NULL, ieffort=NULL) {
 #' primary and secondary periods.
 #'
 #' @param df A \code{data.frame} of the observed detection/non-detection data for each site
-#' in rows and secondary periods in columns, indexed by session (primary period). values
-#' greater than 0 will be truncated to 1. The \code{df} must contain a column
+#' in rows \code{m} and secondary periods in columns \code{J}, indexed by session (primary period)
+#' \code{T}. values greater than 0 will be truncated to 1. The \code{df} must contain a column
 #'  \code{session} with at least two unique values.
-#' @param obsPerSeason scalar of the maximum number of observations (replicates)
-#' per season.
 #' @param siteCovs A \code{data.frame} of covariates that vary at the
 #'    site level. This should have M rows and one column per covariate
 #' @param obsCovs A list of matrices or data.frames of variables varying within sites.
-#' Each matrix or data.frame must be of dimension MxJ.
+#' Each matrix or data.frame must be of dimension \code{MT x J}.
 #' @return a \code{eFrameMS} holding data containing the response and
 #'  covariates required for \code{occuMS}
 #'
@@ -362,10 +362,12 @@ eFrameMS<- function(df, siteCovs = NULL, obsCovs =  NULL) {
 #' @param rem A \code{data.frame} of the observed removal data for each site
 #' in rows and secondary periods in columns, indexed by session (primary period).
 #' The data.frame \code{rem} must contain a column \code{session} with at least two unique values.
+#' The dimensions of \code{rem} are thus \code{MT} rows and \code{J+1} columns
+#' where \code{T} is the number of sessions.
 #' @param siteCovs A \code{data.frame} of covariates that vary at the
 #'    site level. This should have M rows and one column per covariate
 #' @param obsCovs A list of matrices or data.frames of variables varying within sites.
-#' Each matrix or data.frame must be of dimension MxJ.
+#' Each matrix or data.frame must be of dimension \code{MT x J}.
 #' @param delta A vector with elements giving the time units between primary periods for each site
 #' beginning with 1 for the first primary period. A default value of 1 is used to
 #' indicate equal time intervals between primary periods.
@@ -400,7 +402,7 @@ eFrameMNS<- function(rem, siteCovs = NULL, obsCovs = NULL, delta = NULL) {
   if(!is.null(siteCovs))
     if(nrow(siteCovs) != M) stop("siteCov Data does not have same size number of sites as y")
   if(!is.null(obsCovs)) {
-    obsCovs <- covsToDF(obsCovs, "obsCovs", J, M)
+    obsCovs <- covsToDF(obsCovs, "obsCovs", J, M*T)
   }
   ya <- array(y, c(M, T, J))
   num.removed <- apply(ya, 2, sum, na.rm=TRUE)

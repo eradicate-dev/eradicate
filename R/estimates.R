@@ -288,6 +288,11 @@ calcN.efitS<- function(obj, newdata, off.set=NULL, CI.level=0.95, ...) {
     newdata <- cbind(season, trend, newdata[rep(1:M, T),,drop=FALSE])
   }
 
+  if (is.null(off.set)) off.set <- rep(1, M*T)
+  else if(length(off.set) == 1) off.set<- rep(off.set, M*T)
+  else if(length(off.set) != M) stop("error - off.set has wrong length")
+  else off.set<- off.set[rep(1:M, T)]
+
   design <- getDesign(obj, newdata)
   X<- design$X
   M<- nrow(X)
@@ -298,8 +303,7 @@ calcN.efitS<- function(obj, newdata, off.set=NULL, CI.level=0.95, ...) {
   estimates<- coef(obj, "state")
   covMat<- vcov(obj, "state")
   if(ncol(X) != length(estimates)) stop("error - wrong number of covariates")
-  if (is.null(off.set)) off.set <- rep(1, M)
-  else if(length(off.set) == 1) off.set<- rep(off.set, M)
+
   # cellwise estimates
   eta <- as.vector(X %*% estimates)
   vc <- rowSums((X %*% covMat) * X) # equivalent to diag(X %*% covMat %*% t(X))
