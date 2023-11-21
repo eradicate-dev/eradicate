@@ -8,18 +8,15 @@ eFrameMS(df, siteCovs = NULL, obsCovs = NULL)
 }
 \arguments{
 \item{df}{A \code{data.frame} of the observed detection/non-detection data for each site
-in rows and secondary periods in columns, indexed by session (primary period). values
-greater than 0 will be truncated to 1. The \code{df} must contain a column
+in rows \code{m} and secondary periods in columns \code{J}, indexed by session (primary period)
+\code{T}. values greater than 0 will be truncated to 1. The \code{df} must contain a column
  \code{session} with at least two unique values.}
 
 \item{siteCovs}{A \code{data.frame} of covariates that vary at the
 site level. This should have M rows and one column per covariate}
 
 \item{obsCovs}{A list of matrices or data.frames of variables varying within sites.
-Each matrix or data.frame must be of dimension MxJ.}
-
-\item{obsPerSeason}{scalar of the maximum number of observations (replicates)
-per season.}
+Each matrix or data.frame must be of dimension \code{MT x J}.}
 }
 \value{
 a \code{eFrameMS} holding data containing the response and
@@ -31,10 +28,9 @@ occupancy models \code{occMS} where sampling occurs over a number of
 primary and secondary periods.
 }
 \examples{
-### NEED TO SUPPLY GOOD EXAMPLE DATA
- rem<- san_nic_rem
- #'
- emf<-eFrameMS(y=rem, obsPerSeason=XXX, type="removal")
- summary(emf)
+index<- san_nic_open$index
+
+emf<-eFrameMS(df=index)
+summary(emf)
 
 }

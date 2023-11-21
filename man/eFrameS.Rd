@@ -8,14 +8,16 @@ eFrameS(ys, siteCovs = NULL, obsCovs = NULL, delta = NULL)
 }
 \arguments{
 \item{ys}{A \code{data.frame} of the observed data for each site \code{M}
-in rows and secondary periods \code{J} in columns, indexed by session (primary period).
-The data.frame \code{ys} must contain a column \code{session} with at least two unique values.}
+in rows and secondary periods \code{J} in columns, indexed by session (primary period)
+\code{T}.
+The data.frame \code{ys} must contain a column \code{session} with at least two unique values.
+The dimensions of \code{ys} are thus \code{MT} rows and \code{J+1} columns}
 
 \item{siteCovs}{A \code{data.frame} of covariates that vary at the
 site level. This should have M rows and one column per covariate}
 
 \item{obsCovs}{A list of matrices or data.frames of variables varying within sites.
-Each matrix or data.frame must be of dimension MxJ.}
+Each matrix or data.frame must be of dimension \code{MT x J}.}
 
 \item{delta}{A vector with elements giving the time units between primary periods for each site
 beginning with 1 for the first primary period. A default value of 1 is used to
