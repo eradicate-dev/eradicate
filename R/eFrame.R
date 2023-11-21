@@ -331,11 +331,10 @@ eFrameGP<- function(catch, effort, session=NULL, index=NULL, ieffort=NULL) {
 #'  covariates required for \code{occuMS}
 #'
 #' @examples
-#' ### NEED TO SUPPLY GOOD EXAMPLE DATA
-#'  rem<- san_nic_rem
-#'  #'
-#'  emf<-eFrameMS(y=rem, obsPerSeason=XXX, type="removal")
-#'  summary(emf)
+#' index<- san_nic_open$index
+#'
+#' emf<-eFrameMS(df=index)
+#' summary(emf)
 #'
 #' @export
 #'

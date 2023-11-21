@@ -10,7 +10,7 @@
 #' @usage occMS(lamformula, gamformula, epsformula, detformula,
 #' data, starts, method="BFGS", se=TRUE, ...)
 #'
-#' @param lamformula formula for the latent occupancy component.
+#' @param lamformula formula for the latent (initial) occupancy component.
 #' @param gamformula formula for the latent colonisation component. If season
 #' specific colonisation/extinction parameters are desired, then use the
 #' reserved keyword \code{.season}, (i.e. \code{~.season}).
@@ -28,9 +28,9 @@
 #' @return a \code{efit} model object.
 #'
 #' @examples
-#'  counts<- san_nic_pre$counts
-#'  emf <- eFrame(y=counts)
-#'  mod <- occMS(~1, ~1, ~1, ~1, data=emf)
+#'  counts<- san_nic_open$index
+#'  emf <- eFrameMS(df=counts)
+#'  mod <- occMS(~1, ~1, ~.season, ~1, data=emf)
 #'  Nhat<- calcN(mod)
 #'
 #' @export
