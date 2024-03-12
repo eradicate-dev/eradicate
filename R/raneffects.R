@@ -55,16 +55,18 @@ postSamples <- function(obj, ...){
 #' @rdname raneffects
 #' @export
 raneffects.efitR<- function(obj, K, ...) {
-  y <- obj$data$y
-  srm <- obj$sitesRemoved
-  if(length(srm) > 0)
-    y <- y[-obj$sitesRemoved,]
   if(missing(K)) {
     warning("K was set to max(y)+50 by default")
     K <- max(y, na.rm=TRUE)+50
   }
+  y <- obj$data$y
+  srm <- obj$sitesRemoved
   preds<- calcN(obj)
   lam <- preds$cellpreds$N
+  if(length(srm) > 0) {
+    y <- y[-obj$sitesRemoved,]
+    lam <- lam[-obj$sitesRemoved]
+  }
   R <- length(lam)
   cp <- calcP(obj)
   cp <- cbind(cp, 1-rowSums(cp))
