@@ -55,11 +55,11 @@ postSamples <- function(obj, ...){
 #' @rdname raneffects
 #' @export
 raneffects.efitR<- function(obj, K, ...) {
+  y <- obj$data$y
   if(missing(K)) {
     warning("K was set to max(y)+50 by default")
     K <- max(y, na.rm=TRUE)+50
   }
-  y <- obj$data$y
   srm <- obj$sitesRemoved
   preds<- calcN(obj)
   lam <- preds$cellpreds$N
